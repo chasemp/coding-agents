@@ -42,6 +42,7 @@ Choose the language that best fits the domain - TypeScript for web/frontend, Pyt
 
 **Quick reference:**
 - Write tests first (TDD non-negotiable)
+- **Watch the test fail** — if you didn't see it fail, you don't know if it tests the right thing
 - Test through public API exclusively
 - Use factory functions for test data (no mutable setup in `beforeEach`/fixtures)
 - Tests must document expected business behavior
