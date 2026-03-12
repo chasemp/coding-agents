@@ -32,21 +32,30 @@ poetry run ruff check src/ tests/
 
 All three must pass. Fix any failures before continuing — do not skip.
 
-### 3. Bump the version in pyproject.toml
+### 3. Sync documentation
+
+Run `/doc-sync` now. Docs must be current before the version is bumped — a release with stale docs ships the wrong story.
+
+This covers STATE.md, HUMAN_TEST.md, PLAN.md, and FUTURE.md in the overview repo. Commit any doc updates to the overview repo before proceeding.
+
+If `/doc-sync` reports no gaps, note that and continue.
+
+### 4. Bump the version in pyproject.toml and man page
 
 Edit the `version = "..."` line under `[project]` in `pyproject.toml`.
-Confirm the new value matches the requested version exactly.
+Edit the `.TH` line in `man/alph.1` to match.
+Confirm both values match the requested version exactly.
 
-### 4. Commit the version bump
+### 5. Commit the version bump
 
 ```bash
 cd /Users/cpettet/git/chasemp/AlpheusCEF/alph-cli
-git add pyproject.toml
-git commit -m "chore: bump version to <VERSION>"
+git add pyproject.toml man/alph.1
+git commit -m "release: bump to v<VERSION>"
 git push origin main
 ```
 
-### 5. Tag the release
+### 6. Tag the release
 
 ```bash
 cd /Users/cpettet/git/chasemp/AlpheusCEF/alph-cli
@@ -60,7 +69,7 @@ This triggers the `release.yml` workflow which:
 - Creates the GitHub release with the sdist attached
 - Updates the Homebrew formula in `homebrew-tap` (if `HOMEBREW_TAP_TOKEN` is set)
 
-### 6. Verify the workflow
+### 7. Verify the workflow
 
 ```bash
 cd /Users/cpettet/git/chasemp/AlpheusCEF/alph-cli
@@ -69,7 +78,7 @@ gh run list --limit 3
 
 Wait for the release workflow to complete. Check for failures with `gh run view`.
 
-### 7. If HOMEBREW_TAP_TOKEN is not set (formula update skipped)
+### 8. If HOMEBREW_TAP_TOKEN is not set (formula update skipped)
 
 Run manually from the homebrew-tap repo:
 
@@ -77,14 +86,14 @@ Run manually from the homebrew-tap repo:
 cd /Users/cpettet/git/chasemp/AlpheusCEF/homebrew-tap
 ./scripts/update-formula.sh <VERSION>
 git add Formula/alph.rb
-git commit -m "update alph formula to v<VERSION>"
+git commit -m "alph <VERSION>"
 git push origin main
 ```
 
 > The script downloads the tarball to a tempfile before hashing. Do NOT use `curl | shasum`
 > directly — piped curl can produce a truncated byte stream and a wrong SHA256.
 
-### 8. Confirm Homebrew reinstall works
+### 9. Confirm Homebrew reinstall works
 
 ```bash
 brew update && brew reinstall alph
@@ -95,6 +104,7 @@ alph-mcp --help
 ## Output
 
 Report:
+- Docs synced: gaps found and fixed, or already current
 - Version bumped to: `<VERSION>`
 - Tag pushed: `v<VERSION>`
 - CI workflow URL (from `gh run list`)
