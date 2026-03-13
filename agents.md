@@ -42,6 +42,35 @@ done
 # 6. Add agents.md at the repo root (copy and update from agents/agents.md)
 ```
 
+## Choosing Your Mechanism
+
+Three primitives exist for extending Claude Code. Choose the lightest one that
+fits the need.
+
+| | Command | Agent | Skill |
+|---|---------|-------|-------|
+| **Triggered by** | User types `/name` | Claude auto-invokes from description | Claude auto-invokes from description |
+| **Context** | Runs inline (shared session) | Separate subprocess (isolated) | Runs inline (shared session) |
+| **Memory** | No | Yes (user/project/local) | No |
+| **Best for** | Multi-step workflows the user explicitly starts | Autonomous verification or analysis that benefits from isolation | Reusable domain knowledge Claude should surface automatically |
+
+**Decision tree:**
+
+1. Is this a multi-step workflow the user explicitly kicks off? → **Command**
+   (e.g., `/pr`, `/release-alph`, `/config-scout`)
+2. Does it need context isolation, autonomous multi-step analysis, or persistent
+   memory? → **Agent** (e.g., tdd-guardian, pr-reviewer)
+3. Is it reusable domain knowledge that Claude should auto-surface when
+   relevant? → **Skill** (e.g., testing-anti-patterns, systematic-debugging)
+
+**Resolution order** when multiple could work: prefer Skill (lightest) over
+Agent (heavier) over Command (requires explicit user invocation).
+
+**Our specific mapping:**
+- **Commands** orchestrate workflows (git operations, release pipelines, external comparisons)
+- **Agents** enforce disciplines (TDD compliance, type safety, code quality, documentation)
+- **Skills** provide domain knowledge (testing patterns, debugging methodology, architecture guidance)
+
 ## Agent Orchestration
 
 Agents are discipline enforcers, not task executors. They verify that work meets
@@ -107,6 +136,36 @@ Decision needed: [what the human should weigh in on]
 
 This format is consistent across all agents and signals that the agent is not
 blocking but needs human judgment.
+
+### Agent Memory
+
+Some agents have persistent project-scoped memory (`memory: project` in
+frontmatter). Memory lives in `.claude/agent-memory/<agent-name>/` within each
+consuming repo. The first 200 lines of `MEMORY.md` are auto-injected into the
+agent's system prompt at startup.
+
+**Agents with memory:** learn, pr-reviewer, refactor-scan, tdd-guardian
+
+**Memory conventions:**
+- Memory stores project-specific knowledge, not general principles (those belong
+  in the agent definition itself)
+- Each agent's definition documents what to remember and what not to remember
+- Prune memory periodically — remove entries for code that no longer exists,
+  conventions that changed, or exceptions that were resolved
+- When `MEMORY.md` exceeds ~150 lines, organize into topic-specific files and
+  keep `MEMORY.md` as an index
+
+**Memory does NOT replace:**
+- CLAUDE.md (canonical project-wide knowledge)
+- LEARNINGS.md (per-feature learnings managed by progress-guardian)
+- ADRs (architectural decisions managed by adr agent)
+
+### Turn Limits
+
+All agents have `maxTurns` set in frontmatter to prevent runaway execution.
+Analysis-only agents (tdd-guardian, py-enforcer, refactor-scan, learn,
+use-case-data-patterns) have 15 turns. Agents that do more complex work
+(pr-reviewer, progress-guardian, adr, docs-guardian) have 20 turns.
 
 ## File reference
 

@@ -4,6 +4,7 @@ description: >
   Use this agent proactively when making significant architectural decisions and reactively to document architectural choices after they're made. Invoke when evaluating technology options, making foundational decisions, or discovering undocumented architectural choices.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
+maxTurns: 20
 color: purple
 ---
 

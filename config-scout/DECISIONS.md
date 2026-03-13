@@ -21,6 +21,10 @@ stronger than any single source.
 | Model tier optimization across agents | shanraisshan-rpi, obra-superpowers | 2 | 2026-03-13 | Evaluate which agents benefit from opus vs sonnet. Superpowers uses model selection by task complexity. |
 | Receiving code review skill | obra-superpowers | 1 | 2026-03-13 | How to evaluate review feedback with rigor, not performative agreement. Novel angle we don't cover. |
 | Session-start hooks | obra-superpowers | 1 | 2026-03-13 | Auto-load context at session begin. Our @import system partially covers this. |
+| Agent `permissionMode` field | shanraisshan-full-repo | 1 | 2026-03-13 | Read-only agents could use restrictive modes to prevent accidental writes. Needs testing with subagents. |
+| Agent `skills` preloading field | shanraisshan-full-repo | 1 | 2026-03-13 | tdd-guardian could preload testing-anti-patterns, adr could preload effective-design-overview. Makes skill references mechanical instead of advisory prose. |
+| Command→Agent→Skill delegation hierarchy | shanraisshan-full-repo | 1 | 2026-03-13 | Hierarchical orchestration where commands invoke agents that preload skills. Different from our pipeline model — solves feature-building, not discipline enforcement. Revisit if scope expands. |
+| Workflow commands for agent sequences | shanraisshan-full-repo | 1 | 2026-03-13 | `/tdd-cycle` and `/pr-prep` to automate agent sequences. Deferred because Claude auto-invokes agents from descriptions — the manual orchestration problem doesn't exist in practice. |
 
 ---
 
@@ -89,6 +93,40 @@ stronger than any single source.
 - *Surprise value*: The biggest surprise was verification-before-completion. We enforce test-first rigorously but had no rule against the simpler failure mode of just saying "Done." without evidence. The gap was hiding in plain sight because we assumed TDD covered it — it does not.
 - *Scope evolution*: This batch added two new skills (systematic-debugging, skill-hygiene), enhanced three existing agents (tdd-guardian, pr-reviewer, progress-guardian), and defined orchestration patterns. The additions are coherent — debugging and verification are quality disciplines, skill-hygiene is meta-quality, orchestration is infrastructure. All serve the core philosophy. No scope creep detected.
 - *Emerging consensus*: TDD-as-non-negotiable now appears in all three sources we've analyzed (our own, RPI, superpowers). Verification-before-completion appears in superpowers and aligns with our existing "watched-it-fail" principle. The community is converging on "prove it, don't claim it."
+
+---
+
+### 2026-03-13 — shanraisshan-full-repo
+
+**Source**: https://github.com/shanraisshan/claude-code-best-practice
+**Report**: `config-scout/2026-03-13_shanraisshan-full-repo.md`
+**Catalog**: `config-scout/2026-03-13_shanraisshan-full-repo_catalog.md`
+
+**Adopted:**
+- `maxTurns` frontmatter on all 9 agents → agent .md files | Rationale: Hard turn limit prevents runaway execution. Aligns with our "bail on repeated failure" principle. Analysis-only agents get 15, complex-work agents get 20. Source: shanraisshan claude-subagents.md (14 frontmatter fields documented, we used 5).
+- `memory: project` on 4 agents (learn, pr-reviewer, refactor-scan, tdd-guardian) → agent .md files + agents.md | Rationale: Agent memory surfaced in every comparison (shanraisshan-rpi as "persistent feature folders," obra-superpowers implicitly, now shanraisshan-full-repo explicitly). Tally of 3 across independent sources. Agents can now accumulate project-specific knowledge across sessions. Source: shanraisshan claude-agent-memory.md.
+- Agent vs Command vs Skill decision framework → agents.md "Choosing Your Mechanism" section | Rationale: We had correct classification but no documented criteria. A developer creating something new had no guidance on which primitive to reach for. Source: shanraisshan claude-agent-command-skill.md.
+- Context-budget awareness in planning → progress-guardian.md plan review checklist | Rationale: TDD cycles can consume large context chunks. Step sizing guidance referenced TDD cycles but not context window as a resource. Added without an arbitrary threshold — just awareness that steps consuming most remaining context should be broken down. Source: shanraisshan CLAUDE.md workflow practices.
+
+**Deferred:**
+- `permissionMode` field → see Deferred Investigations table | Reason: Read-only agents could use restrictive modes, but needs testing to confirm behavior with subagents. Low urgency since we already restrict via tool allowlists.
+- `skills` preloading field → see Deferred Investigations table | Reason: Agents reference skills in prose but don't mechanically preload them. Would make the relationship explicit. Low urgency — current prose references work.
+- Command→Agent→Skill delegation hierarchy → see Deferred Investigations table | Reason: Different paradigm from our enforcement pipelines. Solves feature-building orchestration, not discipline verification. Revisit if we expand scope beyond enforcement.
+- Workflow commands for agent sequences (`/tdd-cycle`, `/pr-prep`) → see Deferred Investigations table | Reason: Claude auto-invokes agents from their descriptions, so the manual orchestration problem these commands would solve doesn't exist in practice. User confirmed they don't manually invoke agent sequences today.
+
+**Rejected:**
+- `/compact` at 50% context threshold → CLAUDE.md | Reason: 50% is arbitrary. Added context-budget awareness to progress-guardian's checklist instead, without a fixed threshold. Users can compact at natural milestones (between steps, after commits) rather than hitting a number.
+- `disallowedTools` field | Reason: We already restrict via tool allowlists in frontmatter. Adding a deny-list on top is belt-and-suspenders with marginal value.
+- `mcpServers`, `hooks`, `background`, `isolation` fields | Reason: No current use case. pr-reviewer already configures MCP tools via the tools list. No agents need background execution or worktree isolation. These solve problems we don't have.
+- "Commands for workflows not standalone agents" as a new principle | Reason: Already covered by the decision framework we adopted. Our commands already are workflow orchestrators. The principle was implicit and correct — just needed documenting, not changing.
+
+**Patterns Noticed:**
+- *Selection bias*: Third comparison, all from the Claude Code ecosystem. shanraisshan is a documentation/reference hub, not a working agent config — different character from RPI (product workflow) and superpowers (composable skill library). We're getting breadth within the ecosystem but still haven't compared against a non-Claude-Code setup (Cursor rules, copilot-instructions). That should be next.
+- *Rejection patterns*: This is the first comparison where we rejected more than we adopted. The source is a reference catalog, not an opinionated setup — most value was in discovering features we weren't using (frontmatter fields) rather than philosophical patterns. We keep rejecting arbitrary thresholds and belt-and-suspenders safety mechanisms, preferring awareness and judgment over hard rules.
+- *Adoption lag*: Agent memory was deferred in both previous comparisons (as "persistent feature folders" from RPI and implicitly from superpowers). Tally hit 3 and we adopted. This validates the tally system — recurring signals from independent sources do bubble up to adoption. The deferred investigations table is working as designed.
+- *Surprise value*: The biggest surprise was discovering that workflow commands for agent sequences (Finding 5) solve a problem we don't have. Claude's auto-invocation from agent descriptions means the orchestration already happens without explicit user action. This is a good reminder to test assumptions against actual workflow before building solutions.
+- *Scope evolution*: This comparison mostly deepened existing infrastructure (frontmatter fields, memory, documentation) rather than adding new capabilities. No new skills or agents. The setup is maturing — additions are infrastructure hardening, not capability expansion. This feels healthy.
+- *Emerging consensus*: Agent persistent memory now appears across all three sources. The community is converging on agents-that-learn-over-time. Our adoption here puts us in line with this trend. The decision framework (agent vs command vs skill) also appears to be a community standard — everyone is grappling with when to use which primitive.
 
 ---
 

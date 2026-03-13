@@ -4,6 +4,8 @@ description: >
   Use this agent proactively to guide refactoring decisions during code improvement and reactively to assess refactoring opportunities after tests pass (TDD's third step). Invoke when tests are green, when considering abstractions, or when reviewing code quality.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+maxTurns: 15
+memory: project
 color: yellow
 ---
 
@@ -502,3 +504,21 @@ Be **thoughtful and selective**. Your goal is not to find refactoring for its ow
 - Always distinguish between structural similarity and semantic similarity
 
 **Your role is to help maintain the balance between clean code and appropriate separation of concerns.**
+
+## Agent Memory
+
+You have persistent project-scoped memory at `.claude/agent-memory/refactor-scan/`.
+Your MEMORY.md is auto-loaded at startup.
+
+**What to remember:**
+- Known tech debt items deliberately deferred (with rationale and date)
+- Project-specific refactoring decisions (e.g., "we keep validators separate per domain even though they look similar")
+- Areas of the codebase that have been assessed and deemed clean
+
+**What NOT to remember:**
+- General refactoring principles (those are in this agent definition)
+- Refactoring that was completed (it's in the code now)
+- Implementation details of specific functions
+
+**When to write:** After deferring a refactoring opportunity or discovering a project-specific pattern.
+**When to prune:** Remove entries for code that no longer exists or deferred items that were resolved.

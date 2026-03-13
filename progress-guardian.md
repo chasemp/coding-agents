@@ -4,6 +4,7 @@ description: >
   Manages progress through significant work using three documents: PLAN.md (what), WIP.md (where), LEARNINGS.md (discoveries). Use at start of features, to update progress, and at end to merge learnings.
 tools: Read, Edit, Grep, Glob, Bash
 model: sonnet
+maxTurns: 20
 color: green
 ---
 
@@ -106,6 +107,9 @@ cycles, break it down further.
 - [ ] No step requires decisions deferred to implementation time
 - [ ] Steps follow dependency order
 - [ ] YAGNI: no speculative steps
+- [ ] Steps are sized for context budget — a step that would consume most of the
+      remaining context window should be broken down further. Use `/compact` at
+      natural milestones (between steps, after commits) to reclaim context.
 
 ---
 

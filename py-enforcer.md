@@ -4,6 +4,7 @@ description: >
   Use this agent proactively to guide Python type safety best practices during development and reactively to enforce compliance after code is written. Invoke when defining types/validations, writing Python code, or reviewing for type safety violations.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+maxTurns: 15
 color: red
 ---
 

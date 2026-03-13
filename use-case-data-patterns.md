@@ -37,6 +37,7 @@ description: >
   </example>
 tools: Read, Grep, Glob
 model: sonnet
+maxTurns: 15
 color: orange
 ---
 
