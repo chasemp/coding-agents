@@ -42,6 +42,72 @@ done
 # 6. Add agents.md at the repo root (copy and update from agents/agents.md)
 ```
 
+## Agent Orchestration
+
+Agents are discipline enforcers, not task executors. They verify that work meets
+standards — they do not perform the implementation. The sequences below define
+when to invoke which agents and how their outputs relate.
+
+### Recommended Sequences
+
+**TDD Cycle** (every RED-GREEN-REFACTOR iteration):
+```
+tdd-guardian (blocking) → refactor-scan (advisory)
+```
+tdd-guardian verifies test-first compliance. If it flags violations, stop and
+fix before proceeding. refactor-scan runs after GREEN to assess improvement
+opportunities — its output is advisory (refactoring is not always needed).
+
+**PR Preparation** (before creating a pull request):
+```
+progress-guardian (plan alignment, blocking) → pr-reviewer (code quality, blocking) → docs-guardian (advisory)
+```
+progress-guardian checks that the work matches what was planned. pr-reviewer
+checks code quality across 5 categories. docs-guardian checks if documentation
+needs updating. Do not start code quality review before plan alignment passes.
+
+**Post-Merge** (after work is merged):
+```
+learn (capture learnings)
+```
+Invoke learn to capture gotchas, patterns, and decisions while context is fresh.
+
+**Architecture Decisions** (when evaluating design choices):
+```
+effective-design-overview skill → adr (record decision)
+```
+Use the design skill to evaluate the problem space, then adr to record the
+decision and its rationale.
+
+**Python Code** (when writing or reviewing Python):
+```
+py-enforcer (blocking, can run in parallel with tdd-guardian)
+```
+py-enforcer checks type safety independently of TDD compliance. Both can run
+on the same changeset without interference.
+
+### Dependency Rules
+
+- **Blocking** agents must pass before proceeding. Do not skip or defer their findings.
+- **Advisory** agents produce recommendations. Their output informs but does not gate.
+- progress-guardian before pr-reviewer — plan alignment first, then code quality.
+- tdd-guardian before refactor-scan — verify TDD compliance before assessing refactoring.
+- Never run docs-guardian before pr-reviewer — fix code issues before documenting.
+
+### Escalation Convention
+
+When an agent finds something ambiguous — not a clear violation, but a concern —
+it should flag it as:
+
+```
+⚠️ ESCALATION: [description of concern]
+Recommendation: [what the agent suggests]
+Decision needed: [what the human should weigh in on]
+```
+
+This format is consistent across all agents and signals that the agent is not
+blocking but needs human judgment.
+
 ## File reference
 
 | File | Role |

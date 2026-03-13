@@ -109,6 +109,8 @@ For detailed patterns and examples, load the `functional` skill.
 - **Wait for commit approval** before every commit
 - Each increment leaves codebase in working state
 - Capture learnings as they occur, merge at end
+- **Bail on repeated failure**: If an approach fails twice, stop and reassess with the user before trying alternatives. Do not spin on a failing strategy.
+- **No completion claims without fresh evidence**: Before asserting success, run the proving command, read complete output and exit code, confirm it supports the claim. Language like "should work" or "probably" without a fresh run is not acceptable. Confidence from a previous run does not count. Unverified claims are indistinguishable from hallucinations.
 
 For detailed TDD workflow, load the `tdd` skill.
 For refactoring methodology, load the `refactoring` skill.

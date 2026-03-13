@@ -69,17 +69,43 @@ User: "Feature is complete"
 - [ ] Criterion 1
 - [ ] Criterion 2
 
+## File Structure
+
+| File | Responsibility |
+|------|---------------|
+| `path/to/file.py` | What this file does |
+
+*Map the files involved and their responsibilities before defining steps.*
+
 ## Steps
+
+**Step sizing**: Each step should be completable in one TDD cycle (write test,
+watch it fail, implement, verify, commit). If a step requires multiple TDD
+cycles, break it down further.
 
 ### Step 1: [One sentence description]
 
-- **Test**: What failing test will we write?
+- **File(s)**: Which files are created or modified
+- **Test**: Specific failing test with file path (e.g., `tests/test_validation.py::test_rejects_negative_amounts`)
+- **Implementation**: What minimal code satisfies the test
+- **Verify**: Command to run and expected output
 - **Done when**: How do we know it's complete?
 
 ### Step 2: [One sentence description]
 
-- **Test**: What failing test will we write?
+- **File(s)**: Which files are created or modified
+- **Test**: Specific failing test with file path
+- **Implementation**: What minimal code satisfies the test
+- **Verify**: Command to run and expected output
 - **Done when**: How do we know it's complete?
+
+## Plan Review Checklist
+
+- [ ] Each step is one TDD cycle
+- [ ] File paths are specified
+- [ ] No step requires decisions deferred to implementation time
+- [ ] Steps follow dependency order
+- [ ] YAGNI: no speculative steps
 
 ---
 
