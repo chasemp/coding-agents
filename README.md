@@ -36,7 +36,8 @@ This repo is the **personal layer** (Layer 1). Org-specific repos add on top.
 ## Installation
 
 ```bash
-git clone git@github-personal:chasemp/coding-agents.git ~/.claude/coding-agents
+git clone git@github-personal:chasemp/coding-agents.git ~/git/chasemp/coding-agents
+ln -sf ~/git/chasemp/coding-agents ~/.claude/coding-agents
 ```
 
 Add to `~/.claude/CLAUDE.md`:
@@ -46,11 +47,7 @@ Add to `~/.claude/CLAUDE.md`:
 @coding-agents/agents.md
 ```
 
-## Syncing
-
-```bash
-git -C ~/.claude/coding-agents pull --ff-only
-```
+The symlink means edits to the working copy are immediately live — no sync step needed.
 
 ## Org repos
 
