@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/commands/generate-pr-review.md
+../../commands/generate-pr-review.md

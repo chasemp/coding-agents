@@ -4,7 +4,7 @@
 >
 > **Architecture:**
 > - **CLAUDE.md** (this file): Core philosophy + quick reference (~100 lines, always loaded)
-> - **Skills**: Detailed patterns loaded on-demand (tdd, testing, mutation-testing, test-design-reviewer, typescript-strict, functional, refactoring, expectations, planning, front-end-testing, react-testing)
+> - **Skills**: Detailed patterns loaded on-demand (testing-anti-patterns, effective-design-overview, hexagonal-architecture, systematic-debugging, cli-distribution, skill-hygiene)
 > - **Agents**: Specialized subprocesses for verification and analysis
 >
 > **Previous versions:**
@@ -53,8 +53,7 @@ Choose the language that best fits the domain - TypeScript for web/frontend, Pyt
 - **Python**: pytest (with fixtures for immutable setup), unittest
 - **Go**: standard `testing` package, table-driven tests
 
-For detailed testing patterns and examples, load the `testing` skill.
-For verifying test effectiveness through mutation analysis, load the `mutation-testing` skill.
+For testing anti-patterns and how to fix them, load the `testing-anti-patterns` skill.
 
 ## Type Safety Guidelines
 
@@ -76,7 +75,6 @@ For verifying test effectiveness through mutation analysis, load the `mutation-t
 - Explicit error handling (never ignore errors)
 - Use struct tags for validation/serialization
 
-For detailed TypeScript patterns, load the `typescript-strict` skill.
 For Python type patterns, use built-in type system with runtime validation at boundaries.
 For Go patterns, follow standard library conventions.
 
@@ -96,8 +94,6 @@ For Go patterns, follow standard library conventions.
   - **Python**: list comprehensions, generator expressions
   - **TypeScript**: avoid `for...in`, use `for...of` or array methods
 
-For detailed patterns and examples, load the `functional` skill.
-
 ## Development Workflow
 
 **Core principle**: RED-GREEN-REFACTOR in small, known-good increments. TDD is the fundamental practice.
@@ -111,10 +107,6 @@ For detailed patterns and examples, load the `functional` skill.
 - Capture learnings as they occur, merge at end
 - **Bail on repeated failure**: If an approach fails twice, stop and reassess with the user before trying alternatives. Do not spin on a failing strategy.
 - **No completion claims without fresh evidence**: Before asserting success, run the proving command, read complete output and exit code, confirm it supports the claim. Language like "should work" or "probably" without a fresh run is not acceptable. Confidence from a previous run does not count. Unverified claims are indistinguishable from hallucinations.
-
-For detailed TDD workflow, load the `tdd` skill.
-For refactoring methodology, load the `refactoring` skill.
-For significant work, load the `planning` skill for three-document model (PLAN.md, WIP.md, LEARNINGS.md).
 
 ## External APIs
 
@@ -141,10 +133,6 @@ For significant work, load the `planning` skill for three-document model (PLAN.m
 - Update CLAUDE.md when introducing meaningful changes
 - Ask "What do I wish I'd known at the start?" after significant changes
 - Document gotchas, patterns, decisions, edge cases while context is fresh
-
-For detailed TDD workflow, load the `tdd` skill.
-For refactoring methodology, load the `refactoring` skill.
-For detailed guidance on expectations and documentation, load the `expectations` skill.
 
 ## Resources and References
 

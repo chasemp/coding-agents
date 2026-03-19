@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/skills/hexagonal-architecture.md
+../../skills/hexagonal-architecture.md

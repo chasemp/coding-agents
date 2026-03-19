@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/skills/testing-anti-patterns.md
+../../skills/testing-anti-patterns.md
