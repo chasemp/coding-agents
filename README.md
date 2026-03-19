@@ -1,46 +1,60 @@
-# AlpheusCEF Agents
+# Coding Agents
 
-Shared Claude Code agents, instructions, and commands for all AlpheusCEF repos.
+Personal, authoritative Claude Code guidance — agents, skills, commands, and
+instructions for coding agents across all orgs and projects.
 
-This is the single source of truth. All AlpheusCEF repos reference these files directly rather than maintaining their own copies.
+## Layering model
 
-## Design context
+This repo is the **personal layer** (Layer 1). Org-specific repos add on top.
 
-Full project design, architecture decisions, and implementation plan are in the [overview repo](../overview/STATE.md).
+```
+┌─────────────────────────────────────────────┐
+│ Layer 1: Personal (this repo)               │
+│ Installed at: ~/.claude/coding-agents/      │
+│ Loaded via: ~/.claude/CLAUDE.md @includes   │
+├─────────────────────────────────────────────┤
+│ Layer 2: Org-specific                       │
+│ AlpheusCEF/coding-agents                    │
+│ mycelium-agent-framework/coding-agents      │
+│ Cloned into project .claude/org-agents/     │
+├─────────────────────────────────────────────┤
+│ Layer 3: Project                            │
+│ Each repo's own CLAUDE.md                   │
+└─────────────────────────────────────────────┘
+```
 
 ## What's here
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
-| `CLAUDE.md` | Shared project instructions imported by all repo `.claude/CLAUDE.md` files |
-| `tdd-guardian.md` | TDD enforcement and coaching agent |
-| `py-enforcer.md` | Python type safety and immutability enforcer |
-| `pr-reviewer.md` | Pull request review agent |
-| `refactor-scan.md` | Refactoring opportunity scanner |
-| `progress-guardian.md` | Progress tracking and WIP state agent |
-| `adr.md` | Architecture Decision Record writer |
-| `docs-guardian.md` | Documentation consistency guardian |
-| `learn.md` | Learning capture agent |
-| `use-case-data-patterns.md` | Use case and data pattern analysis |
-| `commands/` | Shared slash commands |
+| `CLAUDE.md` | Core TDD, type safety, code style, and workflow guidelines |
+| `agents.md` | Agent setup guide, orchestration sequences, and decision tree |
+| `*.md` (root) | Agent definitions (tdd-guardian, py-enforcer, pr-reviewer, etc.) |
+| `skills/` | On-demand skill definitions (testing-anti-patterns, hexagonal-architecture, etc.) |
+| `commands/` | Slash commands (pr, generate-pr-review) |
 
-## How repos consume these files
+## Installation
 
-Each AlpheusCEF repo has:
-
-```
-.claude/
-  CLAUDE.md            # single line: @/abs/path/to/agents/CLAUDE.md
-  agents/
-    tdd-guardian.md    # symlink → agents repo
-    py-enforcer.md     # symlink → agents repo
-    ...
-  settings.local.json  # per-repo permissions, not shared
-agents.md              # documents the setup for contributors
+```bash
+git clone git@github-personal:chasemp/coding-agents.git ~/.claude/coding-agents
 ```
 
-To wire up a new repo, run the setup script documented in `agents.md`.
+Add to `~/.claude/CLAUDE.md`:
 
-## Updating agents
+```markdown
+@coding-agents/CLAUDE.md
+@coding-agents/agents.md
+```
 
-Edit files here. All repos pick up changes immediately via symlinks — no sync step needed.
+## Syncing
+
+```bash
+git -C ~/.claude/coding-agents pull --ff-only
+```
+
+## Org repos
+
+Org-specific coding-agents repos extend this with org-only content:
+
+- [AlpheusCEF/coding-agents](https://github.com/AlpheusCEF/coding-agents) — release-alph, doc-sync, config-scout
+- [mycelium-agent-framework/coding-agents](https://github.com/mycelium-agent-framework/coding-agents) — spore-validator, ring-inspector

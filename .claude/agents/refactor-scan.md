@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/refactor-scan.md
+../../refactor-scan.md

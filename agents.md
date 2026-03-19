@@ -1,46 +1,27 @@
-# Agent Setup for AlpheusCEF Repos
+# Coding Agent Setup
 
-All AlpheusCEF repos share a single set of Claude Code agents and instructions maintained in this repo. This document explains how the wiring works and how to set up a new repo.
+This repo provides shared Claude Code agents, skills, commands, and instructions.
+It is installed globally at `~/.claude/coding-agents/` and loaded via
+`~/.claude/CLAUDE.md` `@` includes.
 
-## Design context
-
-See [overview/STATE.md](../overview/STATE.md) for the full project design and [overview/PLAN.md](../overview/PLAN.md) for the implementation roadmap.
+Org-specific repos (AlpheusCEF/coding-agents, mycelium-agent-framework/coding-agents)
+layer on top with org-only content. See those repos' READMEs for org setup.
 
 ## How it works
 
-Claude Code loads instructions and agents from a project's `.claude/` directory. Instead of each repo maintaining its own copies, repos wire in the shared files using:
+Claude Code loads instructions and agents from `~/.claude/` (global) and a
+project's `.claude/` directory (project-local). This repo provides the global
+layer:
 
-- **`@` imports** for `CLAUDE.md` — Claude Code inlines the referenced file at load time. Each repo's `.claude/CLAUDE.md` is a single line pointing here.
-- **Symlinks** for agents — each repo's `.claude/agents/` contains symlinks pointing to the agent `.md` files in this repo. Editing an agent file here is immediately reflected in all repos.
+- **`@` imports** in `~/.claude/CLAUDE.md` pull in `CLAUDE.md` and `agents.md`
+  from this repo at load time.
+- **Symlinks** in `~/.claude/commands/` point to skills in this repo for
+  slash-command access.
+- **Agent definitions** are available to Claude via the global `.claude/agents/`
+  directory or via symlinks from project repos.
 
-`settings.local.json` is **not** shared — it holds per-repo permission allowlists and stays in each repo.
-
-## Wiring a new repo
-
-From the new repo root:
-
-```bash
-# 1. Create .claude structure
-mkdir -p .claude/agents .claude/commands
-
-# 2. Point CLAUDE.md at the shared instructions
-AGENTS=/Users/cpettet/git/chasemp/AlpheusCEF/agents
-echo "@${AGENTS}/CLAUDE.md" > .claude/CLAUDE.md
-
-# 3. Symlink each agent
-for agent in tdd-guardian py-enforcer pr-reviewer refactor-scan progress-guardian adr docs-guardian learn use-case-data-patterns; do
-  ln -sf "${AGENTS}/${agent}.md" ".claude/agents/${agent}.md"
-done
-
-# 4. Symlink commands
-for f in "${AGENTS}"/commands/*.md; do
-  ln -sf "$f" ".claude/commands/$(basename $f)"
-done
-
-# 5. Write a per-repo settings.local.json (see an existing repo for a template)
-
-# 6. Add agents.md at the repo root (copy and update from agents/agents.md)
-```
+`settings.local.json` is **not** shared — it holds per-repo permission
+allowlists and stays in each project repo.
 
 ## Choosing Your Mechanism
 
@@ -66,7 +47,7 @@ fits the need.
 **Resolution order** when multiple could work: prefer Skill (lightest) over
 Agent (heavier) over Command (requires explicit user invocation).
 
-**Our specific mapping:**
+**Mapping:**
 - **Commands** orchestrate workflows (git operations, release pipelines, external comparisons)
 - **Agents** enforce disciplines (TDD compliance, type safety, code quality, documentation)
 - **Skills** provide domain knowledge (testing patterns, debugging methodology, architecture guidance)
@@ -171,7 +152,7 @@ use-case-data-patterns) have 15 turns. Agents that do more complex work
 
 | File | Role |
 |------|------|
-| `CLAUDE.md` | Core TDD/type-safety/style rules — imported by all repos |
+| `CLAUDE.md` | Core TDD/type-safety/style rules — loaded globally |
 | `tdd-guardian.md` | Enforces RED-GREEN-REFACTOR, catches test-after violations |
 | `py-enforcer.md` | Enforces type annotations, immutability, no standalone `Any` |
 | `pr-reviewer.md` | Reviews PRs for correctness, test coverage, and style |
@@ -181,4 +162,5 @@ use-case-data-patterns) have 15 turns. Agents that do more complex work
 | `docs-guardian.md` | Keeps documentation consistent with implementation |
 | `learn.md` | Captures learnings and gotchas while context is fresh |
 | `use-case-data-patterns.md` | Analyses use case and data modelling patterns |
+| `skills/` | On-demand skills (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (`/pr`, `/generate-pr-review`) |

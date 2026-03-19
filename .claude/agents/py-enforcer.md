@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/py-enforcer.md
+../../py-enforcer.md

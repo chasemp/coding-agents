@@ -1,1 +1,1 @@
-/Users/cpettet/git/chasemp/AlpheusCEF/agents/progress-guardian.md
+../../progress-guardian.md
