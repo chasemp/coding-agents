@@ -19,6 +19,9 @@ layer:
   slash-command access.
 - **Agent definitions** are available to Claude via the global `.claude/agents/`
   directory or via symlinks from project repos.
+- **Hooks** in `~/.claude/hooks/` (symlinked from this repo) enforce TDD
+  programmatically via Claude Code hook events. Registered in
+  `~/.claude/settings.json` by `hooks/install.sh`.
 
 `settings.local.json` is **not** shared — it holds per-repo permission
 allowlists and stays in each project repo.
@@ -164,3 +167,4 @@ use-case-data-patterns) have 15 turns. Agents that do more complex work
 | `use-case-data-patterns.md` | Analyses use case and data modelling patterns |
 | `skills/` | On-demand skills (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (`/pr`, `/generate-pr-review`) |
+| `hooks/` | Programmatic TDD enforcement (edit guard, stop guard, pre-commit) |

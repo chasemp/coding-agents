@@ -113,7 +113,7 @@ For Go patterns, follow standard library conventions.
 **Core principle**: Never guess or infer API endpoints, payload shapes, or field names. Always verify against a source of truth before writing any code.
 
 **Required sources (in priority order):**
-1. `docs/api/openapi.json` — check this first for any Cycode API work
+1. OpenAPI/Swagger specs in the repo (e.g., `docs/api/openapi.json`)
 2. Confirmed response samples from actually running a probe request
 3. Official API documentation
 
