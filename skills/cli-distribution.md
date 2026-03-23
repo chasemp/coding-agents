@@ -257,26 +257,87 @@ If step 1 shows `COMP_WORDS`/`zsh_complete` instead of `_TYPER_COMPLETE_ARGS`/
 
 ## Homebrew Formula: Versioning and SHA
 
-**Never use `curl | shasum` to get the SHA.** Use `brew fetch --force` on the
-formula after updating the URL. The curl download can be a redirect that
-returns a different artifact than what Homebrew fetches.
+### Why GitHub auto-generated tarballs break Homebrew
+
+GitHub's `/archive/refs/tags/vX.Y.Z.tar.gz` endpoint generates tarballs
+on-the-fly and caches them across CDN nodes. After a new tag is created, the
+tarball may not be cached yet or may be re-generated with different gzip
+metadata, producing a different SHA256 on each download. This is
+non-deterministic and can persist for minutes after a release is created.
+Brew's download may hit a different CDN node than `curl` did, so even a
+verified `curl | shasum` value can mismatch at install time.
+
+### Preferred approach: upload a release asset
+
+Generate a deterministic tarball locally with `git archive` and upload it as a
+release asset. Release assets are stored as static blobs — their SHA never
+changes.
 
 ```bash
-# 1. Update the url line in the formula
-# 2. Run:
-brew fetch --force Formula/alph.rb
-# 3. Read the SHA from the output and paste into sha256
+# 1. Tag and push
+git tag v0.2.0 && git push origin v0.2.0
+
+# 2. Create the release
+gh release create v0.2.0 --title "v0.2.0" --notes "Release notes here."
+
+# 3. Build a deterministic tarball (prefix must match what brew expects)
+git archive --format=tar.gz --prefix=my-tool-0.2.0/ v0.2.0 \
+  -o my-tool-0.2.0.tar.gz
+
+# 4. Upload as a release asset
+gh release upload v0.2.0 my-tool-0.2.0.tar.gz
+
+# 5. Get the SHA (verify it's stable — run twice)
+curl -sL https://github.com/USER/REPO/releases/download/v0.2.0/my-tool-0.2.0.tar.gz \
+  | shasum -a 256
+
+# 6. Use the release asset URL in the formula (not /archive/refs/tags/)
+url "https://github.com/USER/REPO/releases/download/v0.2.0/my-tool-0.2.0.tar.gz"
+sha256 "<the stable hash>"
 ```
 
-If using the curl approach and the SHA mismatches, `brew install` will print
-the correct SHA in its error message — use that value.
+### Fallback: brew fetch --force
 
-**Version bump checklist:**
+If you must use auto-generated archives (e.g. for an existing formula), use
+`brew fetch --force` instead of `curl | shasum`:
+
+```bash
+brew fetch --force Formula/my-tool.rb
+# Read the SHA from the output and paste into sha256
+```
+
+If the SHA still mismatches at install time, `brew install` prints the correct
+SHA in its error message — use that value. But this is a symptom of the
+non-deterministic archive problem; prefer the release-asset approach above.
+
+### Brew cache and stale formulas
+
+After updating a formula's SHA or URL, brew may still use a stale cached copy
+of the formula or tarball:
+
+```bash
+# Force-refresh the tap (pulls latest formula definitions)
+cd $(brew --repository USER/tap) && git pull
+
+# Clear cached downloads for the formula
+rm -f ~/Library/Caches/Homebrew/downloads/*my-tool*
+
+# Then install/reinstall
+brew reinstall USER/tap/my-tool
+```
+
+`brew tap --force USER/tap` and `brew update` do not always pick up changes
+immediately if the tap was recently fetched. The `cd && git pull` approach is
+reliable.
+
+### Version bump checklist
+
 - `pyproject.toml` version
-- `man/alph.1` `.TH` header version string
-- Homebrew formula `url` and `sha256`
-- Git tag matching the version (`git tag v0.1.X && git push origin v0.1.X`)
-- `STATE.md` current version line
+- `man/*.1` `.TH` header version string (if applicable)
+- Git tag matching the version (`git tag vX.Y.Z && git push origin vX.Y.Z`)
+- `git archive` + `gh release upload` to create a stable tarball
+- Homebrew formula `url` (release asset URL) and `sha256`
+- `STATE.md` current version line (if applicable)
 
 ---
 
