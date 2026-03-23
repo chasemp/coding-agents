@@ -83,6 +83,7 @@ For Go patterns, follow standard library conventions.
 **Core principle**: Functional programming with immutable data. Self-documenting code.
 
 **Quick reference:**
+- **Fail loud, fail early** - no silent fallbacks or degraded modes. If a dependency, library, or operation fails, raise/throw immediately. Never silently fall back to an alternative approach unless the user has explicitly defined fallback behavior for that case.
 - No data mutation - immutable data structures only
 - Pure functions wherever possible
 - No nested if/else - use early returns or composition
