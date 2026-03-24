@@ -369,6 +369,119 @@ def registry_callback(ctx: typer.Context) -> None:
 
 ---
 
+## Python + Rust Extensions: Dylib Relocation Fix
+
+### The problem
+
+Homebrew's install pipeline runs `fix_dynamic_linkage` between `install` and
+`post_install`. This step walks the entire keg cellar and calls `ruby-macho`'s
+`change_dylib_id` on every Mach-O file. Rust-compiled Python extensions (`.so`
+files from cryptography, jiter, pydantic-core, etc.) have compact Mach-O
+headers that can't accommodate the rewritten ID, producing:
+
+```
+Error: Failed changing dylib ID of .../cryptography/hazmat/bindings/_rust.abi3.so
+Updated load commands do not fit in the header
+```
+
+The extensions work fine — Python uses absolute paths and ignores the Mach-O
+ID field. But the error looks like a broken install to users.
+
+### Why common workarounds fail
+
+| Approach | Why it fails |
+|----------|-------------|
+| `skip_clean "libexec"` | Only prevents cleanup, not relinking |
+| `skip_relocation!` | Cask-only method, not available on Formula |
+| Delete .so after pip install | Homebrew scans cellar before post_install |
+| Move .so to subdir inside cellar | Homebrew walks entire keg recursively |
+| `--only-binary` pip flag | Wheel installs fine but relink still processes |
+
+There is no Formula-level mechanism to exclude specific files from relocation.
+`mach_o_files` in `keg_relocate.rb` does `path.find` across the entire keg
+with no exclude list.
+
+### The fix: stage venv outside the cellar
+
+Build the venv in `var/<name>-staging` during `install` (outside the cellar).
+Homebrew's relocation step finds no `.so` files to rewrite. In `post_install`
+(which runs after relocation), move the venv into `libexec/` and fix shebangs.
+
+```ruby
+class MyTool < Formula
+  depends_on "python@3.12"
+
+  def install
+    # Build venv OUTSIDE the cellar to avoid dylib relocation errors
+    staging = var/"mytool-staging"
+    staging.mkpath
+    venv = staging/"venv"
+
+    system Formula["python@3.12"].opt_bin/"python3.12", "-m", "venv", venv
+    system venv/"bin/pip", "install", "--upgrade", "pip"
+    system venv/"bin/pip", "install", "--no-cache-dir", "."
+
+    # Wrapper references the FINAL path (won't exist until post_install)
+    (bin/"mytool").write_env_script(libexec/"venv/bin/mytool",
+      PATH: "#{libexec}/venv/bin:$PATH",
+    )
+  end
+
+  def post_install
+    staging = var/"mytool-staging"
+    source = staging/"venv"
+    target = libexec/"venv"
+
+    if source.exist?
+      target.rmtree if target.exist?
+      target.parent.mkpath
+      FileUtils.mv(source.to_s, target.to_s)
+      staging.rmtree if staging.directory? && staging.children.empty?
+
+      # Fix shebangs — they point to the staging path after pip install
+      old_prefix = (var/"mytool-staging/venv").to_s
+      new_prefix = target.to_s
+
+      Dir.glob("#{target}/bin/*").each do |script|
+        next unless File.file?(script) && !File.symlink?(script)
+        content = File.read(script)
+        if content.include?(old_prefix)
+          File.write(script, content.gsub(old_prefix, new_prefix))
+        end
+      end
+
+      cfg = target/"pyvenv.cfg"
+      if cfg.exist?
+        content = cfg.read
+        cfg.write(content.gsub(old_prefix, new_prefix)) if content.include?(old_prefix)
+      end
+    end
+  end
+end
+```
+
+### Why this works
+
+Homebrew's install pipeline:
+
+```
+install          → fix_dynamic_linkage     → post_install
+(venv in var/)     (cellar has no .so)       (mv var/ → libexec/)
+```
+
+The key insight: `fix_dynamic_linkage` only scans the cellar (`Cellar/<name>/<version>/`).
+Files in `var/` are outside the cellar and never touched by relocation.
+
+### Important: post_install runs as a separate process
+
+`post_install` is invoked via `postinstall.rb` in a new Ruby process. You
+cannot pass data between `install` and `post_install` via instance variables.
+Use the filesystem (e.g., `var/<name>-staging`) as the handoff mechanism.
+After `brew install` finishes, `var/<name>-staging` should be cleaned up by
+the `post_install` method.
+
+---
+
 ## Release Workflow Pattern
 
 A GitHub Actions workflow triggered on tag push handles building the sdist/

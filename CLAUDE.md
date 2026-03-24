@@ -146,6 +146,7 @@ For Go patterns, follow standard library conventions.
 - Always `git push` to remote before running `brew install` so the formula can fetch the latest tarball
 - When updating formulas, bump the version AND verify the SHA256 matches the actual release asset (prefer uploaded release assets over GitHub auto-generated tarballs for deterministic hashes)
 - Before using `git checkout --orphan` or any destructive git operation, stash or commit all tracked modifications first. Verify working tree is clean after branch operations.
+- **Rust-compiled Python extensions (.so) and dylib relocation:** Homebrew's `fix_dynamic_linkage` step runs `ruby-macho` on every Mach-O file in the cellar between `install` and `post_install`. Rust extensions (cryptography, jiter, pydantic-core) have compact headers that fail rewriting. Fix: build the venv in `var/<name>-staging` during `install` (outside the cellar), then move it to `libexec/` in `post_install` after relocation completes. Rewrite shebangs and `pyvenv.cfg` after the move. See `cli-distribution` skill for the full pattern.
 
 ## Resources and References
 
