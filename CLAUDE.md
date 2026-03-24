@@ -17,6 +17,10 @@
 
 I follow Test-Driven Development (TDD) with a strong emphasis on behavior-driven testing and functional programming principles. All work should be done in small, incremental changes that maintain a working state throughout development.
 
+## Backwards Compatibility
+
+For pre-1.0 projects, backwards compatibility is **not the default**. No deprecation layers, migration paths, re-exports, or aliases — just change it. If you think something needs backwards compat, ask first.
+
 ## Quick Reference
 
 **Key Principles:**
@@ -27,6 +31,7 @@ I follow Test-Driven Development (TDD) with a strong emphasis on behavior-driven
 - Immutable data only
 - Small, pure functions
 - Use real schemas/types in tests, never redefine them
+- Fail loud, fail early — no silent fallbacks or swallowed errors
 
 **Supported Languages:**
 
@@ -134,6 +139,13 @@ For Go patterns, follow standard library conventions.
 - Update CLAUDE.md when introducing meaningful changes
 - Ask "What do I wish I'd known at the start?" after significant changes
 - Document gotchas, patterns, decisions, edge cases while context is fresh
+
+## Homebrew Workflow
+
+- Always use `brew install` or `brew reinstall` from the tap — never use `pip install` or `--build-from-source`
+- Always `git push` to remote before running `brew install` so the formula can fetch the latest tarball
+- When updating formulas, bump the version AND verify the SHA256 matches the actual release asset (prefer uploaded release assets over GitHub auto-generated tarballs for deterministic hashes)
+- Before using `git checkout --orphan` or any destructive git operation, stash or commit all tracked modifications first. Verify working tree is clean after branch operations.
 
 ## Resources and References
 
