@@ -108,6 +108,7 @@ For Go patterns, follow standard library conventions.
 - RED: Write failing test first (NO production code without failing test)
 - GREEN: Write MINIMUM code to pass test
 - REFACTOR: Assess improvement opportunities (only refactor if adds value)
+- **No category of production code is exempt from TDD** — data definitions, schemas, configs, constants, and mappings all require a failing test first. The thought "this is too simple/mechanical/data-only to need a test" is the signal to stop and write the test. This rationalization is how untested code accumulates.
 - **Wait for commit approval** before every commit
 - Each increment leaves codebase in working state
 - Capture learnings as they occur, merge at end
