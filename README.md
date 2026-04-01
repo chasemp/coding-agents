@@ -99,6 +99,22 @@ consuming repos install the git pre-commit hook. See
 that repo. Useful for repos where TDD enforcement does not apply (scripts,
 configs, spikes).
 
+## Recommended external skills
+
+Skills from the [Anthropic Skills Marketplace](https://github.com/anthropics/skills)
+that complement this repo's guidance. These are installed globally and
+auto-trigger in consuming projects — they don't modify this repo.
+
+| Skill | Trigger | Why |
+|-------|---------|-----|
+| [claude-api](https://github.com/anthropics/skills/tree/main/skills/claude-api) | Detects `anthropic` / `@anthropic-ai/sdk` / `claude_agent_sdk` imports | Loads current SDK context so Claude works from verified API behavior instead of stale training data. Directly supports the "no assumed behavior" principle in deliberate-planning. |
+
+**Install:**
+
+```bash
+/plugin marketplace add https://github.com/anthropics/skills
+```
+
 ## Org repos
 
 Org-specific coding-agents repos extend this with org-only content:
