@@ -107,7 +107,7 @@ auto-trigger in consuming projects — they don't modify this repo.
 
 | Skill | Trigger | Why |
 |-------|---------|-----|
-| [claude-api](https://github.com/anthropics/skills/tree/main/skills/claude-api) | Detects `anthropic` / `@anthropic-ai/sdk` / `claude_agent_sdk` imports | Loads current SDK context so Claude works from verified API behavior instead of stale training data. Directly supports the "no assumed behavior" principle in deliberate-planning. |
+| [claude-api](https://github.com/anthropics/skills/tree/main/skills/claude-api) | Detects `anthropic` / `@anthropic-ai/sdk` / `claude_agent_sdk` imports | Loads current SDK context so Claude works from verified API behavior instead of stale training data. Directly supports the "no assumed behavior" principle in phase-plan. |
 
 **Install:**
 

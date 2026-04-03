@@ -1,17 +1,17 @@
 ---
-name: deliberate-planning
+name: phase-plan
 description: >
   Three-pass planning workflow for complex changes. Pass 1 develops the plan
   with full reasoning persisted to the plan doc. Pass 2 reviews for gaps,
   missing changes, and downstream effects. Pass 3 applies quality gates
   (TDD ordering, diagnostic logging, debugging readiness). Each pass uses
   a fresh context with the plan doc as the sole handoff artifact. Trigger
-  when the user says "deliberate plan", "three-pass plan", "plan review",
+  when the user says "phase plan", "three-pass plan", "plan review",
   or when starting non-trivial changes that benefit from structured reasoning
   before execution.
 ---
 
-# Deliberate Planning
+# Phase Plan
 
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
@@ -85,11 +85,22 @@ Ordered phases of work. Each phase should leave the system in a working state.
 **Goal:** What this phase achieves.
 **Changes:**
 - [ ] File or component change with brief rationale
+**Call chain:** Entry point → intermediate → new/changed code. Trace the
+path from the user-facing entry point to the code this phase introduces.
+If the phase adds a function, name what calls it. If it adds a model,
+name what constructs and uses it. This field is what prevents dead code —
+if you can't write the chain, the wiring isn't planned.
 **Depends on:** Prior phases or external factors.
 **Risks:** What could go wrong, what to watch for.
-**Done when:** Observable acceptance criteria — not "code exists" but
-"running X produces Y" or "test Z passes with this assertion." Each
-criterion should be verifiable by running a command or reading output.
+**Done when:** Two tiers, both required:
+1. **Behavioral:** What the user or system can observably do after this
+   phase that it couldn't before. Phrased as an end-to-end statement:
+   "Running `cli audit --tutoring` produces output containing escalation
+   notes populated from judge candidates." This is the gate.
+2. **Verification:** The test command that proves the behavioral criterion:
+   `pytest tests/test_cli.py -k escalation -v`. This is the mechanism.
+   If the verification passes but the behavioral criterion doesn't hold,
+   the phase is not done.
 
 ## Open Questions
 Unresolved items that need input. Each must be tagged:
@@ -149,16 +160,22 @@ reasoning and review history are persisted, not the exact heading names.
    - Leave the system in a working state when complete
    - Note dependencies and risks
    - Name the specific behaviors being tested, not just "write tests"
-   - Include observable "Done when" acceptance criteria — what command to
-     run, what output to expect. "Code exists" is not acceptance. "Running
-     `pytest tests/test_prescan.py -k emit` shows prescan_start in log
-     output" is acceptance.
+   - Include two-tier "Done when" criteria: a behavioral statement of what
+     the user/system can now do ("running `cli audit --tutoring` produces
+     escalation notes from judge candidates") and a verification command
+     that proves it (`pytest tests/test_cli.py -k escalation`). "Code
+     exists" is not acceptance. A test command alone is not acceptance
+     either — tests can pass while the feature is unwired.
    - If the plan involves an architecture decision, note it — the adr agent
      should be invoked to record it
 6. **Size phases for a single context window.** If you can't describe the
    test-first implementation of every item in a phase and hold it in your
    head, the phase is too big. Split it. This is the primary defense against
    stubbing — phases that fit in one context window get completed fully.
+   **Hard rule: if a phase touches 4 or more files, it must be split.**
+   Do not proceed with planning until oversized phases are broken down.
+   This is not a suggestion — 4+ files in a single phase is a known cause
+   of partial completion and should be treated as a plan defect.
 7. **Persist everything.** Write the full plan doc. The Reasoning section must
    be detailed enough that someone in a fresh context can understand *why*
    every decision was made — not just *what* will be done.
@@ -414,9 +431,16 @@ each subsequent phase, print the short mantra only:
 
 Before moving from Phase N to Phase N+1, confirm:
 
+- [ ] **Re-read the phase spec.** Open the plan doc and re-read Phase N's
+      goal, changes list, call chain, and done-when criteria. Diff what
+      was specified against what was implemented. This is the single most
+      effective check against partial completion — items missed during
+      implementation become obvious when you re-read the spec after the
+      work is done.
 - [ ] All changes listed in Phase N are implemented (not stubbed)
-- [ ] Every function/component built in this phase is called from where
-      the plan says it should be called — trace from the entry point
+- [ ] The call chain specified in the phase is wired end-to-end — trace
+      from the entry point to the new code and confirm reachability
+- [ ] The behavioral done-when criterion holds (not just the test command)
 - [ ] Tests for Phase N's changes were written first and are passing
 - [ ] Existing tests still pass (regression check)
 - [ ] The system is in a working state
