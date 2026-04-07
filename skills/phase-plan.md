@@ -13,6 +13,14 @@ description: >
 
 # Phase Plan
 
+<!-- TRACKING: Wiring gap issue (2026-04-07)
+     Recurring problem: phases build isolated components with passing unit tests
+     but fail to wire them into the entry point. All tests green, feature doesn't
+     work. Added: Wiring test field, entry-point verification requirements,
+     Isolation Trap anti-pattern section. Monitor whether these changes actually
+     prevent the failure mode in practice. If it recurs, the next step is a
+     programmatic hook that checks for entry-point test coverage at phase boundary. -->
+
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
 all reasoning, not just the steps.
@@ -90,6 +98,14 @@ path from the user-facing entry point to the code this phase introduces.
 If the phase adds a function, name what calls it. If it adds a model,
 name what constructs and uses it. This field is what prevents dead code —
 if you can't write the chain, the wiring isn't planned.
+**Wiring test:** The specific integration test that proves the call chain
+is live — not that the component works in isolation, but that the entry
+point can reach it. This test is RED at phase start and GREEN at phase
+end. Example: `test_audit_output_contains_escalation_notes` exercises
+`cli audit --tutoring` end-to-end and asserts the new behavior appears.
+If a phase only has unit tests for its components, the wiring is not
+tested and will be skipped. **This is the single most important field
+for preventing dead code.**
 **Depends on:** Prior phases or external factors.
 **Risks:** What could go wrong, what to watch for.
 **Done when:** Two tiers, both required:
@@ -97,10 +113,14 @@ if you can't write the chain, the wiring isn't planned.
    phase that it couldn't before. Phrased as an end-to-end statement:
    "Running `cli audit --tutoring` produces output containing escalation
    notes populated from judge candidates." This is the gate.
-2. **Verification:** The test command that proves the behavioral criterion:
-   `pytest tests/test_cli.py -k escalation -v`. This is the mechanism.
-   If the verification passes but the behavioral criterion doesn't hold,
-   the phase is not done.
+2. **Verification:** The test command that proves the behavioral criterion.
+   **This command must exercise the entry point, not just the isolated
+   module.** If the verification is `pytest tests/test_consolidation.py`,
+   that's a plan defect — it proves the component works in isolation but
+   not that anything calls it. The verification must be something like
+   `pytest tests/test_cli.py -k escalation -v` that runs through the
+   actual call chain. If the verification passes but the behavioral
+   criterion doesn't hold, the phase is not done.
 
 ## Open Questions
 Unresolved items that need input. Each must be tagged:
@@ -284,7 +304,7 @@ or says "pass 3" / "final review".
 
 ### Checks
 
-**1. TDD ordering and specificity**
+**1. TDD ordering, specificity, and wiring tests**
 - Does each phase start with writing or updating tests?
 - Is every behavioral change covered by a test written *before* the
   implementation?
@@ -296,6 +316,16 @@ or says "pass 3" / "final review".
   tested? "Write tests for the parser" is too vague — "Test that malformed
   input raises ValidationError with field name" is actionable. Vague test
   descriptions lead to vague implementations which lead to stubs.
+- **Wiring test check:** Does every phase have a wiring test that exercises
+  the entry point? If a phase's only tests are unit tests for isolated
+  components, flag it as a plan defect. The wiring test is what prevents
+  the most common failure mode: building components that pass their own
+  tests but are never called from the entry point.
+- **Verification command check:** Does every phase's Verification command
+  run through the entry point? If it only runs isolated module tests
+  (e.g., `pytest tests/test_consolidation.py`), flag it — the verification
+  must prove the call chain is live, not just that the component works
+  alone.
 
 **2. Diagnostic logging and observability**
 - For changes that affect runtime behavior: is appropriate logging planned?
@@ -432,12 +462,17 @@ each subsequent phase, print the short mantra only:
 Before moving from Phase N to Phase N+1, confirm:
 
 - [ ] **Re-read the phase spec.** Open the plan doc and re-read Phase N's
-      goal, changes list, call chain, and done-when criteria. Diff what
-      was specified against what was implemented. This is the single most
-      effective check against partial completion — items missed during
-      implementation become obvious when you re-read the spec after the
-      work is done.
+      goal, changes list, call chain, wiring test, and done-when criteria.
+      Diff what was specified against what was implemented. This is the
+      single most effective check against partial completion — items missed
+      during implementation become obvious when you re-read the spec after
+      the work is done.
 - [ ] All changes listed in Phase N are implemented (not stubbed)
+- [ ] **Wiring test is GREEN.** Run the phase's wiring test and confirm it
+      passes. This test exercises the entry point, not just the isolated
+      module. If the phase has no wiring test, that's a plan defect — stop
+      and add one before claiming the phase is done. **This is the gate.**
+      Unit tests passing is necessary but not sufficient.
 - [ ] The call chain specified in the phase is wired end-to-end — trace
       from the entry point to the new code and confirm reachability
 - [ ] The behavioral done-when criterion holds (not just the test command)
@@ -447,8 +482,14 @@ Before moving from Phase N to Phase N+1, confirm:
 - [ ] Phase N changes are committed
 
 Report this checklist to the user at each phase boundary. Do not silently
-move on. The wiring check is the one most likely to be skipped — a function
-with passing unit tests feels done, but if nothing calls it, it's dead code.
+move on.
+
+**The wiring test is the checklist item most likely to expose incomplete
+phases.** Unit tests for isolated components will pass even when nothing
+calls the component from the entry point. The wiring test is the only
+thing that catches this. If you find yourself wanting to skip it because
+"the unit tests already cover the logic" — that is exactly the situation
+where dead code accumulates.
 
 ### Mid-phase check
 
@@ -481,6 +522,39 @@ and the wiring check catches dead code before it compounds across phases.
 
 ---
 
+<!-- TRACKING: This section added 2026-04-07 to address recurring wiring gap.
+     If phases still complete without wiring after these changes, escalate to
+     a programmatic hook (e.g., hooks/phase-wiring-check.sh). -->
+## Known Anti-Pattern: The Isolation Trap
+
+The most common phase-plan execution failure is what looks like a complete
+implementation but isn't wired to anything. The pattern:
+
+1. Phase builds a component (model, agent, function)
+2. Phase writes unit tests for the component
+3. Unit tests pass
+4. Phase feels "done" — commit, move on
+5. The entry point (cli.py, main.py, the router) still runs the old code
+6. All tests green. Feature doesn't work. Nobody notices until end-of-plan review.
+
+**Why this happens:** Unit tests passing creates false confidence. The phase
+completion checklist says "trace the call chain" but that's a mental exercise
+easily skipped when tests are green. The Verification command runs isolated
+module tests, which pass regardless of whether anything calls the module.
+
+**How to prevent it:** Each phase needs a **wiring test** — an integration
+test that starts at the entry point and asserts the new behavior is reachable.
+This test is RED at phase start (proving the feature doesn't exist yet) and
+GREEN at phase end (proving the wiring is live). The Verification command
+must run this wiring test, not just the unit tests.
+
+**How to detect it during execution:** If you finish a phase and the only
+tests you ran are in `tests/test_<component>.py`, ask: "What test proves
+that the entry point can reach this code?" If the answer is "none yet" or
+"that's in a later phase," the phase is not done.
+
+---
+
 ## Guardrails
 
 - **Never skip reasoning.** A plan without reasoning is a todo list. The
@@ -501,10 +575,12 @@ and the wiring check catches dead code before it compounds across phases.
 - **No stubs, ever.** During execution, every item in a phase gets a real
   implementation. If you catch yourself writing a placeholder, stop — either
   implement it fully or flag that the phase needs to be broken down further.
-- **Built means wired.** Code that exists but isn't reachable from the entry
-  point is dead code, not progress. After building something, trace the call
-  path. If nothing calls it yet, that's part of the same item — not a
-  separate task for later.
+- **Built means wired, and wired means tested.** Code that exists but isn't
+  reachable from the entry point is dead code, not progress. After building
+  something, trace the call path. If nothing calls it yet, that's part of
+  the same item — not a separate task for later. The wiring test is what
+  makes this enforceable: if the wiring test is still RED, the wiring isn't
+  done regardless of how many unit tests pass.
 - **Commit at every stable point.** After each phase passes its checklist,
   commit. No batching phases into a single commit. Each commit is a verified,
   working checkpoint that can be rolled back to independently.
