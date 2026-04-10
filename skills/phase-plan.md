@@ -2,13 +2,13 @@
 name: phase-plan
 description: >
   Three-pass planning workflow for complex changes. Pass 1 develops the plan
-  with full reasoning persisted to the plan doc. Pass 2 reviews for gaps,
-  missing changes, and downstream effects. Pass 3 applies quality gates
-  (TDD ordering, diagnostic logging, debugging readiness). Each pass uses
-  a fresh context with the plan doc as the sole handoff artifact. Trigger
-  when the user says "phase plan", "three-pass plan", "plan review",
-  or when starting non-trivial changes that benefit from structured reasoning
-  before execution.
+  with full reasoning persisted to the plan doc — including Phase 0 discovery
+  when unknowns exist. Pass 2 reviews for gaps, missing changes, and downstream
+  effects. Pass 3 applies quality gates (TDD ordering, diagnostic logging,
+  debugging readiness, validation calibration). Each pass uses a fresh context
+  with the plan doc as the sole handoff artifact. Trigger when the user says
+  "phase plan", "three-pass plan", "plan review", or when starting non-trivial
+  changes that benefit from structured reasoning before execution.
 ---
 
 # Phase Plan
@@ -20,6 +20,16 @@ description: >
      Isolation Trap anti-pattern section. Monitor whether these changes actually
      prevent the failure mode in practice. If it recurs, the next step is a
      programmatic hook that checks for entry-point test coverage at phase boundary. -->
+
+<!-- TRACKING: Discovery + Validation additions (2026-04-10)
+     Two additions: (1) Phase 0 Discovery for validating assumptions before
+     committing to implementation — triggered when unknowns exist. (2) Per-phase
+     Validation field calibrated to scope — tests are the floor, not the ceiling.
+     Also added: Combined Pass 1+2 usage pattern, Phase 0 execution rules,
+     validation calibration as Pass 3 quality gate. Monitor whether Phase 0
+     catches assumption errors that would have caused mid-execution rework,
+     and whether validation strategies are actually calibrated vs defaulting
+     to "tests are sufficient" for everything. -->
 
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
@@ -89,6 +99,44 @@ Anything not listed here is unverified.
 ## Phases
 Ordered phases of work. Each phase should leave the system in a working state.
 
+### Phase 0: Discovery (optional)
+Include this phase when the plan has significant unknowns — unverified API
+behavior, unfamiliar codebase areas, novel technology, BLOCKING open questions,
+or assumptions that could invalidate multiple later phases if wrong. Phase 0
+is cheap insurance: a few hours of probes can save days of rework.
+
+**When to include Phase 0:**
+- Any BLOCKING open question that can be resolved by running code, reading
+  docs, or making a probe request
+- Dependencies on libraries/APIs/tools whose behavior you haven't verified
+  firsthand
+- Unfamiliar areas of the codebase where you're planning based on inference
+  rather than reading
+- Novel integrations where the happy path isn't certain
+
+**When to skip Phase 0:**
+- All assumptions are verified in the Verified Assumptions section
+- The codebase and tools are well-known to the team
+- The change is a straightforward application of an established pattern
+
+**Goal:** Resolve unknowns. Validate assumptions. Eliminate dead ends before
+committing to a multi-phase implementation.
+**Discovery tasks:**
+- [ ] Each task is a specific probe: "Run `tool --flag` and confirm output
+  contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
+  "POST to `/api/v2/foo` with payload Z and record the response shape"
+**Outputs fed back into the plan:**
+- Verified Assumptions updated with findings and evidence
+- Open Questions resolved (or escalated with what was learned)
+- Phases adjusted if discovery invalidates an assumption — document what
+  changed and why in the Review Log
+**Done when:** All BLOCKING open questions are resolved and the Verified
+Assumptions section reflects firsthand evidence, not inference.
+
+**Key property of Phase 0:** It is the only phase that is allowed to change
+the structure of later phases. If a probe reveals that an assumption was wrong,
+update the plan before proceeding — do not defer the adjustment to execution.
+
 ### Phase N: [Name]
 **Goal:** What this phase achieves.
 **Changes:**
@@ -121,12 +169,31 @@ for preventing dead code.**
    `pytest tests/test_cli.py -k escalation -v` that runs through the
    actual call chain. If the verification passes but the behavioral
    criterion doesn't hold, the phase is not done.
+**Validation:** What validation is appropriate for this phase, calibrated
+to the scope of the change. Tests alone are necessary but not always
+sufficient. Declare the validation strategy upfront so the executor and
+reviewer agree on what "verified" means. Examples by scope:
+- **Narrow** (single function, internal refactor): Wiring test + unit
+  tests. Tests are sufficient.
+- **Moderate** (new feature, changed behavior): Wiring test + unit tests
+  + run the system and exercise the feature manually. Confirm the
+  behavioral criterion holds outside of the test harness.
+- **Broad** (integration, external API, multi-component): All of the above
+  + verify integration with external systems. Check logs, confirm data
+  flow, verify error paths. If the change touches a deployment or config,
+  verify it in an environment that resembles production.
+The validation strategy should match the risk. A phase that changes a
+format string needs less validation than a phase that rewires the
+authentication flow.
 
 ## Open Questions
-Unresolved items that need input. Each must be tagged:
-- **BLOCKING** — must be resolved before execution starts
-- **PHASE-GATED** — must be resolved before a specific phase (name it)
-- **ADVISORY** — nice to know, can be resolved during execution
+Unresolved items that need input. Each must include the agent's recommended
+severity and a brief rationale, but the user makes the final call:
+- **BLOCKING** (recommended) — must be resolved before execution starts
+- **PHASE-GATED** (recommended) — must be resolved before a specific phase (name it)
+- **ADVISORY** (recommended) — nice to know, can be resolved during execution
+Format: `- [RECOMMENDED: severity] Question text. *Rationale for recommendation.*`
+The user confirms or overrides the severity before the plan advances.
 
 ## Review Log
 Record of each review pass — what was found, what was changed.
@@ -174,7 +241,23 @@ reasoning and review history are persisted, not the exact heading names.
    before execution begins.
 4. **Explore the solution space.** Consider approaches. Document alternatives
    considered and why they were rejected in the Reasoning section.
-5. **Draft phases.** Break the work into ordered phases. Each phase should:
+5. **Assess whether Phase 0 (Discovery) is needed.** Review the Open
+   Questions, Verified Assumptions, and your own confidence level. If any
+   of the following are true, include Phase 0:
+   - There are BLOCKING open questions that can be resolved by probing
+     (running code, reading docs, hitting an API)
+   - The plan depends on library/API/tool behavior you haven't confirmed
+     firsthand — "I think it works like X" is a discovery task, not an
+     assumption
+   - You're planning changes in a codebase area you haven't read — the
+     plan is based on inference rather than evidence
+   - Multiple later phases depend on the same assumption — if that
+     assumption is wrong, the rework is multiplicative
+
+   Phase 0 is cheap. Skipping it when unknowns exist is expensive. When
+   in doubt, include it — a discovery phase that confirms your assumptions
+   costs a few probes. A plan built on wrong assumptions costs a rewrite.
+6. **Draft phases.** Break the work into ordered phases. Each phase should:
    - Have a clear goal
    - List specific file/component changes (name the files)
    - Leave the system in a working state when complete
@@ -186,9 +269,13 @@ reasoning and review history are persisted, not the exact heading names.
      that proves it (`pytest tests/test_cli.py -k escalation`). "Code
      exists" is not acceptance. A test command alone is not acceptance
      either — tests can pass while the feature is unwired.
+   - Declare a **Validation strategy** calibrated to the scope of the
+     phase. Tests are the floor, not the ceiling. For phases with broad
+     scope or external integration, validation should include running the
+     system and confirming behavior outside the test harness.
    - If the plan involves an architecture decision, note it — the adr agent
      should be invoked to record it
-6. **Size phases for a single context window.** If you can't describe the
+7. **Size phases for a single context window.** If you can't describe the
    test-first implementation of every item in a phase and hold it in your
    head, the phase is too big. Split it. This is the primary defense against
    stubbing — phases that fit in one context window get completed fully.
@@ -196,13 +283,15 @@ reasoning and review history are persisted, not the exact heading names.
    Do not proceed with planning until oversized phases are broken down.
    This is not a suggestion — 4+ files in a single phase is a known cause
    of partial completion and should be treated as a plan defect.
-7. **Persist everything.** Write the full plan doc. The Reasoning section must
+8. **Persist everything.** Write the full plan doc. The Reasoning section must
    be detailed enough that someone in a fresh context can understand *why*
    every decision was made — not just *what* will be done.
-8. **Surface open questions.** If anything is unresolved, capture it in Open
-   Questions rather than guessing. Tag each with severity: **BLOCKING** (must
-   resolve before execution), **PHASE-GATED** (must resolve before a specific
-   phase), or **ADVISORY** (can resolve during execution).
+9. **Surface open questions.** If anything is unresolved, capture it in Open
+   Questions rather than guessing. For each question, recommend a severity
+   (**BLOCKING**, **PHASE-GATED**, **ADVISORY**) with a brief rationale for
+   why you chose that level — but the user makes the final call. Do not
+   silently classify questions as ADVISORY and move on. Every open question
+   is context the user needs to see.
 
 ### What to ask the user
 
@@ -213,8 +302,23 @@ reasoning and review history are persisted, not the exact heading names.
 
 ### Output
 
-A complete plan doc. Tell the user: "Pass 1 complete. Clear context and come
-back for Pass 2 (gap analysis) when ready."
+A complete plan doc. If there are any open questions — regardless of
+recommended severity — list them all and ask the user to confirm or override
+each severity classification before proceeding. Do not say "no blocking items"
+and move on while questions remain unreviewed. The user may decide an ADVISORY
+question is actually BLOCKING. Format:
+
+> "Pass 1 complete. Before clearing context for Pass 2, please review these
+> open questions and confirm whether you agree with the recommended severity:"
+>
+> 1. [RECOMMENDED: ADVISORY] Question text. *Rationale.*
+> 2. [RECOMMENDED: PHASE-GATED (Phase 3)] Question text. *Rationale.*
+>
+> "Override any that should be BLOCKING. Once confirmed, clear context and
+> come back for Pass 2 (gap analysis)."
+
+If there are no open questions, say: "Pass 1 complete. No open questions.
+Clear context and come back for Pass 2 (gap analysis) when ready."
 
 ---
 
@@ -289,8 +393,12 @@ or says "pass 2" / "review the plan".
 
 ### Output
 
-Updated plan doc with gaps filled. Tell the user: "Pass 2 complete. Clear
-context and come back for Pass 3 (quality gates) when ready."
+Updated plan doc with gaps filled. If any open questions remain (including
+new ones surfaced by the gap analysis), list them all with recommended
+severities and ask the user to confirm. Same format as Pass 1 output.
+
+If there are no open questions, say: "Pass 2 complete. No open questions.
+Clear context and come back for Pass 3 (quality gates) when ready."
 
 ---
 
@@ -344,10 +452,25 @@ or says "pass 3" / "final review".
   the reasoning section needs strengthening.
 - Does the plan still solve the original problem stated at the top?
 - Has scope crept beyond what was originally needed?
-- Are the open questions resolved or tagged with severity (BLOCKING,
-  PHASE-GATED, ADVISORY)? Untagged open questions are not acceptable.
+- Are all open questions tagged with a recommended severity and rationale?
+  Untagged open questions are not acceptable.
+- Has the user confirmed the severity of every open question? If any
+  question's severity was set by the agent but never reviewed by the user,
+  flag it — the user must see and confirm before execution starts.
 
-**5. Project conventions**
+**5. Validation calibration**
+- Does every phase declare a validation strategy?
+- Is the validation calibrated to the scope? A phase that introduces a new
+  external integration should not have "tests are sufficient" as its
+  validation. A phase that renames an internal variable should not require
+  manual end-to-end verification.
+- If Phase 0 exists: are the discovery tasks concrete and answerable? Does
+  each task have a clear question and a clear way to answer it? Are the
+  outputs wired to the Verified Assumptions and Open Questions sections?
+- Could any Phase 0 discovery task be resolved right now during planning
+  instead of deferred to execution? If so, resolve it now.
+
+**6. Project conventions**
 - Does the plan align with existing patterns in the codebase?
 - Are naming conventions, file organization, and code style consistent
   with the project?
@@ -376,6 +499,10 @@ or says "pass 3" / "final review".
 - [logging/monitoring additions]
 **Debugging readiness:**
 - [checkpoints, verification steps added]
+**Validation calibration:**
+- [validation strategies reviewed, adjustments to match scope]
+**Discovery (if Phase 0 exists):**
+- [discovery tasks reviewed for concreteness and completeness]
 **Coherence:**
 - [any reasoning gaps filled, scope adjustments]
 **Confirmed ready:** [yes/no — if no, what remains]
@@ -383,17 +510,37 @@ or says "pass 3" / "final review".
 
 ### Output
 
-Final plan doc ready for execution. Before declaring readiness, check Open
-Questions:
+Final plan doc ready for execution. Before declaring readiness, surface ALL
+remaining open questions — not just blocking ones. The user must have seen
+and confirmed every open question's severity before execution starts.
 
-- If any **BLOCKING** items remain: the plan is not ready. List them and say
-  what's needed to resolve each one.
-- If any **PHASE-GATED** items remain: the plan is ready to start, but flag
-  which phases are blocked and what must be resolved before reaching them.
-- If only **ADVISORY** items remain: the plan is ready.
+**If any open questions remain (any severity):**
 
-Tell the user: "Pass 3 complete. The plan is ready for execution." or
-"Pass 3 complete. N blocking items remain before execution can start: ..."
+> "Pass 3 complete. The following open questions remain. Please confirm
+> their severity before we start execution:"
+>
+> 1. [CONFIRMED: BLOCKING] Question text. *Needs resolution before starting.*
+> 2. [RECOMMENDED: PHASE-GATED (Phase 2)] Question text. *Rationale.*
+> 3. [RECOMMENDED: ADVISORY] Question text. *Rationale.*
+>
+> "Any of these you'd like to upgrade to BLOCKING before we proceed?"
+
+Do NOT say "the plan is ready" while unreviewed questions exist. The agent
+recommends, the user decides. A question the agent thinks is ADVISORY might
+be blocking context the user needs to make a decision.
+
+**If all open questions have been previously confirmed by the user:**
+
+Apply the confirmed severities:
+- **BLOCKING** items: the plan is not ready. List what's needed to resolve each.
+- **PHASE-GATED** items: the plan is ready to start, but flag which phases
+  are blocked and what must be resolved before reaching them.
+- **ADVISORY** items: note them but don't gate execution.
+
+**If there are no open questions:**
+
+Tell the user: "Pass 3 complete. No open questions. The plan is ready for
+execution."
 
 ---
 
@@ -403,19 +550,51 @@ Tell the user: "Pass 3 complete. The plan is ready for execution." or
 
 ```
 User: "Let's plan [feature/fix]. Here's the issue: ..."
-→ Pass 1 produces plan doc
+→ Pass 1 produces plan doc (may include Phase 0)
 User: [clears context] "Here's our plan doc. Run pass 2."
 → Pass 2 fills gaps
 User: [clears context] "Here's our plan doc. Run pass 3."
 → Pass 3 applies quality gates
 User: [clears context] "Here's our plan doc. Let's execute."
+→ Execute Phase 0 first (if present), update plan, then phases 1-N
+```
+
+### Combined Pass 1+2, then Pass 3 (recommended for moderate changes)
+
+Run Pass 1 and Pass 2 in the same context window, then clear context before
+Pass 3. This works well when the plan is moderate in scope and the gap
+analysis benefits from still having the original exploration context fresh.
+The user can say "pass 1+2" or "plan and review together". Pass 3 still
+gets a fresh context — the quality gate review benefits from clean eyes.
+
+```
+User: "Let's plan [feature/fix]. Here's the issue: ..."
+→ Pass 1 produces plan doc, then Pass 2 reviews in same context
+User: [clears context] "Here's our plan doc. Run pass 3."
+→ Pass 3 applies quality gates with fresh eyes
+User: [clears context] "Here's our plan doc. Let's execute."
 → Execution follows the plan phase by phase
 ```
 
-### Abbreviated (for moderate changes)
+### Abbreviated (for simple changes)
 
-Combine Pass 2 and Pass 3 into a single review if the change is moderate in
-scope. The user can say "pass 2+3" or "review and finalize".
+Combine all three passes into a single context if the change is small and
+well-understood. The user can say "plan and finalize" or "quick plan".
+
+### With Phase 0 Discovery
+
+When the plan includes Phase 0, execution has a natural checkpoint:
+
+```
+User: [clears context] "Here's our plan doc. Let's execute."
+→ Execute Phase 0 discovery tasks
+→ Report findings, update plan doc
+→ User reviews updated plan: "Looks good, continue." or "Hold on, let's adjust."
+→ Execute phases 1-N
+```
+
+Phase 0 completion is a decision point. If discovery changes the plan
+materially, the user should review before committing to implementation.
 
 ### Resuming after execution starts
 
@@ -457,6 +636,23 @@ each subsequent phase, print the short mantra only:
 >   This creates a rollback point and makes "done" concrete. If it's not
 >   committed, it's not done.
 
+### Executing Phase 0 (Discovery)
+
+If the plan includes Phase 0, execute it before any implementation phase.
+Phase 0 is different from other phases:
+
+- **No TDD cycle.** Phase 0 produces knowledge, not code. Probes, spikes, and
+  experiments are throwaway — they don't need tests.
+- **Update the plan doc as you go.** Move findings into Verified Assumptions.
+  Resolve Open Questions. If a discovery invalidates an assumption that later
+  phases depend on, update those phases now — flag the changes in the Review Log.
+- **Report findings before proceeding.** At the end of Phase 0, summarize what
+  was confirmed, what changed, and whether any phases need restructuring. Get
+  user approval before starting Phase 1 if the plan changed materially.
+- **Phase 0 is not open-ended.** Each discovery task has a concrete question
+  and a concrete way to answer it. If a task's answer leads to more questions,
+  scope those as new discovery tasks — don't let Phase 0 expand indefinitely.
+
 ### Phase completion checklist
 
 Before moving from Phase N to Phase N+1, confirm:
@@ -476,6 +672,12 @@ Before moving from Phase N to Phase N+1, confirm:
 - [ ] The call chain specified in the phase is wired end-to-end — trace
       from the entry point to the new code and confirm reachability
 - [ ] The behavioral done-when criterion holds (not just the test command)
+- [ ] **Validation strategy executed.** Run the validation declared in the
+      phase spec. If the phase says "run the system and exercise the feature
+      manually," do that — don't substitute with "tests pass." If the phase
+      says "tests are sufficient," tests are sufficient. The validation
+      strategy was calibrated during planning for a reason. Report what you
+      validated and what you observed.
 - [ ] Tests for Phase N's changes were written first and are passing
 - [ ] Existing tests still pass (regression check)
 - [ ] The system is in a working state
