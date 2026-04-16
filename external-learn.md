@@ -296,6 +296,21 @@ A single external skill might produce three or four REFINEMENTS.md
 entries plus one EXTERNAL-LEARNINGS.md entry, or zero REFINEMENTS.md
 entries and one EXTERNAL-LEARNINGS.md entry with status `rejected`.
 
+## Final step: recommend the hygiene audit
+
+After writing both artifacts (review report + ledger entry), recommend
+the audit command to the user:
+
+> "Review and ledger entry written. Recommend running `/audit` to
+> verify hygiene — external reviews often touch multiple files, name
+> new targets, or propose refinements that can create cross-reference
+> drift. The audit is read-only and takes a few seconds."
+
+If any candidate was rated `adopt` or `adopt with adaptation` and the
+user acts on it in the same session (creates the new file, edits the
+target), `/audit` is especially worth running afterward — the new
+content is exactly where hygiene issues tend to appear.
+
 ## Quality Gates
 
 Before delivering the review, verify:

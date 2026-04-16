@@ -81,16 +81,19 @@ needs updating. Do not start code quality review before plan alignment passes.
 
 **Post-Merge** (after work is merged):
 ```
-learn (review session for recurring patterns, propose repo refinements)
+learn (review session for recurring patterns, propose repo refinements) → /audit (recommended)
 ```
 Invoke learn to review the completed work for patterns that repeated
 (two-strike rule). Proposals land in `REFINEMENTS.md` at the repo root.
 learn does *not* document project-specific learnings — that's progress-
 guardian's role, and those go in the consumer project's `LEARNINGS.md`.
+After learn writes ledger entries, run `/audit` to verify the repo's
+hygiene didn't drift (size budgets, stale cross-references,
+frontmatter completeness, color collisions, orphan files).
 
 **External Intake** (when evaluating an external skill, plugin, or set):
 ```
-external-learn (compare against this repo, produce review report + ledger entry)
+external-learn (compare against this repo, produce review report + ledger entry) → /audit (recommended)
 ```
 Invoke external-learn with a path, URL, or plugin reference. It writes
 two artifacts:
@@ -105,7 +108,9 @@ two artifacts:
    them without re-reviewing.
 
 external-learn does not adopt anything — the user decides which
-proposals in the report graduate to `REFINEMENTS.md` entries.
+proposals in the report graduate to `REFINEMENTS.md` entries. After
+the review lands (and especially after any adoption), run `/audit`
+to verify repo hygiene.
 
 **Architecture Decisions** (when evaluating design choices):
 ```
