@@ -58,6 +58,25 @@ description: >
      listing, or whether users reflexively opt out. If the exemption isn't
      holding, escalate to a programmatic check. -->
 
+<!-- TRACKING: Plan filename convention (2026-04-16)
+     Changed the default plan doc filename from `plans/<kebab-name>.md` to
+     `plans/YYYY-MM-DD-N-plan-<slug>.md`. Rationale: chronological sort by
+     name (dates ascending, ordinals ascending within a day), an
+     unambiguous "plan" marker so files read as plans out of context, and
+     collision-free naming when multiple plans land on the same day. The
+     ordinal is always present (not just on collisions) so sort order
+     stays stable retroactively when a second plan lands that day.
+     Triggered by a rename pass over an existing `plans/` tree where
+     ~50 files had mixed conventions (`plan-X.md`, `X-plan.md`, no
+     marker) and no temporal ordering — the new convention solves both.
+     Monitor: (a) whether agents remember the ordinal on day-1 plans
+     (likely failure mode: they drop it when there's no collision yet),
+     (b) whether the convention survives contact with projects that
+     already have a plan directory with a different scheme, (c) whether
+     days ever exceed 9 plans and force the zero-padding fallback. If
+     the ordinal rule is forgotten, escalate to a Write-tool guard that
+     validates the filename pattern before creating the file. -->
+
 <!-- TRACKING: File split (2026-04-16)
      Split the skill into a slim main file (this) plus per-pass files in
      skills/phase-plan/. Main file holds the plan doc template, usage
@@ -135,12 +154,26 @@ points in the workflow:
 
 ## The Plan Doc
 
-The plan doc is a markdown file. Its default location is `plans/<kebab-name>.md`
-at the repo root — create the `plans/` directory if it does not exist. If the
-project already keeps plans elsewhere (e.g., `docs/plan-*.md`, an existing
-`designs/` tree), match the existing convention rather than creating a new
-location. Everything goes in this file — it is the handoff artifact between
-context windows.
+The plan doc is a markdown file. Its default location is
+`plans/YYYY-MM-DD-N-plan-<kebab-slug>.md` at the repo root — create the
+`plans/` directory if it does not exist. Name components:
+
+- `YYYY-MM-DD` — today's date. Run `date +%Y-%m-%d` if uncertain.
+- `N` — ordinal within the day, starting at `1`. Check existing entries in
+  `plans/` for today and pick the next unused number. Always include the
+  ordinal, even on the day's first plan, so sort order stays chronological
+  once a second plan lands that day. Use single digits by default; switch
+  to zero-padded (`01`, `02`, ...) and rename that day's earlier entries if
+  a day ever exceeds 9 plans, so `10` doesn't sort between `1` and `2`.
+- `plan-` — literal prefix so the file reads as a plan even out of context.
+- `<kebab-slug>` — short kebab-case description of the topic.
+
+Example: `plans/2026-04-16-1-plan-adaptive-thinking.md`.
+
+If the project already keeps plans under a different convention (e.g., an
+existing `designs/` tree with its own scheme), match the existing convention
+rather than forcing this one. Everything goes in this file — it is the
+handoff artifact between context windows.
 
 ### Required sections
 

@@ -87,11 +87,16 @@
    This is not a suggestion — 4+ files in a single phase is a known cause
    of partial completion and should be treated as a plan defect.
 8. **Persist everything.** Write the full plan doc at
-   `plans/<kebab-name>.md` (create the `plans/` directory if it is missing).
-   If the project already keeps plans elsewhere, match the existing
-   convention instead of creating a new location. The Reasoning section must
-   be detailed enough that someone in a fresh context can understand *why*
-   every decision was made — not just *what* will be done.
+   `plans/YYYY-MM-DD-N-plan-<kebab-slug>.md` (create `plans/` if missing).
+   Use today's date (run `date +%Y-%m-%d` if uncertain), pick `N` as the
+   next unused ordinal for today by scanning existing `plans/` entries
+   (always include the ordinal — even on the day's first plan), keep the
+   literal `plan-` prefix, and pick a short kebab-case slug. See the main
+   `phase-plan.md` § The Plan Doc for the full naming rules. If the project
+   already keeps plans under a different convention, match that instead.
+   The Reasoning section must be detailed enough that someone in a fresh
+   context can understand *why* every decision was made — not just *what*
+   will be done.
 9. **Surface open questions.** If anything is unresolved, capture it in Open
    Questions rather than guessing. For each question, recommend a severity
    (**BLOCKING**, **PHASE-GATED**, **ADVISORY**) with a brief rationale for
