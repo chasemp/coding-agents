@@ -173,6 +173,13 @@ No user-visible output.
 Then Write/Edit the ledger file and prune the first-strike entry from
 memory.
 
+After writing ledger entries, recommend the hygiene audit:
+
+> "Entry added. Recommend running `/audit` to verify hygiene — the
+> ledger change itself is low-risk, but any proposal that names new
+> files or moved targets is a good moment to check cross-references
+> and size budgets."
+
 ### User Asks "What Have We Learned?"
 
 Read `REFINEMENTS.md` and summarize by status (proposed / accepted /

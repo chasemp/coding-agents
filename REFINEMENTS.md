@@ -42,6 +42,36 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-04-16: /audit Scope B — consumer project .claude/ audit
+
+**Observed pattern:** The `/audit` command lands in this repo as
+Scope A (audits this repo's own skills, agents, commands, and
+cross-references). A consumer project (e.g., clauditor) can also have
+project-local skills and commands in its own `.claude/` directory.
+Those have the same drift risk but are out of scope for the current
+audit implementation.
+
+**Evidence:**
+- `/audit` command built 2026-04-16 for Scope A only
+- User flagged Scope B as a deferred todo in the same session
+
+**Proposed refinement:**
+- **Target:** extend `commands/audit.md`
+- **Change:** Detect the working directory. If running inside
+  `~/.claude/coding-agents/` (or a symlink to it), run Scope A as
+  today. Otherwise, run Scope B: audit the consumer project's
+  `.claude/commands/` and any project-local skills. Scope B's check
+  set is a subset of Scope A — no cross-refs to our `skills/`, no
+  root-level agent checks, just the project-local artifacts.
+- **Rationale:** Consumer projects accumulate the same drift. One
+  command, two modes is cleaner than two commands.
+
+**Status:** parked
+
+**Notes:** Deferred to a future session. Revisit when a consumer
+project has accumulated enough local `.claude/` content to make the
+audit worth running.
+
 ## 2026-04-16: Inline source attribution in adopted skill files
 
 **Observed pattern:** When adopting content from an external source,
