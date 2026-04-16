@@ -575,6 +575,36 @@ disallow_any_generics = true
 
 If mypy is NOT yet configured, recommend adding it but don't block on it.
 
+## Escalation: Flag Instead of Block
+
+Not every concern is a clear type-safety violation. Some patterns are
+technically compliant but worth surfacing for human judgment. Use the
+category-first flag pattern (see `agents.md` § Escalation Convention):
+
+```markdown
+⚠️ **Type patterns to flag:**
+- <file:line> — <specific concern>
+- Why it caught my attention: <observation>
+- Recommendation: <what you'd suggest, briefly>
+```
+
+Escalations do not block. Violations do. When in doubt, escalate — the
+user can always upgrade to a blocker.
+
+**Examples of scenarios that warrant escalation rather than blocking:**
+
+- **`typing.cast()` at a hot path.** The cast passes mypy and may be
+  correct, but it suppresses a check the type system was trying to make.
+  Worth asking: is the cast justified by a runtime invariant, or is it
+  papering over an upstream type error?
+- **`object` used where a `Protocol` would be clearer.** The code satisfies
+  "no `Any`" but `object` is a blunt tool — callers must isinstance-check
+  to do anything useful. A narrow `Protocol` would convey intent without
+  losing type safety.
+- **Pydantic v1 pattern in a v2 codebase (or vice versa).** The file
+  type-checks cleanly but mixes idioms. Not a violation, but a source of
+  cognitive overhead the author may not have noticed.
+
 ## Quality Gates
 
 Before approving code, verify:
