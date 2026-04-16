@@ -41,3 +41,65 @@ targets refinements to this repo's own skills, agents, and commands.
 ## Entries
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
+
+## 2026-04-16: Cross-reference ask-questions-if-underspecified from phase-plan Pass 1
+
+**Observed pattern:** Phase-plan Pass 1 step 1 says to ask clarifying
+questions but doesn't distinguish "request is ambiguous" (interpretation)
+from "planning needs unknowns resolved" (detail). Without a pointer,
+readers may think phase-plan is the only clarification skill.
+
+**Evidence:**
+- Review of trailofbits external skill surfaced the distinction
+  (2026-04-16)
+
+**Proposed refinement:**
+- **Target:** extend `skills/phase-plan/pass1.md` § Steps, step 1
+- **Change:** Added a pointer: "If the request itself is ambiguous
+  (multiple plausible interpretations), use the
+  `ask-questions-if-underspecified` skill first — it uses a lighter
+  multiple-choice format better suited to resolving interpretation
+  before planning engages."
+- **Rationale:** Clarifies the separation of concerns: underspec skill
+  resolves interpretation, phase-plan resolves planning detail.
+
+**Status:** accepted
+
+**Notes:** Applied 2026-04-16 in `skills/phase-plan/pass1.md` (step 1).
+Depends on the ask-questions-if-underspecified proposal below, accepted
+in the same session. Source review in
+`plans/external-learn-ask-questions-if-underspecified.md`.
+
+## 2026-04-16: Adopt ask-questions-if-underspecified as new skill
+
+**Observed pattern:** Ambiguous short-scope requests — ones that don't
+warrant phase-plan but still have 2+ plausible interpretations — rely
+on Claude's judgment with no skill-level backing. This leads to
+starting work in the wrong direction and backfilling questions mid-work.
+
+**Evidence:**
+- External source: trailofbits/skills plugin
+  `ask-questions-if-underspecified` (commit `9f7f8ad`, 2026-02-18)
+- Gap confirmed: no existing skill fires before phase-plan on
+  ambiguous requests
+
+**Proposed refinement:**
+- **Target:** new skill `skills/ask-questions-if-underspecified.md`
+- **Change:** Created a light-weight skill adapting the trailofbits
+  skill. Kept the 6-axis checklist (objective / done / scope /
+  constraints / environment / safety), the multiple-choice + defaults
+  question format with `defaults` fast-path and compact reply syntax,
+  the "pause before acting" rule, and the "ask vs look up"
+  anti-pattern. Adapted voice to match our style. Added explicit
+  hand-off rules to `phase-plan` when scope turns out non-trivial.
+- **Rationale:** Closes the gap between "casual request" and
+  "phase-plan triggers." Prevents Claude from starting work on the
+  wrong interpretation.
+
+**Status:** accepted
+
+**Notes:** Applied 2026-04-16. New file:
+`skills/ask-questions-if-underspecified.md` (~135 lines). Source
+attribution included in the skill (link to upstream plugin, reviewed
+commit SHA, pointer to review report). Review details in
+`plans/external-learn-ask-questions-if-underspecified.md`.
