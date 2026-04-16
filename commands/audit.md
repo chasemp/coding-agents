@@ -52,13 +52,18 @@ CLAUDE.md over 200. Per-pass files are informational only.
 Grep for file-path references in skills, agents, commands, CLAUDE.md,
 and agents.md. Verify each referenced path exists.
 
-### Skill path references (`skills/X.md`, `skills/X/Y.md`)
+### Skill path references (e.g., `skills/X.md`, `skills/X/Y.md`)
 
-!`grep -rhoE 'skills/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)?\.md' skills/ commands/ *.md 2>/dev/null | sort -u`
+Filters out obvious template placeholders (`X.md`, `some-*`, `<name>`)
+and `.claude/` paths (those refer to consumer projects, not this repo).
+The pattern optionally captures `.claude/` prefix so the filter can
+see and reject it. See the grep below for the full filter list.
 
-### Command path references (`commands/X.md`)
+!`grep -rhoE '(\.claude/)?skills/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)?\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/X/|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u`
 
-!`grep -rhoE 'commands/[a-zA-Z0-9_-]+\.md' skills/ commands/ *.md 2>/dev/null | sort -u`
+### Command path references (e.g., `commands/X.md`)
+
+!`grep -rhoE '(\.claude/)?commands/[a-zA-Z0-9_-]+\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u`
 
 ### Agent name references in backticks
 
@@ -83,13 +88,17 @@ Skills need `name:` and `description:`. Agents need `name:`,
 
 ### Agents missing required fields
 
-!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -15 "$f" | grep -q '^tools:' || continue; for field in name description tools model maxTurns; do head -15 "$f" | grep -q "^$field:" || echo "MISSING $field: $f"; done; done`
+!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -60 "$f" | grep -q '^tools:' || continue; for field in name description tools model maxTurns; do head -60 "$f" | grep -q "^$field:" || echo "MISSING $field: $f"; done; done`
 
 ### Commands missing required fields
 
-!`for f in commands/*.md; do head -10 "$f" | grep -q '^description:' || echo "MISSING description: $f"; head -10 "$f" | grep -q '^allowed-tools:' || echo "MISSING allowed-tools: $f"; done`
+!`for f in commands/*.md; do head -10 "$f" | grep -q '^description:' || echo "MISSING description: $f"; done`
 
 **Interpret:** Any "MISSING" line is a frontmatter defect.
+`allowed-tools:` is not required — commands that don't invoke tools
+(like `/s`, which only emits text) don't need it. Claude Code enforces
+the tool allowlist at runtime, so an absent field just means "no
+tools used."
 
 ## Check 4: Color uniqueness on agents
 
@@ -99,7 +108,13 @@ Agent `color:` fields should be unique for visual distinctiveness.
 
 **Interpret:** Group by color. Any color used by 2+ agents is a
 collision. Not a blocker — cosmetic only — but worth fixing when
-convenient.
+convenient. **Palette constraint:** the Claude Code frontend supports
+an 8-color palette (red, orange, yellow, green, cyan, blue, purple,
+pink). With 10 agents, at least 2 collisions are unavoidable. Pair
+collisions between agents with orthogonal workflows so they rarely
+fire together (current intentional pairings:
+`orange` = py-enforcer + use-case-data-patterns;
+`purple` = adr + docs-guardian).
 
 ## Check 5: Orphan root files
 
@@ -107,12 +122,14 @@ Root `.md` files that are neither on the docs whitelist nor have
 agent frontmatter (i.e., no `tools:` field) are orphans. They may be
 stale or misplaced.
 
-!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -15 "$f" | grep -q '^tools:' || echo "ORPHAN: $f (no tools: field, not on docs whitelist)"; done`
+!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -60 "$f" | grep -q '^tools:' || echo "ORPHAN: $f (no tools: field in first 60 lines, not on docs whitelist)"; done`
 
 **Interpret:** Any "ORPHAN" line warrants attention. Either the file
 belongs on the docs whitelist (add to the `case` patterns in these
 checks and to `agents.md` § File reference) or it should be deleted
-or moved.
+or moved. The 60-line head covers agents with sprawling frontmatter
+descriptions (`use-case-data-patterns.md`, for instance, has a
+description that spans ~40 lines of inline examples).
 
 ## Check 6: TRACKING markers for load-bearing redundancy
 

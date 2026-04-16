@@ -5,7 +5,7 @@ description: >
 tools: Read, Grep, Glob, Bash
 model: sonnet
 maxTurns: 15
-color: red
+color: orange
 ---
 
 # Python Type Safety Enforcer
