@@ -114,6 +114,7 @@ For Go patterns, follow standard library conventions.
 - Capture learnings as they occur, merge at end
 - **Bail on repeated failure**: If an approach fails twice, stop and reassess with the user before trying alternatives. Do not spin on a failing strategy.
 - **No completion claims without fresh evidence**: Before asserting success, run the proving command, read complete output and exit code, confirm it supports the claim. Language like "should work" or "probably" without a fresh run is not acceptable. Confidence from a previous run does not count. Unverified claims are indistinguishable from hallucinations.
+- **Plans record the why, not just the what.** Any plan in `plans/` (or the project's equivalent location) must carry **Problem Statement**, **Approach**, and **Reasoning** — not just a change list. If a future reader cannot reconstruct *why* the change was proposed from the plan alone, the plan is incomplete. Format is flexible; presence of these three semantic elements is not. The `plan-doc-reasoning` skill enforces the floor; `phase-plan` prescribes the full template for complex changes.
 
 ## External APIs
 
