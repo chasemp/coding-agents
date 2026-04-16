@@ -88,6 +88,16 @@ Invoke learn to review the completed work for patterns that repeated
 learn does *not* document project-specific learnings — that's progress-
 guardian's role, and those go in the consumer project's `LEARNINGS.md`.
 
+**External Intake** (when evaluating an external skill, plugin, or set):
+```
+external-learn (compare against this repo, produce review report)
+```
+Invoke external-learn with a path, URL, or plugin reference. It writes
+a structured review to `plans/external-learn-<name>.md` with per-candidate
+ratings (adopt / adopt with adaptation / extend existing / reject /
+park) and draft proposals the user can promote to `REFINEMENTS.md`.
+external-learn does not adopt anything — the user decides.
+
 **Architecture Decisions** (when evaluating design choices):
 ```
 effective-design-overview skill → adr (record decision)
@@ -142,7 +152,7 @@ frontmatter). Memory lives in `.claude/agent-memory/<agent-name>/` within each
 consuming repo. The first 200 lines of `MEMORY.md` are auto-injected into the
 agent's system prompt at startup.
 
-**Agents with memory:** learn, pr-reviewer, refactor-scan, tdd-guardian
+**Agents with memory:** learn, external-learn, pr-reviewer, refactor-scan, tdd-guardian
 
 **Memory conventions:**
 - Memory stores project-specific knowledge, not general principles (those belong
@@ -164,7 +174,8 @@ agent's system prompt at startup.
 All agents have `maxTurns` set in frontmatter to prevent runaway execution.
 Analysis-only agents (tdd-guardian, py-enforcer, refactor-scan, learn,
 use-case-data-patterns) have 15 turns. Agents that do more complex work
-(pr-reviewer, progress-guardian, adr, docs-guardian) have 20 turns.
+(pr-reviewer, progress-guardian, adr, docs-guardian, external-learn)
+have 20 turns.
 
 ## File reference
 
@@ -178,8 +189,10 @@ use-case-data-patterns) have 15 turns. Agents that do more complex work
 | `progress-guardian.md` | Tracks WIP state and implementation progress |
 | `adr.md` | Writes Architecture Decision Records |
 | `docs-guardian.md` | Keeps documentation consistent with implementation |
-| `learn.md` | Captures learnings and gotchas while context is fresh |
+| `learn.md` | Self-refinement scout — detects recurring patterns, proposes refinements to this repo (writes to `REFINEMENTS.md`) |
+| `external-learn.md` | External intake scout — compares external skills/plugins against this repo, produces review reports in `plans/` |
 | `use-case-data-patterns.md` | Analyses use case and data modelling patterns |
 | `skills/` | On-demand skills (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (`/pr`, `/generate-pr-review`) |
 | `hooks/` | Programmatic TDD enforcement (edit guard, stop guard, pre-commit) |
+| `REFINEMENTS.md` | Global refinement ledger — managed by `learn`, fed by `external-learn` |
