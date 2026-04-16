@@ -42,6 +42,59 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-04-16: Plan docs must record Problem/Approach/Reasoning
+
+**Observed pattern:** Plans created outside `phase-plan`'s three-pass
+flow frequently shipped without persisted reasoning — change lists
+with no trace of WHY the change was proposed. The user reported
+having to remind about this repeatedly in-session. `phase-plan`'s
+template already enforces this for its own flow, but nothing
+generalized the rule to ad-hoc plans, review reports, or interim
+drafts written directly to `plans/`.
+
+**Evidence:**
+- User statement 2026-04-16: "let's ensure we have solid direction
+  on persisting the problem statements, proposed solution, and
+  rationale to our plan files… I feel like I have to remind on
+  that a lot"
+- Session survey: `plans/xml-tag-enhancement.md` follows phase-plan
+  format (Problem Statement + Reasoning); `plans/external-learn-
+  ask-questions-if-underspecified.md` uses external-learn's review
+  format (Source Summary + per-candidate Rationale). Both comply by
+  their respective template — but no rule forces compliance for
+  plans outside those templates.
+
+**Proposed refinement:**
+- **Target:** three layers, mirroring the TDD three-tier enforcement
+  pattern
+- **Change:**
+  - `CLAUDE.md` Development Workflow — added rule that plans in
+    `plans/` must carry Problem Statement, Approach, and Reasoning,
+    format flexible but presence required.
+  - New skill `skills/plan-doc-reasoning.md` — auto-triggers when
+    writing/editing `plans/*.md`. Prescribes the three required
+    elements in any format. Notes that phase-plan/external-learn/ADR
+    templates already satisfy the floor.
+  - `commands/audit.md` Check 7 — advisory scan of `plans/*.md` for
+    reasoning-related headings. Flags plans with no heading matching
+    the expected vocabulary (Problem / Reasoning / Rationale / Why
+    this / Source Summary / Context / Decision / Approach).
+- **Rationale:** Single-layer reinforcement (just the rule in
+  CLAUDE.md) has not been enough — user reported repeated reminders.
+  Mirroring the TDD three-tier pattern (always-loaded rule + on-write
+  skill + periodic audit check) provides enough redundancy that
+  forgetting becomes unlikely. "Load-bearing repetition" is the
+  designed-in insurance.
+
+**Status:** accepted
+
+**Notes:** Applied 2026-04-16. Files changed: `CLAUDE.md` (added bullet
+in Development Workflow § Quick reference), `skills/plan-doc-reasoning.md`
+(new ~90-line skill), `commands/audit.md` (added Check 7). Check 7
+passes on both current `plans/*.md` files — `xml-tag-enhancement.md`
+has "Problem Statement" and "Reasoning" headings; `external-learn-
+ask-questions-if-underspecified.md` has "Source Summary" heading.
+
 ## 2026-04-16: /audit Scope B — consumer project .claude/ audit
 
 **Observed pattern:** The `/audit` command lands in this repo as

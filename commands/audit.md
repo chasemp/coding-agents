@@ -145,6 +145,36 @@ TRACKING comment referencing the split (2026-04-16). Per-pass and
 execute files do not need TRACKING markers themselves — the main
 file's TRACKING is the canonical marker.
 
+## Check 7: Plan docs carry reasoning
+
+Every plan in `plans/*.md` must carry Problem Statement, Approach,
+and Reasoning — the WHY, not just the WHAT. Enforced by the
+`plan-doc-reasoning` skill. This check is the periodic verification.
+
+Headings from known formats that satisfy the floor:
+
+- `phase-plan` template: `## Problem Statement`, `## Reasoning`
+- `external-learn` review: `## Source Summary`, per-candidate `**Rationale:**`
+- `ADR` record: `## Context`, `## Decision`, `## Rationale`
+
+The check grep below looks for any reasoning-related heading. Files
+with no such heading are flagged for review — they may be pure
+change lists with no reasoning trail.
+
+!`for f in plans/*.md; do grep -qiE '^#{1,4} (problem|reasoning|rationale|why this|source summary|context|decision|approach)' "$f" || echo "MISSING reasoning marker: $f"; done 2>/dev/null`
+
+**Interpret:** Any "MISSING" line means the plan has no heading that
+looks like a reasoning or problem record. The plan may still capture
+reasoning in prose form, but the absence of a recognizable heading
+is a signal — read the file and confirm the three elements are
+present. If they are, consider adding an explicit heading to make
+the reasoning scannable. If they are not, the plan needs work before
+it is useful to a future reader.
+
+**False positives expected:** plans that use non-standard heading
+names but still carry reasoning. Treat the check as advisory — the
+fix is usually "rename a heading" not "rewrite the plan."
+
 ## Output
 
 Present findings grouped by check number. Use this summary structure:
@@ -169,6 +199,9 @@ Check 5 — Orphan root files: [pass / N flags]
 
 Check 6 — TRACKING markers: [pass / issue]
   <if issue, what>
+
+Check 7 — Plan doc reasoning: [pass / N flags]
+  <each MISSING line, with a note that these are advisory>
 
 Overall: <N> flags across <M> checks.
 ```
