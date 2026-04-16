@@ -79,9 +79,25 @@ When the same idea appears in multiple files:
 2. Keep the full statement there
 3. Replace other occurrences with a cross-reference:
    "See CLAUDE.md Development Workflow" or "See testing-anti-patterns skill"
-4. Exception: agents may restate a principle in operational terms if the
-   restatement adds enforcement-specific value (e.g., tdd-guardian's
-   rationalizations list adds agent-specific coaching responses)
+
+### Named exceptions to the deduplication rule
+
+Two cases warrant intentional repetition. Both must be explicit —
+mark the repeated content so a future hygiene pass doesn't collapse it.
+
+- **Operational restatement** — agents may restate a principle in
+  operational terms if the restatement adds enforcement-specific value
+  (e.g., tdd-guardian's rationalizations list adds agent-specific
+  coaching responses).
+- **Load-bearing repetition** — critical rules that are frequently
+  skipped (e.g., "no stubs", "commit per phase", wiring test
+  requirements) may be repeated verbatim across files where they
+  apply, because forgetting them mid-execution is the primary failure
+  mode these rules guard against. The redundancy is intentional. Mark
+  it with a TRACKING comment so future refactors do not collapse it
+  as a DRY violation. Example: the phase-plan split (2026-04-16)
+  repeats execution guardrails across the main file and the per-pass
+  and execute files — that is load-bearing, not sloppy.
 
 ### Smell test
 
@@ -160,8 +176,17 @@ When config-scout identifies something worth adopting:
    correct level (CLAUDE.md, skill, agent, or command).
 3. **Adapt the phrasing** — external configs have their own voice. Rewrite to
    match our tone: strict but constructive, concise, principle-first.
-4. **Add provenance** — in the commit message, include `Source: <url>` so
-   git blame traces the idea's origin.
+4. **Add provenance, in two places.** File-local attribution survives
+   git history drift; commit-message-only attribution does not. Do both:
+   - **In the adopted file itself** — a short paragraph near the top
+     with the upstream link, the reviewed commit SHA, and (when
+     applicable) a pointer to the `plans/external-learn-<name>.md`
+     review report.
+   - **In the commit message** — include `Source: <url>` so `git blame`
+     still traces the idea's origin.
+   Example of the file-local pattern:
+   `skills/ask-questions-if-underspecified.md` (adopted 2026-04-16 from
+   trailofbits/skills, commit `9f7f8ad`).
 5. **Check for contradiction** — does the new idea conflict with existing
    principles? If so, make an explicit choice and document why in DECISIONS.md.
 6. **Verify token budget** — after adding, check the file's line count. Did it

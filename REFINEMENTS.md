@@ -78,11 +78,15 @@ the user flagged this as worth codifying.
   tracking upstream changes. Commit-message-only attribution fails on
   both counts.
 
-**Status:** proposed
+**Status:** accepted
 
-**Notes:** Concrete example of the target pattern: the source
-attribution paragraph in `skills/ask-questions-if-underspecified.md`
-(created 2026-04-16, commit `aa7499d`).
+**Notes:** Applied 2026-04-16. Extended `skills/skill-hygiene.md`
+§ Incorporating External Ideas step 4 to require attribution in both
+the file and the commit message. Extended `external-learn.md` Quality
+Gates with a matching requirement for `adopt` / `adopt with adaptation`
+candidates. Concrete example of the target pattern is
+`skills/ask-questions-if-underspecified.md` (created 2026-04-16,
+commit `aa7499d`).
 
 ## 2026-04-16: Load-bearing redundancy exception to DRY
 
@@ -120,11 +124,14 @@ guarding against.
   back into a single source — which would undo the split's whole
   purpose. Making the exception explicit prevents the regression.
 
-**Status:** proposed
+**Status:** accepted
 
-**Notes:** The phase-plan TRACKING comment at 2026-04-16 already
-documents this decision locally. This proposal promotes it to a
-general hygiene principle.
+**Notes:** Applied 2026-04-16. Restructured `skills/skill-hygiene.md`
+§ Deduplication Rules: split the prior "Exception:" step out into a
+new "Named exceptions to the deduplication rule" subsection with two
+items — Operational restatement (existing) and Load-bearing repetition
+(new). The phase-plan split is named as the canonical example of the
+latter.
 
 ## 2026-04-16: Cross-reference ask-questions-if-underspecified from phase-plan Pass 1
 
