@@ -81,9 +81,12 @@ needs updating. Do not start code quality review before plan alignment passes.
 
 **Post-Merge** (after work is merged):
 ```
-learn (capture learnings)
+learn (review session for recurring patterns, propose repo refinements)
 ```
-Invoke learn to capture gotchas, patterns, and decisions while context is fresh.
+Invoke learn to review the completed work for patterns that repeated
+(two-strike rule). Proposals land in `REFINEMENTS.md` at the repo root.
+learn does *not* document project-specific learnings — that's progress-
+guardian's role, and those go in the consumer project's `LEARNINGS.md`.
 
 **Architecture Decisions** (when evaluating design choices):
 ```
@@ -110,16 +113,27 @@ on the same changeset without interference.
 ### Escalation Convention
 
 When an agent finds something ambiguous — not a clear violation, but a concern —
-it should flag it as:
+it should flag it for human judgment rather than block. Use the category-first
+flag pattern (originated in pr-reviewer, adopted across all enforcement agents):
 
-```
-⚠️ ESCALATION: [description of concern]
-Recommendation: [what the agent suggests]
-Decision needed: [what the human should weigh in on]
+```markdown
+⚠️ **<Category> to flag:**
+- <Specific concern, with file:line when applicable>
+- <Why it caught your attention>
+- <Recommended action, briefly>
 ```
 
-This format is consistent across all agents and signals that the agent is not
-blocking but needs human judgment.
+Category examples: "Deviations to flag", "TDD concerns to flag", "Type patterns
+to flag", "Refactoring concerns to flag". The category anchors the reader to
+what kind of judgment is being requested.
+
+**Rule of thumb:** Escalations do not block — violations do. If you are
+unsure which you found, escalate. A human can upgrade an escalation to a
+blocker, but a false block wastes a cycle.
+
+Each enforcement agent (tdd-guardian, pr-reviewer, py-enforcer, refactor-scan)
+defines its own Escalation section with 2–3 concrete examples of scenarios
+where this pattern applies.
 
 ### Agent Memory
 
@@ -141,7 +155,8 @@ agent's system prompt at startup.
 
 **Memory does NOT replace:**
 - CLAUDE.md (canonical project-wide knowledge)
-- LEARNINGS.md (per-feature learnings managed by progress-guardian)
+- LEARNINGS.md (per-feature learnings in consumer projects, managed by progress-guardian)
+- REFINEMENTS.md (global refinement ledger for this repo, managed by learn)
 - ADRs (architectural decisions managed by adr agent)
 
 ### Turn Limits

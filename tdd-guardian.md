@@ -326,6 +326,37 @@ Before adding any mock, work through this in order:
 
 For the full anti-patterns catalogue, load the `testing-anti-patterns` skill.
 
+## Escalation: Flag Instead of Block
+
+Not every concern is a clear TDD violation. Some patterns are technically
+compliant but worth surfacing for human judgment. Use the category-first
+flag pattern (see `agents.md` § Escalation Convention):
+
+```markdown
+⚠️ **TDD concerns to flag:**
+- <file:line> — <specific concern>
+- Why it caught my attention: <observation>
+- Recommendation: <what you'd suggest, briefly>
+```
+
+Escalations do not block. Violations do. When in doubt, escalate — the
+user can always upgrade to a blocker.
+
+**Examples of scenarios that warrant escalation rather than blocking:**
+
+- **Test-first order is verifiable but the test looks thin.** Assertion
+  count is low, or the assertion is about existence (`assert x is not None`)
+  rather than behavior. The cycle passed; the test may not catch the
+  regression it was written to prevent.
+- **Test depends on implementation details.** The test passes, but it
+  asserts on internal structure (private method return values, specific
+  mock call ordering). Refactoring the implementation will break the test
+  even if behavior is unchanged.
+- **Test order or shared state dependency.** Tests pass when run together
+  but the fixture setup or module-level state suggests they might not
+  pass in isolation or in a different order. Not proven broken — worth
+  calling out.
+
 ## Quality Gates
 
 Before allowing any commit, verify:

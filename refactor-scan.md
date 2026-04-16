@@ -393,6 +393,40 @@ def calculate_shipping(order_amount: float) -> float:
 5. **Clarity Check**: Will this be more readable and maintainable?
 6. **Premature Check**: Am I abstracting before I understand the pattern?
 
+## Escalation: Flag Instead of Block
+
+Refactoring is inherently advisory — nothing this agent produces is
+blocking by default. But some findings are stronger than others. Use
+the category-first flag pattern for observations that deserve the
+user's explicit attention (see `agents.md` § Escalation Convention):
+
+```markdown
+⚠️ **Refactoring concerns to flag:**
+- <file:line> — <specific concern>
+- Why it caught my attention: <observation>
+- Recommendation: <what you'd suggest, briefly>
+```
+
+Use escalation (not a direct recommendation) when the call is close and
+the user should weigh in.
+
+**Examples of scenarios that warrant escalation rather than a plain
+recommendation:**
+
+- **Structural similarity without semantic similarity.** Three functions
+  share the same shape (try/except around a DB call, return a result
+  object), but each represents a different domain concept. Abstracting
+  would couple unrelated things; leaving them alone looks like duplication.
+  Worth the user's judgment, not a unilateral "extract this".
+- **Long function that reads clearly.** Function exceeds conventional
+  length but the flow is linear and the naming is clean. Splitting might
+  make it worse by introducing indirection. Escalate rather than
+  recommend — "worth a look, but not obviously an improvement".
+- **Repeated pattern with subtle variation.** The same three lines appear
+  across five files, but one of them has an extra error-handling branch.
+  An abstraction would need to handle the variant, which may complicate
+  it past the point of net benefit.
+
 ## Quality Gates
 
 Before recommending refactoring, verify:
