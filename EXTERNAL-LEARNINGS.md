@@ -72,3 +72,41 @@ the author's framing>
 ## Entries
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
+
+## 2026-04-16: ask-questions-if-underspecified (trailofbits/skills)
+
+**Source type:** URL (GitHub directory)
+**Reference:** https://github.com/trailofbits/skills/tree/main/plugins/ask-questions-if-underspecified
+**Upstream (if git):** `github.com/trailofbits/skills`, branch `main`, last commit touching path `9f7f8ad` (2026-02-18)
+**Reviewed version:** HEAD as of 2026-04-16
+**Review report:** `plans/external-learn-ask-questions-if-underspecified.md`
+**Author / publisher:** Kevin Valerio (skill author), Trail of Bits (publisher)
+
+**Source summary:** Single-skill plugin that fires when a request has
+multiple plausible interpretations or unclear details (objective / done
+/ scope / constraints / environment / safety). Prescribes 1–5 must-have
+questions in a compact multiple-choice format with defaults and a
+fast-path reply, followed by a restatement of confirmed requirements
+before work starts. Includes a "pause before acting" rule and an
+anti-pattern against asking what a discovery read could answer.
+
+**Takeaways:**
+- **Adopted:** *(pending user decision — see report for proposals)*
+  - Overall concept: adopt as a new skill, `skills/ask-questions-if-underspecified.md`
+  - 6-axis underspecified checklist (objective / done / scope / constraints / environment / safety)
+  - Multiple-choice + defaults question format with `defaults` fast-path and compact reply (`1a 2b`)
+  - "Pause before acting" rule until must-have answers arrive
+  - "Ask vs look up" anti-pattern (don't ask questions a quick discovery read can answer)
+  - Question templates adapted to our voice
+- **Adapted:** Voice tweaks across all adopted content; keep it shorter than the source.
+- **Extended:** Cross-reference from `phase-plan/pass1.md` step 1 so readers see the interpretation-vs-detail distinction.
+
+**Rejected:**
+- None this round. Every pattern in the source had adoption value at some scope.
+
+**Status:** reviewed
+
+**Follow-ups:**
+- User decides whether to promote the two proposed `REFINEMENTS.md` entries (new skill + phase-plan cross-reference).
+- Upstream repo is active; re-check in ~3 months for iterations.
+- Parked question from the review: should phase-plan's walk-through also gain a "defaults" fast-path? Revisit after the underspec skill sees real use.
