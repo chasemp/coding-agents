@@ -31,6 +31,29 @@ description: >
      and whether validation strategies are actually calibrated vs defaulting
      to "tests are sufficient" for everything. -->
 
+<!-- TRACKING: Discovery exemption + plans dir + walk-through (2026-04-16)
+     Three additions: (1) Promoted the Phase 0 "no TDD" rule to a named
+     Discovery Exemption with explicit scope, bounded to discovery work only.
+     Added per-task Disposition field (throwaway / keep-as-fixture / promote)
+     to resolve the hybrid case where spike code becomes production code.
+     Context: observed in clauditor golden-dataset-eval plan where the D1
+     spike produced disposable code alongside reflexive TDD tests — the
+     skill's "no TDD in Phase 0" signal was too weak to override the TDD
+     instinct. (2) Prescribed plans/ as the default location for plan docs,
+     with directory auto-creation; fall back to existing project convention
+     (e.g., docs/) if one is established. (3) Made one-at-a-time walk-through
+     the default for confirming open-question severities at the end of each
+     pass (previously a bulk listing). Brief listing first, then each
+     question presented individually with a confirm/override prompt. User
+     can opt out with "accept all as recommended" — default changed because
+     bulk listings let the user skim past questions that deserve a real
+     decision. Monitor: (a) whether the Discovery Exemption neutralizes the
+     TDD-instinct override during Phase 0 execution, or whether spikes
+     continue to accumulate tests by reflex; (b) whether the walk-through
+     surfaces severity overrides that would have been missed by the bulk
+     listing, or whether users reflexively opt out. If the exemption isn't
+     holding, escalate to a programmatic check. -->
+
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
 all reasoning, not just the steps.
@@ -73,9 +96,12 @@ points in the workflow:
 
 ## The Plan Doc
 
-The plan doc is a markdown file the user creates or points to. It lives in the
-project (often at the repo root or in a `plans/` directory). Everything goes in
-this file — it is the handoff artifact between context windows.
+The plan doc is a markdown file. Its default location is `plans/<kebab-name>.md`
+at the repo root — create the `plans/` directory if it does not exist. If the
+project already keeps plans elsewhere (e.g., `docs/plan-*.md`, an existing
+`designs/` tree), match the existing convention rather than creating a new
+location. Everything goes in this file — it is the handoff artifact between
+context windows.
 
 ### Required sections
 
@@ -121,10 +147,21 @@ is cheap insurance: a few hours of probes can save days of rework.
 
 **Goal:** Resolve unknowns. Validate assumptions. Eliminate dead ends before
 committing to a multi-phase implementation.
-**Discovery tasks:**
-- [ ] Each task is a specific probe: "Run `tool --flag` and confirm output
-  contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
-  "POST to `/api/v2/foo` with payload Z and record the response shape"
+**Discovery tasks:** Each task declares a question, a probe, success criteria,
+and a disposition for any code the probe produces. Format:
+- [ ] **D1: [Question being answered]**
+  - **Probe:** Specific investigation — "Run `tool --flag` and confirm output
+    contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
+    "POST to `/api/v2/foo` with payload Z and record the response shape"
+  - **Success criteria:** What answer resolves the question (a concrete
+    value, shape, or observed behavior — not "it seems to work")
+  - **Disposition:** What happens to code written during the probe. One of:
+    - `throwaway` — delete or archive the spike after findings are recorded
+    - `keep-as-fixture` — the spike's output becomes test data or reference
+      material; consumers get TDD, the fixture itself does not
+    - `promote` — the spike code will become production code in a named
+      follow-up phase; TDD applies to the promoted code in that phase,
+      not to the spike
 **Outputs fed back into the plan:**
 - Verified Assumptions updated with findings and evidence
 - Open Questions resolved (or escalated with what was learned)
@@ -283,7 +320,10 @@ reasoning and review history are persisted, not the exact heading names.
    Do not proceed with planning until oversized phases are broken down.
    This is not a suggestion — 4+ files in a single phase is a known cause
    of partial completion and should be treated as a plan defect.
-8. **Persist everything.** Write the full plan doc. The Reasoning section must
+8. **Persist everything.** Write the full plan doc at
+   `plans/<kebab-name>.md` (create the `plans/` directory if it is missing).
+   If the project already keeps plans elsewhere, match the existing
+   convention instead of creating a new location. The Reasoning section must
    be detailed enough that someone in a fresh context can understand *why*
    every decision was made — not just *what* will be done.
 9. **Surface open questions.** If anything is unresolved, capture it in Open
@@ -303,21 +343,54 @@ reasoning and review history are persisted, not the exact heading names.
 ### Output
 
 A complete plan doc. If there are any open questions — regardless of
-recommended severity — list them all and ask the user to confirm or override
-each severity classification before proceeding. Do not say "no blocking items"
-and move on while questions remain unreviewed. The user may decide an ADVISORY
-question is actually BLOCKING. Format:
+recommended severity — the default is to walk the user through them one at
+a time before advancing. The user must have seen and confirmed every
+question's severity before Pass 2 begins.
 
-> "Pass 1 complete. Before clearing context for Pass 2, please review these
-> open questions and confirm whether you agree with the recommended severity:"
->
-> 1. [RECOMMENDED: ADVISORY] Question text. *Rationale.*
-> 2. [RECOMMENDED: PHASE-GATED (Phase 3)] Question text. *Rationale.*
->
-> "Override any that should be BLOCKING. Once confirmed, clear context and
-> come back for Pass 2 (gap analysis)."
+**Step 1: Brief listing.** Present all open questions as a short numbered
+summary with the recommended severity and a one-line rationale:
 
-If there are no open questions, say: "Pass 1 complete. No open questions.
+> "Pass 1 complete. [N] open questions. Brief summary:"
+>
+> 1. [RECOMMENDED: ADVISORY] Question text. *One-line rationale.*
+> 2. [RECOMMENDED: PHASE-GATED (Phase 3)] Question text. *One-line rationale.*
+> 3. [RECOMMENDED: BLOCKING] Question text. *One-line rationale.*
+>
+> "Let's walk through these one at a time to confirm severity. Starting
+> with #1 unless you'd rather accept all as recommended."
+
+**Step 2: Walk through each question.** Unless the user opts out ("accept
+all as recommended" or equivalent), present one question at a time and wait
+for a response before advancing:
+
+> "**Question 1 of [N]**
+>
+> [Question text]
+>
+> Recommended: [SEVERITY]. [Full rationale — can be longer than the
+> one-liner in the brief listing if context helps the user decide.]
+>
+> Confirm as [SEVERITY], or override to BLOCKING / PHASE-GATED / ADVISORY?"
+
+Record each confirmed severity in the Open Questions section of the plan
+doc, prefixed `[CONFIRMED: <severity>]` to distinguish user-confirmed from
+agent-recommended. Continue to the next question only after the current
+one is confirmed.
+
+**Step 3: Close out.** After the last question (or immediately if the user
+opts out):
+
+> "All [N] open questions confirmed. [Tally, e.g., '1 BLOCKING, 1 PHASE-GATED,
+> 1 ADVISORY.'] Clear context and come back for Pass 2 (gap analysis) when
+> ready."
+
+Do not say "no blocking items" and move on while questions remain
+unreviewed. The user may decide an ADVISORY question is actually BLOCKING —
+that call can only be made if they see and consider each one. The walk-
+through is what makes "the user decides" concrete; the bulk-accept shortcut
+exists for experienced users who trust the recommendations.
+
+**If there are no open questions**, say: "Pass 1 complete. No open questions.
 Clear context and come back for Pass 2 (gap analysis) when ready."
 
 ---
@@ -394,8 +467,11 @@ or says "pass 2" / "review the plan".
 ### Output
 
 Updated plan doc with gaps filled. If any open questions remain (including
-new ones surfaced by the gap analysis), list them all with recommended
-severities and ask the user to confirm. Same format as Pass 1 output.
+new ones surfaced by the gap analysis), follow the **walk-through procedure
+from Pass 1 Output**: brief listing, then one-at-a-time confirmation unless
+the user opts out with "accept all as recommended". Questions already
+confirmed in Pass 1 that have not changed do not need re-confirmation —
+only new or revised ones get walked through.
 
 If there are no open questions, say: "Pass 2 complete. No open questions.
 Clear context and come back for Pass 3 (quality gates) when ready."
@@ -467,6 +543,11 @@ or says "pass 3" / "final review".
 - If Phase 0 exists: are the discovery tasks concrete and answerable? Does
   each task have a clear question and a clear way to answer it? Are the
   outputs wired to the Verified Assumptions and Open Questions sections?
+- **Disposition check:** Does every Phase 0 task declare a disposition
+  (`throwaway`, `keep-as-fixture`, or `promote`)? If a task is marked
+  `promote`, is there a named follow-up phase that applies TDD to the
+  promoted code? An undeclared disposition is a plan defect — it is the
+  exact ambiguity the Discovery Exemption exists to prevent.
 - Could any Phase 0 discovery task be resolved right now during planning
   instead of deferred to execution? If so, resolve it now.
 
@@ -502,7 +583,7 @@ or says "pass 3" / "final review".
 **Validation calibration:**
 - [validation strategies reviewed, adjustments to match scope]
 **Discovery (if Phase 0 exists):**
-- [discovery tasks reviewed for concreteness and completeness]
+- [discovery tasks reviewed for concreteness, completeness, and disposition]
 **Coherence:**
 - [any reasoning gaps filled, scope adjustments]
 **Confirmed ready:** [yes/no — if no, what remains]
@@ -516,14 +597,29 @@ and confirmed every open question's severity before execution starts.
 
 **If any open questions remain (any severity):**
 
-> "Pass 3 complete. The following open questions remain. Please confirm
-> their severity before we start execution:"
+Use the **walk-through procedure from Pass 1 Output**, with one adjustment:
+split the brief listing into confirmed-from-prior-passes (read-only) and
+new-or-unreviewed (need the user's call). Walk through only the unreviewed
+set.
+
+> "Pass 3 complete. Open question status:"
 >
+> **Confirmed from prior passes (read-only):**
 > 1. [CONFIRMED: BLOCKING] Question text. *Needs resolution before starting.*
-> 2. [RECOMMENDED: PHASE-GATED (Phase 2)] Question text. *Rationale.*
-> 3. [RECOMMENDED: ADVISORY] Question text. *Rationale.*
 >
-> "Any of these you'd like to upgrade to BLOCKING before we proceed?"
+> **New or unreviewed (need your call):**
+> 2. [RECOMMENDED: PHASE-GATED (Phase 2)] Question text. *One-line rationale.*
+> 3. [RECOMMENDED: ADVISORY] Question text. *One-line rationale.*
+>
+> "Let's walk through the unreviewed ones (#2, #3). Starting with #2 unless
+> you'd rather accept all as recommended, or revisit a previously confirmed
+> item."
+
+Then walk through each RECOMMENDED item one at a time per the Pass 1
+procedure. Close out with a readiness statement:
+
+> "All open questions confirmed. [Tally.] The plan is ready for execution
+> (pending any BLOCKING items — see below)."
 
 Do NOT say "the plan is ready" while unreviewed questions exist. The agent
 recommends, the user decides. A question the agent thinks is ADVISORY might
@@ -609,10 +705,55 @@ and continue. The plan doc is a living document during execution.
 When the user says "let's execute" after planning is complete, these rules
 govern how you work through the plan.
 
+**Scope:** The rules below govern implementation phases (Phase 1 and beyond).
+Phase 0 Discovery follows the **Discovery Exemption** — see the dedicated
+section below before executing Phase 0.
+
 Print the full execution reminder at the start of execution. At the start of
 each subsequent phase, print the short mantra only:
 
 > **TDD first. Full phases. No stubs. No dead code. Commit when green.**
+
+### Discovery Exemption
+
+Phase 0 discovery tasks produce knowledge, not production code. The following
+implementation rules **do not apply** to discovery work:
+
+- **No RED-GREEN-REFACTOR cycle.** Spike code answers a question; it does
+  not need tests written first. Adding tests "because everything needs tests"
+  defeats the purpose of a spike and is the anti-pattern this exemption
+  exists to prevent.
+- **No wiring test requirement.** The spike itself is the verification —
+  did it answer the question with concrete evidence?
+- **No commit-per-item rule.** Commit the findings summary when discovery
+  is complete, not every probe iteration. Probe code may never be committed
+  at all (see `throwaway` disposition).
+- **No no-stubs rule.** Hardcoded paths, skipped edge cases, inline literals,
+  and shortcuts are expected in spike code. The spike is a scaffold, not
+  a product.
+
+The following rules **still apply** during discovery:
+
+- **Verified Assumptions must be updated with concrete evidence** — a docs
+  link, `file:line` reference, command output, or probe response. Inference
+  is not evidence.
+- **Findings must be recorded in the plan doc**, not only in chat. The plan
+  doc is the artifact that travels across context windows; a finding that
+  isn't written down is effectively lost.
+- **Each task must honor its declared Disposition.** The disposition
+  (`throwaway`, `keep-as-fixture`, `promote`) was declared during planning
+  for a reason — it resolves the ambiguity about what happens to spike
+  code once the question is answered.
+- **No assumed behavior dressed up as a finding.** If a probe didn't actually
+  run, a doc wasn't actually read, or output wasn't actually captured, the
+  assumption is not verified — it is still an Open Question.
+
+**Why this exemption is named and scoped:** The TDD-first instinct is strong
+and correct for implementation work. Without an explicit exemption, discovery
+spikes accumulate tests by reflex, which defeats the point of a spike. The
+scope is narrow — the exemption applies to Phase 0 only, and once spike code
+is promoted to production (via the `promote` disposition), full TDD rules
+resume in the named follow-up phase.
 
 ### The execution reminder (print in full at execution start)
 
@@ -639,10 +780,23 @@ each subsequent phase, print the short mantra only:
 ### Executing Phase 0 (Discovery)
 
 If the plan includes Phase 0, execute it before any implementation phase.
-Phase 0 is different from other phases:
+The **Discovery Exemption** (above) governs which rules apply. Additional
+execution guidance:
 
-- **No TDD cycle.** Phase 0 produces knowledge, not code. Probes, spikes, and
-  experiments are throwaway — they don't need tests.
+- **Honor the declared disposition for each task.** The disposition was
+  chosen during planning — follow it:
+  - `throwaway` — delete or archive the spike code after recording
+    findings. Do not leave disposable scripts in the repo pretending to
+    be production code. A `spike/` or `tests/spike/` location is fine
+    if the code has any residual diagnostic value.
+  - `keep-as-fixture` — save the output to its target location
+    (e.g., `tests/fixtures/`, `tests/eval/ground_truth.json`) and record
+    the path in the plan doc. The fixture does not need tests, but
+    consumers that read it do.
+  - `promote` — the spike code stays, but the named follow-up phase
+    must wrap it in real tests before it ships. Until then, flag the
+    spike code as non-production (a module-level comment or a dedicated
+    directory) so no one mistakes it for vetted code.
 - **Update the plan doc as you go.** Move findings into Verified Assumptions.
   Resolve Open Questions. If a discovery invalidates an assumption that later
   phases depend on, update those phases now — flag the changes in the Review Log.
@@ -758,6 +912,11 @@ that the entry point can reach this code?" If the answer is "none yet" or
 ---
 
 ## Guardrails
+
+**Scope note:** The execution-related guardrails below ("No stubs, ever",
+"Built means wired", "Commit at every stable point") govern implementation
+phases. Phase 0 discovery operates under the Discovery Exemption in the
+Execution Rules section — read that first if you are executing Phase 0.
 
 - **Never skip reasoning.** A plan without reasoning is a todo list. The
   reasoning is what makes the plan re-entrant across context windows.
