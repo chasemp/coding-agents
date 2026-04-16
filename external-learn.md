@@ -318,6 +318,15 @@ Before delivering the review, verify:
 - **Upstream references are captured or marked "unknown".** Do not
   invent values — if the source is a raw paste with no URL, say so
   explicitly in the ledger.
+- **Adopt proposals include inline attribution.** For any candidate
+  rated `adopt` or `adopt with adaptation`, the review's proposal must
+  call out an inline source-attribution paragraph in the target file
+  itself — upstream link, reviewed commit SHA, and pointer to the
+  review report. Commit-message-only attribution is insufficient
+  because it dies in git history. See `skills/skill-hygiene.md`
+  § Incorporating External Ideas step 4 for the canonical pattern
+  and `skills/ask-questions-if-underspecified.md` for a concrete
+  example.
 
 ## Agent Memory
 
