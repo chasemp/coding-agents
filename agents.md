@@ -90,13 +90,22 @@ guardian's role, and those go in the consumer project's `LEARNINGS.md`.
 
 **External Intake** (when evaluating an external skill, plugin, or set):
 ```
-external-learn (compare against this repo, produce review report)
+external-learn (compare against this repo, produce review report + ledger entry)
 ```
 Invoke external-learn with a path, URL, or plugin reference. It writes
-a structured review to `plans/external-learn-<name>.md` with per-candidate
-ratings (adopt / adopt with adaptation / extend existing / reject /
-park) and draft proposals the user can promote to `REFINEMENTS.md`.
-external-learn does not adopt anything — the user decides.
+two artifacts:
+
+1. A structured review at `plans/external-learn-<name>.md` with
+   per-candidate ratings (adopt / adopt with adaptation / extend existing
+   / reject / park) and draft proposals the user can promote to
+   `REFINEMENTS.md`.
+2. A summary entry at the top of `EXTERNAL-LEARNINGS.md` with upstream
+   references (git URL, commit, version), takeaways, and status. The
+   ledger tracks every source we've studied so future sessions recognize
+   them without re-reviewing.
+
+external-learn does not adopt anything — the user decides which
+proposals in the report graduate to `REFINEMENTS.md` entries.
 
 **Architecture Decisions** (when evaluating design choices):
 ```
@@ -166,7 +175,8 @@ agent's system prompt at startup.
 **Memory does NOT replace:**
 - CLAUDE.md (canonical project-wide knowledge)
 - LEARNINGS.md (per-feature learnings in consumer projects, managed by progress-guardian)
-- REFINEMENTS.md (global refinement ledger for this repo, managed by learn)
+- REFINEMENTS.md (global refinement proposals for this repo, managed by learn)
+- EXTERNAL-LEARNINGS.md (ledger of external sources reviewed, managed by external-learn)
 - ADRs (architectural decisions managed by adr agent)
 
 ### Turn Limits
@@ -195,4 +205,5 @@ have 20 turns.
 | `skills/` | On-demand skills (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (`/pr`, `/generate-pr-review`) |
 | `hooks/` | Programmatic TDD enforcement (edit guard, stop guard, pre-commit) |
-| `REFINEMENTS.md` | Global refinement ledger — managed by `learn`, fed by `external-learn` |
+| `REFINEMENTS.md` | Global refinement-proposal ledger — managed by `learn`, fed by `external-learn` via user promotion |
+| `EXTERNAL-LEARNINGS.md` | Ledger of external sources reviewed and what we took away — managed by `external-learn` |
