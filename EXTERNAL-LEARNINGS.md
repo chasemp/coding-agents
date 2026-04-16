@@ -91,22 +91,27 @@ before work starts. Includes a "pause before acting" rule and an
 anti-pattern against asking what a discovery read could answer.
 
 **Takeaways:**
-- **Adopted:** *(pending user decision — see report for proposals)*
-  - Overall concept: adopt as a new skill, `skills/ask-questions-if-underspecified.md`
+- **Adopted:** New skill created at `skills/ask-questions-if-underspecified.md`
+  absorbing:
+  - Overall "ask before implementing when underspecified" concept
   - 6-axis underspecified checklist (objective / done / scope / constraints / environment / safety)
   - Multiple-choice + defaults question format with `defaults` fast-path and compact reply (`1a 2b`)
   - "Pause before acting" rule until must-have answers arrive
   - "Ask vs look up" anti-pattern (don't ask questions a quick discovery read can answer)
   - Question templates adapted to our voice
-- **Adapted:** Voice tweaks across all adopted content; keep it shorter than the source.
-- **Extended:** Cross-reference from `phase-plan/pass1.md` step 1 so readers see the interpretation-vs-detail distinction.
+- **Adapted:** Voice rewritten throughout; added explicit hand-off rules
+  to `phase-plan` for when scope turns out non-trivial; source
+  attribution included in skill frontmatter paragraph.
+- **Extended:** Added cross-reference from `skills/phase-plan/pass1.md` step 1 so
+  readers see the interpretation-vs-detail distinction.
 
 **Rejected:**
 - None this round. Every pattern in the source had adoption value at some scope.
 
-**Status:** reviewed
+**Status:** fully adopted
 
 **Follow-ups:**
-- User decides whether to promote the two proposed `REFINEMENTS.md` entries (new skill + phase-plan cross-reference).
+- Both `REFINEMENTS.md` entries accepted in-session (skill created,
+  phase-plan cross-reference applied).
 - Upstream repo is active; re-check in ~3 months for iterations.
 - Parked question from the review: should phase-plan's walk-through also gain a "defaults" fast-path? Revisit after the underspec skill sees real use.

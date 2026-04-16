@@ -11,7 +11,13 @@
 ## Steps
 
 1. **Understand the problem space.** Read the issue, relevant code, and any
-   existing context. Ask clarifying questions — do not assume.
+   existing context. Ask clarifying questions — do not assume. If the
+   request itself is ambiguous (multiple plausible interpretations, not
+   just missing planning details), use the
+   `ask-questions-if-underspecified` skill first — it uses a lighter
+   multiple-choice format better suited to resolving interpretation
+   before planning engages. Pass 1 handles the planning-detail questions
+   that remain after interpretation is settled.
 2. **Ground the plan in the codebase.** Before drafting any phases, explore
    the code that will be affected. Name specific files, functions, and modules.
    Identify existing patterns (how does the project already do logging? testing?
