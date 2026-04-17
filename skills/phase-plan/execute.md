@@ -167,6 +167,13 @@ Before moving from Phase N to Phase N+1, confirm:
       ✅ SHIPPED with the commit SHA; Outcome Summary row added or
       updated; any deviations from the Pass 3 spec noted. See
       "Keep the plan doc in sync with reality" below.
+- [ ] **If Phase N is the final phase (or execution is being
+      abandoned), the close-out Review Log entry is written before
+      the final commit.** Three required elements — Shipped, Stopped
+      or skipped, Discoveries. Template and design goal in
+      "Keep the plan doc in sync with reality" § When the plan
+      closes. Per-phase markers are not a substitute; the close-out
+      is the narrative that ties the arc together for a cold reader.
 
 Report this checklist to the user at each phase boundary. Do not silently
 move on.
@@ -271,9 +278,40 @@ act:
 4. **Deferred work** (anything the plan surfaced but didn't land) is
    in `TODO.md` (or the project's equivalent) with a pointer back to
    the plan path, so future readers can find the full context.
-5. **Review Log** has a dated close-out entry naming what the plan
-   accomplished end-to-end, including any late surprises (e.g., the
-   validation audit exposed a bug that was fixed in-plan).
+5. **Review Log has a dated close-out entry** with three required
+   elements — this is the narrative that ties execution together.
+   Per-phase headers cover "what shipped where"; the close-out entry
+   covers the arc.
+
+   **Design goal:** a reader picking this up cold can reconstruct
+   what we shipped, what failed and why we stopped, and what we
+   learned that changed our mental model.
+
+   **Required template:**
+
+   ```markdown
+   ### Plan close-out — YYYY-MM-DD
+   **Shipped:** <final state in git after this plan — the commits,
+                 files, and observable behavior that now exist. Not
+                 a phase-by-phase replay; one coherent paragraph or
+                 bullet list that enumerates the shipped surface.>
+   **Stopped or skipped:** <what didn't land, and the reasoning.
+                             Phases skipped, work deferred to TODO,
+                             anything abandoned. Write "nothing" if
+                             the plan shipped in full.>
+   **Discoveries:** <what execution taught us that changed our
+                     mental model — insights we wouldn't have
+                     captured during planning. Failed approaches
+                     that informed the shipped one; surprises from
+                     smoke tests; assumptions that turned out wrong
+                     mid-phase. Write "none noteworthy" if execution
+                     went exactly as planned (rare — interrogate
+                     this before writing it).>
+   ```
+
+   Per-phase `✅ SHIPPED (sha)` markers are necessary but not
+   sufficient. The close-out is the paragraph the next reader will
+   open first when they ask "why does the code do X?"
 
 ### Why this matters
 
