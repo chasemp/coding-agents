@@ -87,8 +87,17 @@ unless the user opts out with "accept all as recommended". Questions
 already confirmed in Pass 1 that have not changed do not need
 re-confirmation — only new or revised ones get walked through.
 
-If there are no open questions, say: "Pass 2 complete. No open questions.
-Clear context and come back for Pass 3 (quality gates) when ready."
+The close-out message (whether questions were walked through or there were
+none) must include the plan file path so the user does not have to scroll
+back through session history:
+
+> "Pass 2 complete. [Tally of new/revised questions confirmed, if any.]
+> Clear context and come back for Pass 3 (quality gates) when ready.
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
+
+If there are no open questions, use the same close-out format with "No
+open questions." in place of the tally.
 
 ## Reminders (critical, repeated for forefront)
 

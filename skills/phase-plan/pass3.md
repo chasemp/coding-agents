@@ -165,7 +165,12 @@ Then walk through each RECOMMENDED item one at a time per the Pass 1
 procedure. Close out with a readiness statement:
 
 > "All open questions confirmed. [Tally.] The plan is ready for execution
-> (pending any BLOCKING items — see below)."
+> (pending any BLOCKING items — see below).
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
+
+Always include the plan file path in the close-out — the user should never
+have to scroll back through session history to find where the plan lives.
 
 Do NOT say "the plan is ready" while unreviewed questions exist. The agent
 recommends, the user decides. A question the agent thinks is ADVISORY might
@@ -179,10 +184,13 @@ Apply the confirmed severities:
   are blocked and what must be resolved before reaching them.
 - **ADVISORY** items: note them but don't gate execution.
 
+Close out with the plan file path in the same format.
+
 **If there are no open questions:**
 
-Tell the user: "Pass 3 complete. No open questions. The plan is ready for
-execution."
+> "Pass 3 complete. No open questions. The plan is ready for execution.
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
 
 ## Reminders (critical, repeated for forefront)
 
