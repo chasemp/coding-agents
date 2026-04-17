@@ -42,6 +42,64 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-04-17: Verbal batched proposals should persist to plans/
+
+**Observed pattern:** A long multi-session thread accumulated 18
+commits' worth of meaningful changes (new agent, 3 skills, 3
+commands, 2 ledgers, phase-plan split, escalation unification, doc
+impact enforcement, one-plan clarification) without a single file
+in `plans/` being written for the session itself. Each batch was a
+functional plan — problem statement ("escalation defined but
+unused"), proposed solution (list of specific edits), reasoning
+("pair with orthogonal workflow"). User approved via "let's do all
+that" and work proceeded. The rationale survived in commit messages
+and `REFINEMENTS.md` entries but never as one cohesive plan doc.
+
+**Evidence:**
+- 2026-04-16 and 2026-04-17 commits `cc13767` through `a444ad8` —
+  all substantive, all directed by verbal proposals approved in
+  conversation, none preceded by a `plans/` file.
+- User statement 2026-04-17: "we made a plan here without phase
+  plan, although this is maybe just barely at that threshold."
+- `phase-plan` trigger didn't fire because each turn's increment
+  felt small — it was the session-level accumulation that crossed
+  the threshold.
+
+**Proposed refinement:** One of these three shapes (user to pick,
+or reject all three as over-engineering).
+- **A. Trigger-language tweak.** Extend `phase-plan` description:
+  "…or when an approved batched proposal in conversation would
+  touch 3+ files, new files, or skill/agent/command definitions —
+  persist the proposal to `plans/` before executing, even if
+  short." Lightest touch; no new skill.
+- **B. New skill `persist-verbal-plan`.** Auto-trigger when Claude
+  is about to begin executing a batched change approved in
+  conversation and the batch crosses a threshold (3+ files, new
+  files, or configuration-of-Claude-Code changes). Writes a short
+  plan doc to `plans/` capturing the verbal proposal before the
+  first edit. Small, focused, complements `plan-doc-reasoning`.
+- **C. Park it.** One strike only (this session); the pattern may
+  not recur if individual users pace differently. Revisit if a
+  second session replays the same shape.
+
+**Rationale:** Rationale survived this session via commit messages
+and the ledgers, so no knowledge was lost — but future-us reading
+`git log` to reconstruct "why did external-learn get a ledger in
+addition to REFINEMENTS.md" will find the answer scattered across
+four commits and two entries instead of one plan doc. The plan doc
+is the artifact whose absence we would not immediately feel but
+would regret in three months.
+
+**Status:** proposed
+
+**Notes:** User's framing — "this is maybe just barely at that
+threshold" — suggests the refinement should be conservative. Option
+A (trigger tweak) is my lean; Option B if A proves insufficient
+after another strike. Meta-observation: this session's work itself
+is the kind of thing the new `Documentation Impact` requirement
+would have caught at plan time (we had to update README, agents.md,
+CLAUDE.md repeatedly as reactive patches).
+
 ## 2026-04-17: Documentation Impact in phased plans + one-plan clarification
 
 **Observed pattern:** Recent multi-session work adding skills
