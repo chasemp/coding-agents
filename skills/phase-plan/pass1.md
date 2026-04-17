@@ -176,7 +176,12 @@ opts out):
 
 > "All [N] open questions confirmed. [Tally, e.g., '1 BLOCKING, 1 PHASE-GATED,
 > 1 ADVISORY.'] Clear context and come back for Pass 2 (gap analysis) when
-> ready."
+> ready.
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
+
+Always include the plan file path in the close-out — the user should never
+have to scroll back through session history to find where the plan lives.
 
 Do not say "no blocking items" and move on while questions remain
 unreviewed. The user may decide an ADVISORY question is actually BLOCKING —
@@ -184,8 +189,12 @@ that call can only be made if they see and consider each one. The walk-
 through is what makes "the user decides" concrete; the bulk-accept shortcut
 exists for experienced users who trust the recommendations.
 
-**If there are no open questions**, say: "Pass 1 complete. No open questions.
-Clear context and come back for Pass 2 (gap analysis) when ready."
+**If there are no open questions**, say:
+
+> "Pass 1 complete. No open questions. Clear context and come back for Pass 2
+> (gap analysis) when ready.
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
 
 ## Reminders (critical, repeated for forefront)
 
