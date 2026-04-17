@@ -64,11 +64,11 @@ resume in the named follow-up phase.
 Print this once at the start of execution. At the start of each subsequent
 phase, print the short mantra only:
 
-> **TDD first. Full phases. No stubs. No dead code. Commit when green.**
+> **TDD first. Full phases. No stubs. No dead code. Commit when green. Plan matches reality.**
 
 Full reminder (first-phase print):
 
-> **TDD first. Full phases. No stubs. No dead code. Commit at stable points.**
+> **TDD first. Full phases. No stubs. No dead code. Commit at stable points. Plan matches reality.**
 >
 > - Write tests before implementation — every phase, every change.
 > - Execute each phase of the plan completely and in order. Do not skip
@@ -87,6 +87,11 @@ Full reminder (first-phase print):
 > - **Commit after each phase.** When the phase checklist passes, commit.
 >   This creates a rollback point and makes "done" concrete. If it's not
 >   committed, it's not done.
+> - **Keep the plan doc in sync with reality.** Phase shipped → update
+>   its header + Outcome Summary. Phase skipped → mark skipped in-place
+>   with the decision. Discovery invalidates an assumption → update VA
+>   and any affected phase specs before moving on. The plan is a living
+>   document; stale plan text lies to the next reader.
 
 ---
 
@@ -151,6 +156,10 @@ Before moving from Phase N to Phase N+1, confirm:
 - [ ] Existing tests still pass (regression check)
 - [ ] The system is in a working state
 - [ ] Phase N changes are committed
+- [ ] **Plan doc reflects the outcome.** Phase N's header marked
+      ✅ SHIPPED with the commit SHA; Outcome Summary row added or
+      updated; any deviations from the Pass 3 spec noted. See
+      "Keep the plan doc in sync with reality" below.
 
 Report this checklist to the user at each phase boundary. Do not silently
 move on.
@@ -161,6 +170,116 @@ calls the component from the entry point. The wiring test is the only
 thing that catches this. If you find yourself wanting to skip it because
 "the unit tests already cover the logic" — that is exactly the situation
 where dead code accumulates.
+
+---
+
+## Keep the plan doc in sync with reality
+
+**The plan is a living document.** Its value after close-out is as a
+record that matches what actually happened — not what was hoped for at
+Pass 3. A plan that says "Phase 2 will do X" when Phase 2 was skipped,
+or claims a Verified Assumption that discovery disproved, is worse than
+no plan: future readers trust the text and act on stale information.
+
+Every phase-boundary event has a corresponding plan-doc update. Skip
+these updates and the plan silently drifts. Make them part of the same
+commit as the code change when possible, so the plan's state matches
+the repo's state at every step.
+
+### When a phase ships
+
+After the phase completion checklist passes and you commit:
+
+1. **Edit the phase section header in-place** to mark it shipped and
+   link the commit SHA. Format:
+   `### Phase N: <Name> — ✅ SHIPPED (\`<sha>\`)`
+2. **If the phase delivered something different from the Pass 3 spec**,
+   append a short "Delivered:" note describing the difference and why
+   it was chosen. Don't rewrite the original spec — append. The spec
+   is the contract; the delivered note is the reconciliation.
+3. **Add a one-line entry to the Outcome Summary** (at the top of the
+   plan — create it if it doesn't exist) with the commit SHA and a
+   one-sentence outcome. This is the at-a-glance view for future readers.
+
+### When a phase is skipped
+
+A conditional phase that the gate never tripped, or a phase rendered
+unnecessary by discovery, must be **marked skipped in place** — not
+deleted. Format:
+
+- Change header to `### Phase N: <Name> — ⏭️ SKIPPED`
+- Prepend a "Decision YYYY-MM-DD:" paragraph explaining why the gate
+  did or didn't fire, with the concrete numbers/evidence that drove
+  the call.
+- Leave the original spec below the decision paragraph so a future
+  reader can see what would have happened if the gate had flipped.
+- Update the Outcome Summary entry to reflect the skip.
+
+### When discovery changes the problem or solution
+
+Phase 0 is the only phase allowed to alter the structure of later
+phases — and the alterations must land in the plan doc before Phase 1
+starts. Specifically:
+
+- **Assumption disproven** → update the corresponding Verified
+  Assumption entry with the finding, and update Reasoning if the
+  approach hinges on it. Don't leave the original statement lying
+  around implying it's still true.
+- **Assumption invalidates a later phase** → update that phase's spec,
+  Depends-on list, or scope. If the phase is no longer needed, mark it
+  skipped per the rules above.
+- **Discovery produces data the plan doesn't anticipate** → add a new
+  VA entry rather than mixing the finding into the Review Log alone.
+  VA is the source of truth; Review Log is the narrative.
+- **Problem Statement is wrong** → edit it. The original can stay in
+  the Review Log as "original framing" if the revision is material,
+  but the top-of-plan text has to reflect current understanding.
+
+### When new findings surface mid-execution
+
+Not every observation needs a plan update — only those that change
+decisions or invalidate assumptions. The filter: would a future reader
+need to know this to understand the plan's outcomes? If yes, update.
+If it's purely operational (transient error, environment quirk, known
+flake), keep it in chat.
+
+Typical mid-execution updates:
+- A follow-up the plan surfaced but won't address → add a bullet under
+  the phase that surfaced it, point at `TODO.md` for tracking.
+- A new risk that didn't exist at Pass 3 → Review Log entry, and if
+  it changes the decision for a later phase, update that phase's spec.
+- A decision you made that the plan doesn't cover → Review Log entry
+  with "Decision YYYY-MM-DD:" and the reason.
+
+### When the plan closes
+
+Closing a plan is not just "I wrote the last commit." It's a specific
+act:
+
+1. **Outcome Summary exists at the top** with one row per phase showing
+   outcome (✅/⏭️/❌) + commit SHA + one-sentence note.
+2. **Every phase section** has its ✅/⏭️/❌ header prefix.
+3. **Status header** (top of plan) reads Closed, with a one-line tally
+   of what shipped vs skipped vs deferred.
+4. **Deferred work** (anything the plan surfaced but didn't land) is
+   in `TODO.md` (or the project's equivalent) with a pointer back to
+   the plan path, so future readers can find the full context.
+5. **Review Log** has a dated close-out entry naming what the plan
+   accomplished end-to-end, including any late surprises (e.g., the
+   validation audit exposed a bug that was fixed in-plan).
+
+### Why this matters
+
+Plans are read twice: once during execution, once months later when
+someone is asking "why does the code do X?" The second read is what
+determines whether the plan was worth writing. If the doc matches the
+code, the reader gets the full why-chain without chasing commits. If
+it doesn't, they trust the stale text and make the wrong call, or
+give up and read the code raw — which is the failure mode the plan
+existed to prevent.
+
+**A plan that doesn't reflect reality is technical debt with a
+credibility surface.** Fix it as you go.
 
 ---
 
