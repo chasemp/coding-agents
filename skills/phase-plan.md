@@ -77,6 +77,26 @@ description: >
      the ordinal rule is forgotten, escalate to a Write-tool guard that
      validates the filename pattern before creating the file. -->
 
+<!-- TRACKING: Documentation Impact + One-plan clarification (2026-04-17)
+     Two related additions. (1) Added a Documentation Impact required
+     section to the plan doc template plus a Pass 1 inventory step and
+     Pass 3 coverage check. Context: recent multi-session work on this
+     repo (new skills, new agent, two ledgers) required doc updates to
+     README.md, agents.md, and cross-references in multiple files — and
+     those updates happened reactively when audit or the user caught
+     drift, not proactively in phase items. User flagged: "docs are
+     getting crusty." Mirrors the wiring-test fix — work belongs in the
+     phase that triggers its need, not a later cleanup phase that gets
+     skipped. (2) Added "One plan, three passes" clarification section
+     plus banners on each per-pass skill file. Context: an agent using
+     the skill tried to create per-pass plan files (plans/foo-pass1.md
+     style) because the skill dir has pass1.md/pass2.md/pass3.md and
+     the relationship wasn't explicit. Monitor: (a) whether plans
+     actually populate Documentation Impact with real content vs
+     rubber-stamping "no impact," and (b) whether the clarification
+     holds up — if agents still try to create per-pass plan files,
+     escalate to a Write-tool guard that rejects them. -->
+
 <!-- TRACKING: File split (2026-04-16)
      Split the skill into a slim main file (this) plus per-pass files in
      skills/phase-plan/. Main file holds the plan doc template, usage
@@ -108,6 +128,35 @@ produced unless something is concretely wrong. The goal is to build on a stable
 foundation, not re-deal the cards each pass. If a phase needs a new step, add
 it. If reasoning has a gap, fill the gap — don't rewrite the surrounding
 paragraphs. Wholesale restructuring requires explicit user approval.
+
+---
+
+## One plan, three passes
+
+**Critical clarification:** The plan is a **single file** — for example
+`plans/2026-04-17-1-plan-foo.md`. All three passes refine that same file
+at different depths and along different dimensions:
+
+- **Pass 1** builds the base: problem, reasoning, phases, open questions.
+- **Pass 2** extends the base with gap analysis: missing dependencies,
+  cross-phase issues, factual checks against the codebase.
+- **Pass 3** layers quality gates on top: TDD ordering, observability,
+  validation calibration, documentation impact coverage.
+
+Each pass is a pass *over* the same document, not the production of a
+separate document. The passes differ in **what they look for**, not
+**what they produce**.
+
+### Per-pass skill files are instructions, not plan templates
+
+The files in `skills/phase-plan/` (`pass1.md`, `pass2.md`, `pass3.md`,
+`execute.md`) are this skill's own instruction content — they tell
+Claude what to do in each pass. They are **not** templates for plan
+output and they do **not** correspond to per-pass plan artifacts.
+
+If you find yourself creating `plans/foo-pass1.md`, `plans/foo-pass2.md`,
+`plans/foo-pass3.md`, or any other per-pass plan files, stop. You
+should be editing the single plan file.
 
 ---
 
@@ -193,6 +242,31 @@ decision process from this section alone.
 What we confirmed about libraries, APIs, CLI tools, and existing code —
 and how we confirmed it (docs link, source file:line, probe output).
 Anything not listed here is unverified.
+
+## Documentation Impact
+Every doc file that will be added, renamed, moved, removed, or
+referenced differently by this plan. Captured at plan time so doc
+updates become first-class phase items, not a deferred cleanup.
+
+Format:
+- `path/to/doc.md` — what changes there, which phase handles it
+
+Typical candidates to check:
+- `README.md` — command/skill/agent additions, renames, removals
+- `agents.md` — agent registry, file reference, orchestration sequences,
+  memory lists, recommended sequences
+- `CLAUDE.md` — core principle changes (rare)
+- Other skills/agents that cross-reference a file being changed
+- `REFINEMENTS.md` / `EXTERNAL-LEARNINGS.md` — status transitions if
+  the plan resolves or promotes a proposal
+
+**Schedule each doc update in the phase that makes its reference
+stale**, not a later "docs phase" at the end. Docs phases at the end
+are the most-skipped part of any plan.
+
+If the plan adds, renames, or removes a file, this section cannot be
+empty. At minimum, record "grepped — no references found" with the
+search terms used.
 
 ## Phases
 Ordered phases of work. Each phase should leave the system in a working state.

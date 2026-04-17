@@ -4,6 +4,12 @@
 > Assumes the main `phase-plan.md` skill is already loaded, and often
 > `pass1.md` has been loaded in the same context (when using the Combined
 > Pass 1+2 pattern).
+>
+> **Not a plan template.** This file is the `phase-plan` skill's
+> instructions for Pass 2. The plan doc itself is a single file (see
+> `phase-plan.md` § One plan, three passes) — Pass 2 extends that same
+> file with gap analysis. Do not create `plans/foo-pass2.md` or any
+> other per-pass plan file.
 
 **Goal:** Review the plan for missing changes, downstream effects, and
 incomplete reasoning.

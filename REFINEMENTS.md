@@ -42,6 +42,73 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-04-17: Documentation Impact in phased plans + one-plan clarification
+
+**Observed pattern:** Recent multi-session work adding skills
+(`ask-questions-if-underspecified`, `plan-doc-reasoning`,
+`claude-code-docs`), a new agent (`external-learn`), two ledgers
+(`REFINEMENTS.md`, `EXTERNAL-LEARNINGS.md`), and a command (`/audit`)
+required doc updates to `README.md`, `agents.md`, CLAUDE.md, and
+cross-references across multiple skills. Those updates happened —
+but reactively, when the user or `/audit` caught drift, not
+proactively as part of the plan's phase items. User flagged: "docs
+are getting crusty." Separate issue in the same session: an agent
+using the skill attempted to create per-pass plan files
+(`plans/foo-pass1.md`) because `skills/phase-plan/pass{1,2,3}.md`
+exists and the relationship wasn't explicit.
+
+**Evidence:**
+- Multiple commits from 2026-04-16 where `agents.md` had to be
+  updated after-the-fact (learn role update, REFINEMENTS.md add,
+  external-learn add, EXTERNAL-LEARNINGS.md add, /audit add).
+- User statement 2026-04-17: "we're not incorporating refining
+  documentation in our plans already and we need to be."
+- User statement 2026-04-17: "I had an agent trying to use the skill
+  get confused on whether there were per pass individual plan files."
+
+**Proposed refinement:** Two related additions to `phase-plan`.
+
+Documentation Impact (five edits):
+1. Plan doc template gets a required `Documentation Impact` section
+   between `Verified Assumptions` and `Phases`.
+2. Pass 1 gains a new step 7 ("Inventory documentation impact")
+   between "Draft phases" and "Size phases"; steps 7–9 renumbered
+   to 8–10.
+3. Pass 3 gains a new Check 7 ("Documentation impact coverage")
+   and a "Documentation impact" line in the Review Log format.
+4. Execute checklist gains a "Documentation updates scheduled for
+   this phase are done" item.
+5. Main file gets a TRACKING block dated 2026-04-17.
+
+One-plan clarification (three edits):
+1. Main file gets a new `## One plan, three passes` section
+   immediately before `## Loading the Per-Pass Files`, explicitly
+   stating that the plan is a single file and that the per-pass
+   skill files are instructions, not plan templates.
+2. Each per-pass file (`pass1.md`, `pass2.md`, `pass3.md`) gets a
+   "Not a plan template" banner under the existing loading note,
+   telling readers not to create per-pass plan files.
+3. TRACKING block includes the clarification context.
+
+**Rationale:** The doc-impact addition mirrors the wiring-test fix —
+work belongs in the phase that triggers its need, not a later
+cleanup phase that gets skipped when time pressure hits. It
+complements `docs-guardian` (advisory at PR time) by catching doc
+impact at plan time when it's cheapest to schedule correctly. The
+one-plan clarification closes a real confusion mode observed in a
+user's session.
+
+**Status:** accepted
+
+**Notes:** Applied 2026-04-17. Files changed:
+- `skills/phase-plan.md` (template `Documentation Impact` section +
+  `One plan, three passes` section + TRACKING block)
+- `skills/phase-plan/pass1.md` (step 7 added, step renumbering,
+  banner)
+- `skills/phase-plan/pass2.md` (banner only)
+- `skills/phase-plan/pass3.md` (Check 7 + Review Log row + banner)
+- `skills/phase-plan/execute.md` (Phase completion checklist item)
+
 ## 2026-04-16: Plan docs must record Problem/Approach/Reasoning
 
 **Observed pattern:** Plans created outside `phase-plan`'s three-pass

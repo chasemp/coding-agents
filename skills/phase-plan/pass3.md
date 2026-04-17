@@ -3,6 +3,12 @@
 > Loaded on demand by the `phase-plan` skill when the user invokes Pass 3.
 > Assumes the main `phase-plan.md` skill is already loaded. Pass 3 is
 > designed for a fresh context — clean eyes on the final plan.
+>
+> **Not a plan template.** This file is the `phase-plan` skill's
+> instructions for Pass 3. The plan doc itself is a single file (see
+> `phase-plan.md` § One plan, three passes) — Pass 3 layers quality
+> gates on top of that same file. Do not create `plans/foo-pass3.md`
+> or any other per-pass plan file.
 
 **Goal:** Ensure the plan is ready for execution — TDD-first, observable,
 debuggable, and coherent.
@@ -80,6 +86,20 @@ or says "pass 3" / "final review".
 - Are naming conventions, file organization, and code style consistent
   with the project?
 
+**7. Documentation impact coverage**
+- Does the plan have a `Documentation Impact` section (see main
+  `phase-plan.md` § The Plan Doc)? If the plan adds, renames, moves,
+  or removes any file, that section cannot be empty — even a "grepped
+  — no references found" record is acceptable, silence is not.
+- Every file listed in Documentation Impact has a corresponding phase
+  item that updates it.
+- Every phase that adds/renames/removes a file has a same-phase doc
+  update. A "docs phase" at the end is an anti-pattern; flag it and
+  redistribute the doc updates into the phases that trigger them.
+- For renames: has the plan acknowledged potential stale references
+  (see `/audit` Check 2)? The grep should be proactive, not a post-hoc
+  audit run.
+
 ## Steps
 
 1. Read the plan doc end to end with fresh eyes.
@@ -110,6 +130,8 @@ or says "pass 3" / "final review".
 - [discovery tasks reviewed for concreteness, completeness, and disposition]
 **Coherence:**
 - [any reasoning gaps filled, scope adjustments]
+**Documentation impact:**
+- [doc updates verified present in the right phase, or flagged as missing]
 **Confirmed ready:** [yes/no — if no, what remains]
 ```
 

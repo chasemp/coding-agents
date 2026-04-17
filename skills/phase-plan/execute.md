@@ -154,6 +154,13 @@ Before moving from Phase N to Phase N+1, confirm:
       validated and what you observed.
 - [ ] Tests for Phase N's changes were written first and are passing
 - [ ] Existing tests still pass (regression check)
+- [ ] **Documentation updates scheduled for this phase are done.**
+      Cross-check Phase N against the plan's Documentation Impact
+      section. If a doc update was scheduled for this phase, it is
+      applied in the same commit window — not deferred to the next
+      phase. If no updates were scheduled, confirm the Documentation
+      Impact section accounts for this phase's changes (or record
+      "no refs" with the search terms used).
 - [ ] The system is in a working state
 - [ ] Phase N changes are committed
 - [ ] **Plan doc reflects the outcome.** Phase N's header marked
