@@ -42,6 +42,57 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-04-17: Plan close-out must produce a reader-can-reconstruct narrative
+
+**Observed pattern:** Plans were executing to completion (final phase
+shipped, Outcome Summary rows present, per-phase `✅ SHIPPED` markers
+in place) but the plan doc was not closing out cleanly. A reader
+picking it up cold could not reconstruct the arc — what shipped,
+what failed and why we stopped, and what we learned that changed our
+mental model. Per-phase markers answered "what shipped where" but not
+"what was the journey." `execute.md` § When the plan closes had a
+Review Log requirement, but it was vague ("dated close-out entry
+naming what the plan accomplished end-to-end, including any late
+surprises") and in practice was skipped or reduced to a restatement
+of the Outcome Summary.
+
+**Evidence:**
+- User report 2026-04-17 citing a session-level observation from
+  another LLM: "the plan has Outcome Summary + Phase 4 SKIPPED
+  rationale, but no dated close-out narrative tying execution
+  together — no record of the smoke test success, no reasoning on
+  the 'concurrency dominates wall clock' insight as an execution-time
+  discovery, no enumeration of the final shipped state."
+- User's explicit design goal, quoted verbatim: "A reader picking
+  this up cold can reconstruct: what we shipped, what failed and why
+  we stopped, and what we learned that changed our mental model."
+
+**Proposed refinement:**
+- **Target:** `skills/phase-plan/execute.md`
+- **Change:**
+  1. Strengthened § When the plan closes item 5 from a vague
+     one-liner into a three-element template (Shipped / Stopped or
+     skipped / Discoveries). Included the design-goal quote
+     verbatim so the test for sufficiency is unambiguous.
+  2. Added a phase-completion-checklist item that fires when Phase
+     N is the final phase (or execution is abandoned): close-out
+     Review Log entry written before the final commit, all three
+     elements populated.
+- **Rationale:** Per-phase `✅ SHIPPED` markers enumerate "what
+  shipped where" but leave the arc implicit. The three-element
+  close-out makes the arc explicit in one place. Without it, the
+  plan's most valuable reader — the one reading months later to
+  answer "why does the code do X?" — has to reconstruct execution
+  by chasing commits and scanning scattered phase notes. That is
+  the exact failure mode the plan doc exists to prevent.
+
+**Status:** accepted
+
+**Notes:** Applied 2026-04-17. Files changed:
+`skills/phase-plan/execute.md` (strengthened close-out item 5 with
+three-element template and design-goal quote; extended phase
+completion checklist with final-phase close-out requirement).
+
 ## 2026-04-17: Verbal batched proposals should persist to plans/
 
 **Observed pattern:** A long multi-session thread accumulated 18
