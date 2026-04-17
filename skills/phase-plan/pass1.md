@@ -3,6 +3,12 @@
 > Loaded on demand by the `phase-plan` skill when the user invokes Pass 1.
 > Assumes the main `phase-plan.md` skill is already loaded (plan doc
 > structure, usage patterns, guardrails).
+>
+> **Not a plan template.** This file is the `phase-plan` skill's
+> instructions for Pass 1. The plan doc itself is a single file (see
+> `phase-plan.md` § One plan, three passes). All three passes refine
+> that same file — do not create per-pass plan files like
+> `plans/foo-pass1.md`.
 
 **Goal:** Produce a complete plan with full reasoning persisted.
 
@@ -78,7 +84,22 @@
      system and confirming behavior outside the test harness.
    - If the plan involves an architecture decision, note it — the adr agent
      should be invoked to record it
-7. **Size phases for a single context window.** If you can't describe the
+7. **Inventory documentation impact.** For every file the plan adds,
+   renames, moves, or removes, grep the repo for references and capture
+   them in the plan's **Documentation Impact** section (see main
+   `phase-plan.md` § The Plan Doc). For each referenced doc, name
+   which phase will update it — the phase that makes the reference
+   stale, not a later cleanup phase.
+
+   If the impact is large (many references, multiple cross-cutting
+   files, or a rename that touches the registry in `agents.md`),
+   escalate to a Phase 0 discovery task (D-item) so the grep is done
+   firsthand before phases are sized.
+
+   A plan that adds, renames, or removes a file with an empty
+   Documentation Impact section is a plan defect. At minimum list
+   "grepped — no references found" with the search terms used.
+8. **Size phases for a single context window.** If you can't describe the
    test-first implementation of every item in a phase and hold it in your
    head, the phase is too big. Split it. This is the primary defense against
    stubbing — phases that fit in one context window get completed fully.
@@ -86,7 +107,7 @@
    Do not proceed with planning until oversized phases are broken down.
    This is not a suggestion — 4+ files in a single phase is a known cause
    of partial completion and should be treated as a plan defect.
-8. **Persist everything.** Write the full plan doc at
+9. **Persist everything.** Write the full plan doc at
    `plans/YYYY-MM-DD-N-plan-<kebab-slug>.md` (create `plans/` if missing).
    Use today's date (run `date +%Y-%m-%d` if uncertain), pick `N` as the
    next unused ordinal for today by scanning existing `plans/` entries
@@ -97,12 +118,12 @@
    The Reasoning section must be detailed enough that someone in a fresh
    context can understand *why* every decision was made — not just *what*
    will be done.
-9. **Surface open questions.** If anything is unresolved, capture it in Open
-   Questions rather than guessing. For each question, recommend a severity
-   (**BLOCKING**, **PHASE-GATED**, **ADVISORY**) with a brief rationale for
-   why you chose that level — but the user makes the final call. Do not
-   silently classify questions as ADVISORY and move on. Every open question
-   is context the user needs to see.
+10. **Surface open questions.** If anything is unresolved, capture it in Open
+    Questions rather than guessing. For each question, recommend a severity
+    (**BLOCKING**, **PHASE-GATED**, **ADVISORY**) with a brief rationale for
+    why you chose that level — but the user makes the final call. Do not
+    silently classify questions as ADVISORY and move on. Every open question
+    is context the user needs to see.
 
 ## What to ask the user
 
