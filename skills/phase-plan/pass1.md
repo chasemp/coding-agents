@@ -82,9 +82,34 @@
      phase. Tests are the floor, not the ceiling. For phases with broad
      scope or external integration, validation should include running the
      system and confirming behavior outside the test harness.
+   - **Populate Read-set, Write-set, and Shared-state contract** for every
+     phase (see main `phase-plan.md` § The Plan Doc). Be specific — name
+     the files, name the ambient state. These fields drive the Concurrency
+     Map; leaving them empty is a plan defect, not a shortcut.
    - If the plan involves an architecture decision, note it — the adr agent
      should be invoked to record it
-7. **Inventory documentation impact.** For every file the plan adds,
+7. **Derive the Concurrency Map.** With every phase's Write-set and Shared-
+   state contract populated, walk the dependency graph and ask: "Which
+   phases could run at the same time without trampling each other?" A
+   pair is parallel-safe only when (a) write-sets are disjoint *and*
+   (b) shared-state contracts don't collide *and* (c) you can name the
+   re-entry verification check that would catch a leak. If any of those
+   three is missing, the phases are sequential.
+
+   Default to sequential. Parallelism is opt-in and must be justified in
+   the Concurrency Map section of the plan doc — not derived implicitly
+   at execution time. If the plan is fully sequential, the Concurrency
+   Map still gets a one-line entry stating "All phases sequential" and a
+   reason; an empty section means parallelism wasn't considered, which
+   is a plan defect.
+
+   **Watch for hidden shared state.** "Both phases run in worktrees" is
+   not enough — worktrees share a parent repo, and operations like
+   `git checkout`, `git stash`, or `git rebase` from a child worktree
+   can move HEAD on the parent. A shared-state contract that lists only
+   "isolated worktree" without naming what would *break* the isolation
+   is the failure pattern this section exists to prevent.
+8. **Inventory documentation impact.** For every file the plan adds,
    renames, moves, or removes, grep the repo for references and capture
    them in the plan's **Documentation Impact** section (see main
    `phase-plan.md` § The Plan Doc). For each referenced doc, name
@@ -99,7 +124,7 @@
    A plan that adds, renames, or removes a file with an empty
    Documentation Impact section is a plan defect. At minimum list
    "grepped — no references found" with the search terms used.
-8. **Size phases for a single context window.** If you can't describe the
+9. **Size phases for a single context window.** If you can't describe the
    test-first implementation of every item in a phase and hold it in your
    head, the phase is too big. Split it. This is the primary defense against
    stubbing — phases that fit in one context window get completed fully.
@@ -107,7 +132,7 @@
    Do not proceed with planning until oversized phases are broken down.
    This is not a suggestion — 4+ files in a single phase is a known cause
    of partial completion and should be treated as a plan defect.
-9. **Persist everything.** Write the full plan doc at
+10. **Persist everything.** Write the full plan doc at
    `plans/YYYY-MM-DD-N-plan-<kebab-slug>.md` (create `plans/` if missing).
    Use today's date (run `date +%Y-%m-%d` if uncertain), pick `N` as the
    next unused ordinal for today by scanning existing `plans/` entries
@@ -118,7 +143,7 @@
    The Reasoning section must be detailed enough that someone in a fresh
    context can understand *why* every decision was made — not just *what*
    will be done.
-10. **Surface open questions.** If anything is unresolved, capture it in Open
+11. **Surface open questions.** If anything is unresolved, capture it in Open
     Questions rather than guessing. For each question, recommend a severity
     (**BLOCKING**, **PHASE-GATED**, **ADVISORY**) with a brief rationale for
     why you chose that level — but the user makes the final call. Do not

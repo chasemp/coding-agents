@@ -81,6 +81,32 @@ or says "pass 3" / "final review".
 - Could any Phase 0 discovery task be resolved right now during planning
   instead of deferred to execution? If so, resolve it now.
 
+**5b. Concurrency honesty**
+- Does the Concurrency Map exist and account for every phase, even if
+  the answer is "All phases sequential"? An empty or missing
+  Concurrency Map is a plan defect.
+- For every parallel set, are write-sets *actually* disjoint? Open the
+  per-phase Write-set entries and confirm — don't take Pass 2's word for
+  it after Pass 3's other adjustments may have moved files between phases.
+- For every parallel set, is the Shared-state contract written as
+  **invariants** (checkable statements about what the phase will and will
+  not do) rather than **mechanisms** (what wrapper or sandbox is used)?
+  "Runs in a worktree" is a mechanism; "does not invoke `git checkout`,
+  `git stash`, or `git rebase` in the parent worktree" is an invariant.
+  Replace mechanism-only contracts with invariants. This is the single
+  most important concurrency check — files-only isolation has a long
+  history of leaking through ambient state.
+- For every parallel set, is the Re-entry verification field populated
+  with concrete checks that map one-to-one to the Shared-state contract?
+  "Verify isolation held" is not concrete; "main-repo HEAD == <pre-
+  dispatch SHA>, `lsof -i :8080` empty, `git worktree list` shows only
+  expected worktrees" is. If the contract names five invariants, the
+  re-entry verification names five corresponding checks.
+- Could parallelism be added that the plan currently misses? Sequential
+  is the default but Pass 3 is the last chance to surface
+  embarrassingly-parallel work that's still bunched up. Flag candidates
+  to the user — don't unilaterally restructure.
+
 **6. Project conventions**
 - Does the plan align with existing patterns in the codebase?
 - Are naming conventions, file organization, and code style consistent
@@ -126,6 +152,12 @@ or says "pass 3" / "final review".
 - [checkpoints, verification steps added]
 **Validation calibration:**
 - [validation strategies reviewed, adjustments to match scope]
+**Concurrency honesty:**
+- [Concurrency Map verified; write-set disjointness re-checked; shared-
+  state contracts converted from mechanisms to invariants where needed;
+  re-entry verification mapped one-to-one to contract; new parallel
+  candidates flagged. Write "Map confirmed; sequential plan." if no
+  changes were warranted.]
 **Discovery (if Phase 0 exists):**
 - [discovery tasks reviewed for concreteness, completeness, and disposition]
 **Coherence:**

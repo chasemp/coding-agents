@@ -127,6 +127,148 @@ execution guidance:
 
 ---
 
+## Executing Parallel Phases
+
+If the Concurrency Map declares a parallel set (e.g., `{Phase 2A, Phase 2B}`),
+execution follows a different rhythm than sequential phases. **Read this
+whole section before dispatching** — skipping any step is how isolation
+leaks become silent and trampling damage compounds across later phases.
+
+### Step 1 — Pre-dispatch snapshot
+
+Before launching any parallel agents, snapshot the shared state declared
+in each phase's Shared-state contract. The snapshot is what Re-entry
+verification will compare against. Record at minimum:
+
+- Parent repo HEAD SHA and current branch
+- `git status --porcelain` output (must be clean — abort if not)
+- `git worktree list` output
+- Bound ports (`lsof -iTCP -sTCP:LISTEN -P -n`) if any phase touches
+  network state
+- Any other ambient state named in the contracts
+
+Save the snapshot as a Review Log entry or a temp file. **If `git status`
+is not clean, do not dispatch.** Dirty pre-dispatch state means a leak
+has nothing to compare against.
+
+### Step 2 — Dispatch in a single message
+
+Launch every phase in the parallel set as **multiple Agent tool calls in
+one message**. Sequential Agent calls run serially even when the work is
+independent — single-message multi-tool-use is the only way concurrency
+actually happens.
+
+Each dispatched agent receives, in its prompt:
+
+- Its phase spec from the plan doc (Goal, Changes, Wiring test, Done-when)
+- Its **Shared-state contract** — read as binding, not aspirational
+- An explicit instruction to emit a **shared-state footprint report** at
+  completion, naming every external surface it touched: commits made on
+  its branch, ports bound, processes spawned, env vars exported, files
+  written outside its declared write-set
+- Its **Re-entry verification** checks, so the agent knows what the
+  orchestrator will measure on return
+
+The shared-state footprint report is the in-flight reflection point —
+the agent self-audits what it actually did versus what its contract
+said it would. If the footprint exceeds the contract, the report flags
+it immediately rather than letting it surface as a re-entry failure.
+
+### Step 3 — Re-entry verification
+
+When all parallel agents return, run each phase's Re-entry verification
+checks against the pre-dispatch snapshot. Compare:
+
+- Current HEAD SHA against the snapshot's HEAD SHA. **If it changed, an
+  agent trampled the parent repo.** This is the most common failure mode.
+- `git worktree list` against the snapshot.
+- Bound ports against the snapshot.
+- Every other invariant named in the contracts.
+
+**If any check fails, stop and report.** Do not silently restore the
+expected state — the trampling itself is the bug, and silently fixing it
+hides the fact that a parallel grouping was unsound. Add a Review Log
+entry naming what leaked, then either:
+
+1. With the user's awareness, manually restore the trampled state and
+   continue
+2. Pull the conflicting phases back to sequential in the Concurrency Map
+   and re-execute the work that was undone
+
+The whole point of the contract is that violations are visible.
+Trampling caught at re-entry is cheap (usually one `git checkout`);
+trampling caught three phases later is expensive.
+
+### Step 4 — Consolidate locally (do not open PRs)
+
+After re-entry verification passes, the parallel work must be merged
+back into the feature branch **locally**. Worktrees and subagents are
+an execution-time parallelism mechanism within a single feature branch
+— they are not a sub-PR factory.
+
+**The rule:** Parallel agents commit on their own branches (typically
+inside their isolated worktrees). The orchestrator then merges each of
+those branches back into the parent feature branch with a local
+`git merge` — usually `git merge --no-ff <agent-branch>` so the
+parallel structure remains visible in the feature branch's history. No
+PRs are opened to consolidate parallel chunks; PRs are reserved for
+the feature-branch → main hand-off, and only when the user explicitly
+asks for one.
+
+**Why this matters:** Treating per-agent branches as PR fodder
+fragments a single feature into many merge events, inverts the
+branching model, and creates review noise. The user's branch is the
+unit of delivery; the parallel agents are an execution detail
+underneath it.
+
+**Procedure:**
+
+1. Confirm each agent's branch is committed and pushed to its worktree
+   (the agent itself handles this as part of its phase).
+2. Return the orchestrator's working directory to the feature branch in
+   the parent repo (verify with `git branch --show-current`).
+3. For each agent's branch, in the order the Concurrency Map
+   designates (or arbitrary order if the merges commute):
+   `git merge --no-ff <agent-branch>` — preserves the parallel topology
+   in history. Use `--ff-only` instead if linear history is the
+   project's convention.
+4. Delete the per-agent worktrees: `git worktree remove <path>`.
+5. Delete the per-agent branches once their commits are reachable
+   from the feature branch: `git branch -d <agent-branch>`.
+6. Run the feature branch's full test suite once more after the merges
+   to confirm the consolidated state still passes — wiring tests
+   passing in isolation does not guarantee they pass after the merge,
+   and Pass 3 calibrated for this with the `--no-ff` topology in mind.
+
+**If the merges conflict:** That's a sign the Pass 2 disjointness check
+missed something. Resolve the conflict, record what overlapped in the
+Review Log, and tighten the next plan's write-set declarations. A
+clean parallel set produces clean merges; conflicts mean the write-sets
+weren't actually disjoint.
+
+**Push timing:** The feature branch is pushed when the user asks, not
+automatically after consolidation. Local merges first, then push, then
+PRs — in that order, with user approval at each step.
+
+### Step 5 — Report and proceed
+
+After consolidation completes:
+
+- Report each phase's wiring test result
+- Report each phase's shared-state footprint
+- Report the re-entry verification results
+- Report the merge results (which branches merged cleanly, any conflicts
+  resolved, current feature-branch SHA)
+- Note any deviations from the Concurrency Map and explain them
+
+Then proceed to the next sequential phase, treating the parallel set as
+a single completed checkpoint. Each parallel phase still gets its own
+commit (the commit-per-phase rule does not change), and the set as a
+whole has one re-entry verification record plus one consolidation record
+in the Review Log.
+
+---
+
 ## Phase completion checklist
 
 Before moving from Phase N to Phase N+1, confirm:
@@ -167,6 +309,13 @@ Before moving from Phase N to Phase N+1, confirm:
       ✅ SHIPPED with the commit SHA; Outcome Summary row added or
       updated; any deviations from the Pass 3 spec noted. See
       "Keep the plan doc in sync with reality" below.
+- [ ] **If Phase N ran in a parallel set, Re-entry verification passed.**
+      Compare the post-dispatch state against the pre-dispatch snapshot
+      (HEAD SHA, worktree list, bound ports, every invariant from the
+      Shared-state contract). Record the result in the Review Log. If
+      verification failed, the phase is *not* done regardless of wiring
+      test status — see "Executing Parallel Phases" § Step 3 for
+      recovery.
 - [ ] **If Phase N is the final phase (or execution is being
       abandoned), the close-out Review Log entry is written before
       the final commit.** Three required elements — Shipped, Stopped
@@ -392,6 +541,74 @@ must run this wiring test, not just the unit tests.
 tests you ran are in `tests/test_<component>.py`, ask: "What test proves
 that the entry point can reach this code?" If the answer is "none yet" or
 "that's in a later phase," the phase is not done.
+
+---
+
+## Known Anti-Pattern: Isolation Trampling
+
+<!-- TRACKING: Section added 2026-05-04 alongside the Concurrency Map
+     additions to phase-plan.md. If parallel phases still trample shared
+     state after these changes (despite snapshot/verification protocol),
+     escalate to a programmatic pre-dispatch check (e.g.,
+     hooks/parallel-dispatch-check.sh) that refuses to launch agents
+     when the parent repo is dirty or when contracts contain only
+     mechanisms ("worktree") instead of invariants. -->
+
+The most common parallel-execution failure is what looks like isolated
+agents quietly mutating shared state. The pattern:
+
+1. Phase 2A and Phase 2B are declared parallel-safe — disjoint write-sets,
+   "both run in worktrees."
+2. Phase 2A is launched in worktree A; Phase 2B in worktree B.
+3. Phase 2B's agent runs `git checkout main` (or `git stash`, or
+   `git rebase`) in what it thinks is its worktree, but the command
+   lands on the parent repo — because git operations from a child
+   worktree can move HEAD on the parent under certain command forms,
+   or because the agent's working directory drifted.
+4. The parent repo's HEAD silently moves.
+5. The next sequential phase reads the parent's HEAD, gets the wrong
+   commit, and either fails confusingly or — worse — silently produces
+   the wrong output.
+6. Hours or days later, someone notices the orchestrator branch is on
+   the wrong commit. The fix is one `git checkout` command. The
+   diagnosis takes the rest of the day.
+
+**Why this happens:** Worktrees are file-system isolation, not full
+repo isolation. They share the parent's git database; commands that
+manipulate refs (`checkout`, `stash`, `rebase`) can leak across the
+boundary. A Shared-state contract that lists "isolated worktree" but
+doesn't name *what would break the isolation* gives the orchestrator
+no early-warning signal.
+
+The same shape applies beyond git: shared tmp directories, ambient
+env vars, lock files, port collisions, shared databases. Files-only
+isolation has a long history of leaking through ambient state.
+
+**How to prevent it (planning-side):** The Shared-state contract must
+list **invariants**, not mechanisms. "Runs in worktree" is a mechanism
+— it describes what wrapper is used. "Does not invoke `git checkout`,
+`git stash`, or `git rebase` in the parent worktree; binds no ports;
+writes only under `$TMPDIR/<phase-id>/`" is a list of invariants —
+each one is a checkable statement about behavior. Pass 3's concurrency-
+honesty check exists to catch mechanism-only contracts.
+
+**How to detect it during execution:** The pre-dispatch snapshot and
+re-entry verification protocol (see "Executing Parallel Phases" above)
+catches this. If the parent HEAD SHA at re-entry doesn't match the
+snapshot, isolation trampling happened — even if every wiring test
+went GREEN, the parallel grouping was unsound and the plan's
+Concurrency Map needs adjustment.
+
+**Recovery:** Trampling caught at the re-entry check is cheap — the
+fix is usually one `git checkout`. The damage is the wasted time when
+it isn't caught and downstream phases run on the wrong base. Catching
+it early is the entire purpose of the snapshot/verification discipline.
+
+When trampling is observed, write a Review Log entry that captures:
+the phase that leaked, what state it touched, what the contract said,
+and what the contract should say next time. The Concurrency Map for
+the *next* plan benefits from this entry; the current plan benefits
+from the recovery.
 
 ---
 
