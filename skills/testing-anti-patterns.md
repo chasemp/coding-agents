@@ -249,6 +249,72 @@ For external APIs: use a fake/stub server or recorded responses rather than mock
 
 ---
 
+## Anti-Pattern 6: Implementation-Mirrored Assertions
+
+**The violation:**
+```python
+# Production
+def discount_for(amount: int) -> int:
+    if amount > 100:
+        return amount // 10
+    return 0
+
+# Test — written by reading the implementation
+def test_discount_logic():
+    assert discount_for(150) == 15
+```
+
+**Why this is wrong:**
+- The single happy-path point hits the `> 100` branch but says nothing about its edges. The test would still pass if `if amount > 100` were deleted, flipped to `>=`, or changed to `> 50`.
+- The assertion was written from the implementation's shape, not from the behavior's contract. Coverage looks complete; behavior is unproven.
+- A real bug — wrong threshold, wrong rate, missing branch — slips past green tests because no assertion pins it down.
+
+**The fix — assert at every edge that matters:**
+```python
+def test_no_discount_at_or_below_threshold():
+    """No discount applies until the order exceeds £100."""
+    assert discount_for(100) == 0
+    assert discount_for(99) == 0
+
+def test_ten_percent_discount_above_threshold():
+    """Orders above £100 get a 10% discount."""
+    assert discount_for(101) == 10
+    assert discount_for(150) == 15
+```
+
+The boundary (`100`) and the rate (`10%`) are now asserted — not just a single point that happens to lie on the curve.
+
+### Gate Function: Mental Mutation Pass
+
+After GREEN, before REFACTOR, run this in your head — it takes seconds and catches the most common form of weak coverage:
+
+```
+For each meaningful line in the production code, ask:
+  "If I changed this line, would a test fail?"
+
+Mutations to consider:
+  - Flip a comparison operator (> → >=, == → !=)
+  - Negate a boolean (return True → return False)
+  - Drop a branch (delete the `if` so the body always runs)
+  - Off-by-one (n → n + 1, n - 1 → n)
+  - Return a default (return result → return None)
+  - Skip a side effect (delete a write, a log, a notification)
+  - Swap a constant (10 → 0, "USD" → "EUR")
+
+IF you can name a one-line mutation that no test catches:
+  STOP — write the test that catches it before refactoring.
+```
+
+**This is a heuristic, not a tool.** It catches the common case at zero cost. For hot paths, security-relevant code, or anywhere a silent regression would be expensive, escalate to a real mutation testing tool — `mutmut` for Python, Stryker for JS/TS, `go-mutesting` for Go. The mental pass is the floor; tooling is the ceiling.
+
+**Tell-tale signs you skipped the mutation pass:**
+- Single-point assertions on a function with branches (`assert f(150) == 15` for a function with a threshold at 100)
+- One assertion per code branch with no boundary tests on either side of the threshold
+- Tests written by reading the implementation rather than the spec — the test mirrors the code's structure exactly
+- "I tested the happy path" with no boundary or negative-path coverage
+
+---
+
 ## How TDD Prevents These Anti-Patterns
 
 | Anti-pattern | Why TDD prevents it |
@@ -258,8 +324,11 @@ For external APIs: use a fake/stub server or recorded responses rather than mock
 | Mocking without understanding | You run against real implementation first, so you see what the test needs |
 | Incomplete mocks | You use real schemas from the start; the type system catches gaps |
 | Over-complex mocks | Minimal implementation pressure keeps mocking scoped |
+| Implementation-mirrored assertions | RED-watched-fail forces you to write the assertion before the code exists; you can't mirror a shape that hasn't been written yet |
 
 **If you're testing mock behavior, you violated TDD** — you added mocks before watching the test fail against real code.
+
+**If your assertions mirror the implementation's shape, you wrote tests after.** A test written first describes the contract; a test written after describes the code. The mental mutation pass is the cheapest detector — but the cleanest prevention is RED-first.
 
 ---
 
@@ -272,6 +341,7 @@ For external APIs: use a fake/stub server or recorded responses rather than mock
 | Mocking a method whose side effect the test needs | Mock at a lower level, preserve the side effect |
 | Hand-rolled partial response dicts | Use the real schema/dataclass to construct test data |
 | Mock setup > test logic | Consider real in-memory objects or `tmp_path` |
+| Single-point assertion on branching code | Add boundary cases; run the mental mutation pass |
 
 ## Red Flags
 
@@ -281,3 +351,6 @@ For external APIs: use a fake/stub server or recorded responses rather than mock
 - You can't explain why a mock is needed
 - Mocking "just to be safe"
 - Test fails when mock changes, not when behavior changes
+- One assertion per branch with no edge cases on either side of the threshold
+- "If I deleted this line of production code, no test would fail"
+- Tests look like a structural mirror of the implementation

@@ -42,6 +42,108 @@ targets refinements to this repo's own skills, agents, and commands.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-05-04: Mutation accommodation in TDD + concurrency planning with isolation invariants
+
+**Observed pattern:** Two related gaps in the existing guidance:
+
+1. **Mutation accommodation.** The TDD cycle ended at "VERIFY GREEN +
+   REFACTOR" with no defense against assertions that mirror the
+   implementation's shape rather than its behavioral edges. A test that
+   passes today can be entirely satisfied by code where flipping `>` to
+   `>=`, dropping a branch, or swapping a constant produces no failure.
+   Coverage looks complete; behavior is unproven. The "watched-it-fail"
+   principle prevents one failure mode (test never failed) but not the
+   other (test fails on absence, passes on any shape that returns the
+   right value at the asserted point).
+2. **Concurrency in phase-plan.** Plans defaulted to sequential phases
+   even when work was embarrassingly parallel — no mechanism surfaced
+   parallelizable subgraphs, so concurrency was left on the table. When
+   parallelism *was* attempted, write-set declarations were files-only;
+   ambient state (git HEAD, env vars, ports, daemons) leaked across
+   "isolated" boundaries and trampled the parent context, costing
+   diagnostic time disproportionate to the trivial fix.
+
+**Evidence:**
+- User session 2026-05-04 explicitly naming both gaps: "mutation
+  accommodation for test-driven development" and concurrency thinking
+  where "they kind of trample each other."
+- User-cited trampling incident: a worktree-isolated agent ran
+  `git checkout` in the main worktree, moving HEAD on the parent repo.
+  Wiring tests passed; downstream confusion took meaningful time to
+  diagnose. The user's own retrospective: "the concurrency map could
+  have noted the shared-state risk."
+
+**Proposed refinement:** Accepted in this session — applied directly.
+
+- **Target:** `skills/testing-anti-patterns.md`, `tdd-guardian.md`,
+  `skills/phase-plan.md`, `skills/phase-plan/{pass1,pass2,pass3,execute}.md`
+- **Change:**
+  1. **Mutation:**
+     - `testing-anti-patterns.md` § Anti-Pattern 6: Implementation-Mirrored
+       Assertions. Mental Mutation Pass gate function. Updated TDD-prevents
+       table, quick reference, red flags.
+     - `tdd-guardian.md` Sacred Cycle extended to RED → VERIFY RED → GREEN
+       → VERIFY GREEN → **MUTATE** → REFACTOR. Mental Mutation Pass section
+       inline. Mutation concerns escalation example. Quality Gates checklist
+       item. Common-violations entry.
+  2. **Concurrency:**
+     - `skills/phase-plan.md` plan-doc template extended with per-phase
+       Read-set / Write-set / Shared-state contract / Re-entry verification
+       fields, plus a top-level Concurrency Map section (required even when
+       sequential).
+     - `pass1.md` step 7 derives the Concurrency Map from per-phase fields;
+       defaults to sequential, parallelism opt-in.
+     - `pass2.md` step 5 audits disjointness, sharpens mechanisms into
+       invariants, surfaces missed parallelism, adds Re-entry verification.
+       Review Log gets a Concurrency entry.
+     - `pass3.md` adds quality gate 5b (Concurrency honesty) — confirms
+       contracts are invariants, not mechanisms, and Re-entry verification
+       maps one-to-one to the contract.
+     - `execute.md` adds an Executing Parallel Phases section (pre-dispatch
+       snapshot, single-message dispatch with shared-state footprint
+       reports, post-dispatch re-entry verification) and an Isolation
+       Trampling anti-pattern section. Phase completion checklist gets a
+       conditional re-entry verification item.
+- **Rationale:**
+  - Mutation: catches the most common form of false-confidence coverage
+    at zero cost; escalates to mutmut/Stryker/go-mutesting only for
+    high-stakes code. The mental pass is the floor, tooling is the
+    ceiling.
+  - Concurrency: forces the parallelism question to be asked in every
+    plan (empty Concurrency Map = plan defect), forces shared-state
+    declarations to be invariants (checkable) rather than mechanisms
+    (wishful), and gives execute.md a snapshot/verification protocol
+    that surfaces trampling at the cheapest moment to fix it.
+
+**Status:** accepted
+
+**Notes:**
+- TRACKING comments added to `phase-plan.md` (concurrency rationale +
+  trampling failure mode) and `execute.md` (Isolation Trampling
+  anti-pattern). Monitor: (a) whether plans actually populate write-sets
+  and shared-state contracts vs leaving them empty; (b) whether re-entry
+  verification catches isolation leaks proactively; (c) whether parallel
+  dispatch shows up in execute.md runs at all, or whether the sequential
+  default holds even when the Concurrency Map declares parallelism is
+  safe; (d) whether the mental mutation pass becomes habitual or whether
+  green tests with implementation-mirrored assertions still slip through.
+- If write-sets are reflexively left empty, escalate to a programmatic
+  check that refuses to advance past Pass 2 without them. If trampling
+  recurs despite the snapshot/verification protocol, escalate to a
+  pre-dispatch hook that refuses to launch parallel agents when the
+  parent repo is dirty or contracts contain only mechanisms.
+- **2026-05-04 follow-up:** User clarified that parallel agents must
+  consolidate **locally** into the feature branch, not via per-chunk
+  PRs. Added `execute.md` § Executing Parallel Phases Step 4
+  (Consolidate locally), Concurrency Map scope note in
+  `phase-plan.md`, and a feedback memory at
+  `feedback_parallel_consolidates_locally.md`. The branch is the unit
+  of delivery; worktrees/subagents are execution-time concurrency
+  underneath it. Monitor: whether agents still reach for `gh pr
+  create` after parallel sets despite the explicit guidance, or
+  whether the local-merge protocol becomes the default.
+
+
 ## 2026-04-17: Plan close-out must produce a reader-can-reconstruct narrative
 
 **Observed pattern:** Plans were executing to completion (final phase

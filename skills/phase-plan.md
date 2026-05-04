@@ -112,6 +112,32 @@ description: >
      Monitor whether the split actually reduces cognitive load or creates
      navigation friction. -->
 
+<!-- TRACKING: Concurrency planning + isolation invariants (2026-05-04)
+     Added: per-phase Read-set / Write-set / Shared-state contract /
+     Re-entry verification fields, top-level Concurrency Map section,
+     Pass 1 derivation step, Pass 2 disjointness check, Pass 3 isolation-
+     honesty check, execute.md parallel dispatch protocol with pre/post
+     snapshot of shared state and an Isolation Trampling anti-pattern.
+     Triggered by two failure modes observed in practice: (a) plans
+     default to sequential phases even when work is embarrassingly
+     parallel — no mechanism currently surfaces parallelizable subgraphs,
+     so concurrency is left on the table; (b) "trampling" incidents where
+     a supposedly worktree-isolated agent leaked state into the main repo
+     (e.g., a `git checkout` in the wrong worktree moved HEAD on the
+     parent), because the only declared isolation surface was the file
+     system. Files-only write-sets miss this — git HEAD, env vars,
+     working directory, ports, daemons, and other ambient state must be
+     declared explicitly, and re-entry verification must check them.
+     Monitor: (a) whether plans actually populate write-sets and shared-
+     state contracts vs leaving them empty or hand-waving "no shared
+     state"; (b) whether re-entry verification catches isolation leaks
+     proactively, or only after they cause confusion downstream; (c)
+     whether parallel dispatch shows up in execute.md runs at all, or
+     whether the sequential default holds even when the Concurrency Map
+     declares parallelism is safe. If write-sets are reflexively left
+     empty, escalate to a programmatic check that refuses to advance
+     past Pass 2 without them. -->
+
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
 all reasoning, not just the steps.
@@ -268,6 +294,60 @@ If the plan adds, renames, or removes a file, this section cannot be
 empty. At minimum, record "grepped — no references found" with the
 search terms used.
 
+## Concurrency Map
+Which phases run sequentially vs in parallel, and on what isolation guarantees.
+The section is **required** so the question is forced — not so every plan
+declares parallelism. Default to sequential; parallel is opt-in.
+
+**Scope of parallelism:** A parallel set is a *local execution* detail
+inside a single feature branch. Parallel agents work in worktrees and
+on per-agent branches, but their output is merged back into the feature
+branch **locally** via `git merge` — not via PRs. PRs are reserved for
+the feature-branch → main hand-off, on user request. Worktrees and
+subagents are not a sub-PR factory; they are how concurrent work happens
+underneath one branch of delivery. See `execute.md` § Step 4 for the
+consolidation procedure.
+
+For each set of phases that can run in parallel, declare three things:
+- **Disjoint write-sets:** The phases write to non-overlapping files/modules.
+  Compare the per-phase **Write-set** entries below — any overlap means the
+  phases cannot run in parallel.
+- **Disjoint shared-state contracts:** Neither phase mutates ambient state
+  the other observes. This goes beyond files: git HEAD/branch, working
+  directory, env vars, ports, daemons, lock files, databases, external
+  services. A files-only check is not enough; isolation leaks through
+  ambient state are the most common parallel-execution failure mode.
+- **Re-entry verification:** What the orchestrator checks when each parallel
+  phase returns to confirm isolation actually held. Examples: "main repo
+  HEAD = <pre-dispatch sha>", "`git status` clean in main worktree",
+  "no orphan `claude-*` processes", "lock file removed".
+
+**Format:**
+```
+Sequential spine: Phase 0 → Phase 1 → [Phase 2A || Phase 2B] → Phase 3
+
+Parallel set {2A, 2B}:
+- Disjoint write-sets: 2A writes src/foo.py + tests/test_foo.py;
+                       2B writes src/bar.py + tests/test_bar.py.
+- Shared-state contract: Both run in isolated git worktrees off
+  the parent branch. Neither invokes `git checkout` / `git stash` /
+  `git rebase` in the parent worktree. Both use disjoint tmp paths
+  and bind no ports.
+- Re-entry verification: Confirm parent-repo HEAD unchanged from
+  pre-dispatch SHA. Confirm `git worktree list` shows only the
+  expected worktrees. Confirm no spawned subprocess outlived the
+  agent.
+```
+
+If everything is sequential, write `All phases sequential.` and a one-line
+reason (e.g., "each phase reads what the prior wrote"). The empty Concurrency
+Map is what we're trying to prevent — silence here means parallelism was
+never considered.
+
+**Hard rule:** If two phases share *any* write-set entry or *any*
+shared-state mutation, they must be sequential. No exceptions inferred from
+"it'll probably be fine."
+
 ## Phases
 Ordered phases of work. Each phase should leave the system in a working state.
 
@@ -338,6 +418,39 @@ If a phase only has unit tests for its components, the wiring is not
 tested and will be skipped. **This is the single most important field
 for preventing dead code.**
 **Depends on:** Prior phases or external factors.
+**Read-set:** Files/modules this phase reads. Name files, not directories.
+Used by Pass 2 to detect cross-phase coupling and by the Concurrency Map
+to confirm parallelism is safe.
+**Write-set:** Files/modules this phase writes (creates, edits, or deletes).
+Used to derive the Concurrency Map. **If two phases share any entry here,
+they cannot run in parallel.** Be explicit — "src/" is not a write-set;
+`src/engine.py` and `src/config.py` are.
+**Shared-state contract:** Mutable state outside the file write-set that
+this phase touches or depends on. The Concurrency Map cannot be honest
+without this. Examples to consider:
+- **Git:** branches read/written, whether the phase invokes `git checkout`,
+  `git stash`, `git rebase`, or `git worktree` operations that can leak
+  HEAD across worktrees
+- **Process:** long-running daemons started/stopped, ports bound, signals
+  sent
+- **Filesystem:** working-directory changes, tmp paths, lock files
+- **Environment:** env vars set or read, secrets accessed
+- **External:** databases, API quotas, message queues, shared caches
+If the phase asserts isolation (runs in a worktree, uses tmp_path, runs
+in a container), name the invariants that prove the isolation holds —
+not just the mechanism. "Runs in worktree" is a mechanism; "Does not
+invoke `git checkout` in the parent worktree, binds no ports, writes
+only under `$TMPDIR/<phase-id>/`" is an invariant. Mechanisms can be
+violated; invariants are checkable.
+For sequential phases on a small change, this can be brief — "no shared
+mutable state beyond the file write-set" is acceptable when true. The
+field is required so the question is asked, not so every entry is long.
+**Re-entry verification:** (Required for any phase listed in a parallel
+set in the Concurrency Map.) The orchestrator's checklist after this
+phase returns, mapping one-to-one to the shared-state contract. Each
+item is a concrete check: "main-repo HEAD == <pre-dispatch sha>",
+"`lsof -i :8080` shows nothing", "no row added to `audit_log` outside
+the phase's own tmp database". For sequential phases, omit this field.
 **Risks:** What could go wrong, what to watch for.
 **Done when:** Two tiers, both required:
 1. **Behavioral:** What the user or system can observably do after this

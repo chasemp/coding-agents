@@ -43,11 +43,47 @@ or says "pass 2" / "review the plan".
 4. **Check cross-phase dependencies.**
    - Does Phase N depend on something Phase M introduces? Is M before N?
    - Are there circular dependencies that need restructuring?
-   - Could any phase be parallelized or reordered for safer delivery?
    - **Verify every "Depends on" field** — after the gap analysis, are the
      stated dependencies still accurate? Add any that were discovered, remove
      any that no longer apply.
-5. **Check the reasoning.**
+5. **Audit the Concurrency Map for honesty and completeness.**
+   - **Disjointness check.** For every parallel set in the Concurrency Map,
+     compare the per-phase **Write-set** entries. Any overlap — even a
+     single shared file — disqualifies the parallel grouping. Move the
+     conflicting phases back to sequential and record it in the Review Log.
+   - **Shared-state coverage check.** Read each phase's **Shared-state
+     contract**. Is it a list of *invariants* ("does not invoke `git
+     checkout` in the parent worktree", "binds no ports", "writes only
+     under `$TMPDIR/<phase-id>/`") or just a list of *mechanisms* ("runs
+     in a worktree")? Mechanisms can be violated; invariants are
+     checkable. Replace mechanism-only contracts with explicit invariants.
+   - **Ambient-state sweep.** For every phase in a parallel set, ask:
+     does it touch any of these without declaring it?
+       - Git: branch operations, HEAD, stash, rebase, worktree mutations
+         in the *parent* repo
+       - Process: long-running daemons, port binds, signal handlers
+       - Filesystem: working-directory changes, lock files, shared tmp
+         paths, cache directories
+       - Environment: env vars, secrets, ambient credentials
+       - External: shared databases, API quotas, message queues
+     Anything missed is added to the Shared-state contract and re-evaluated
+     for parallel safety.
+   - **Re-entry verification check.** Every phase in a parallel set has a
+     **Re-entry verification** field with concrete checks (not "verify
+     isolation held" — name the SHA, the lsof output, the process check).
+     If the verification is vague, sharpen it or pull the phase back to
+     sequential.
+   - **Missed-parallelism check.** For phases currently sequential, ask:
+     are their write-sets actually disjoint? Their shared-state contracts
+     non-conflicting? If yes, propose moving them to a parallel set in
+     the Concurrency Map and let the user decide. Plans default to
+     sequential not because that is always right but because parallelism
+     is opt-in — Pass 2 is where opt-in candidates surface.
+   - If the Concurrency Map says "All phases sequential," confirm that's
+     actually true given the gap analysis. New phases added during Pass 2
+     may have introduced parallel candidates that weren't visible in
+     Pass 1.
+6. **Check the reasoning.**
    - Do the stated reasons still hold given the full plan?
    - Are any assumptions contradicted by later phases?
    - Are rejected alternatives actually better given what the full plan
@@ -58,7 +94,7 @@ or says "pass 2" / "review the plan".
      the assumed behavior verified in the Verified Assumptions section? If
      a gap-fill introduced a new library call or API interaction, verify it
      now — don't defer to execution.
-6. **Extend, don't rewrite.** Insert missing steps into existing phases,
+7. **Extend, don't rewrite.** Insert missing steps into existing phases,
    add new phases if needed, fill gaps in reasoning. Preserve the existing
    structure and language — do not reorganize or rephrase what already works.
    If something is concretely wrong (not just "I'd phrase it differently"),
@@ -72,6 +108,10 @@ or says "pass 2" / "review the plan".
 ### Pass 2: Gap Analysis — [date]
 **Found:**
 - [description of gap or missing change]
+**Concurrency:**
+- [Concurrency Map adjustments — phases moved to parallel, phases pulled
+  back to sequential, shared-state contracts sharpened, re-entry checks
+  added. Write "no changes — map confirmed" if the audit found nothing.]
 **Changed:**
 - [what was added, reordered, or revised in the plan]
 **Confirmed:**
