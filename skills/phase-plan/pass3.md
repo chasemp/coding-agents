@@ -40,6 +40,19 @@ or says "pass 3" / "final review".
   (e.g., `pytest tests/test_consolidation.py`), flag it — the verification
   must prove the call chain is live, not just that the component works
   alone.
+- **Mutation resistance check:** For each phase whose tests assert on
+  branching, threshold, or boundary behavior, does the test plan name
+  the *edges* — not just a single happy-path point? "Asserts
+  `discount_for(150) == 15`" is implementation-mirrored; "asserts no
+  discount at amount ≤ 100 and 10% discount at amount > 100, with
+  boundary cases at 99/100/101" is mutation-resistant. The Mental
+  Mutation Pass (see `tdd-guardian.md` § Sacred Cycle and
+  `testing-anti-patterns.md` § Anti-Pattern 6) runs at execution time;
+  Pass 3 catches the planning-side version: assertions that, by
+  construction, would survive a one-line mutation to production. Flag
+  any phase whose test specifications read as single-point assertions
+  on branching code, and ask the planner to name the boundary cases
+  before the phase ships.
 
 **2. Diagnostic logging and observability**
 - For changes that affect runtime behavior: is appropriate logging planned?
