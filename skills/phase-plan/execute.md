@@ -7,8 +7,11 @@
 When the user says "let's execute" after Pass 3, these rules govern how
 you work through the plan. **Read this whole file before starting
 execution** — it contains the Discovery Exemption, the execution
-reminder, Phase 0 guidance, the phase completion checklist, the
-mid-phase check, and the Isolation Trap anti-pattern.
+reminder, Phase 0 guidance, the Executing Parallel Phases protocol
+(snapshot, dispatch, re-entry verification, local consolidation), the
+phase completion checklist, the plan-doc-sync rules, the mid-phase
+check, the Isolation Trap anti-pattern, and the Isolation Trampling
+anti-pattern.
 
 **Scope:** The rules below govern implementation phases (Phase 1 and beyond).
 Phase 0 Discovery follows the **Discovery Exemption** — read that section
@@ -223,8 +226,10 @@ underneath it.
 
 **Procedure:**
 
-1. Confirm each agent's branch is committed and pushed to its worktree
-   (the agent itself handles this as part of its phase).
+1. Confirm each agent's branch is committed locally on its own branch
+   inside its worktree. **Nothing is pushed at this stage** — per-agent
+   branches stay local until the feature branch is consolidated and the
+   user approves a push of the feature branch as a whole.
 2. Return the orchestrator's working directory to the feature branch in
    the parent repo (verify with `git branch --show-current`).
 3. For each agent's branch, in the order the Concurrency Map
@@ -235,10 +240,14 @@ underneath it.
 4. Delete the per-agent worktrees: `git worktree remove <path>`.
 5. Delete the per-agent branches once their commits are reachable
    from the feature branch: `git branch -d <agent-branch>`.
-6. Run the feature branch's full test suite once more after the merges
-   to confirm the consolidated state still passes — wiring tests
-   passing in isolation does not guarantee they pass after the merge,
-   and Pass 3 calibrated for this with the `--no-ff` topology in mind.
+6. **Re-run the wiring tests on the consolidated feature branch.**
+   Each parallel phase's wiring test passed in its own branch's reality
+   — but that reality didn't include the other parallel branches' work.
+   The consolidated state is the one that ships, so the wiring tests
+   must be re-validated after the merge. If any wiring test fails post-
+   merge, the parallel set was unsound — record what broke in the
+   Review Log and resolve before continuing. Run the full suite as well
+   to catch any regression the merge introduced.
 
 **If the merges conflict:** That's a sign the Pass 2 disjointness check
 missed something. Resolve the conflict, record what overlapped in the
@@ -246,9 +255,11 @@ Review Log, and tighten the next plan's write-set declarations. A
 clean parallel set produces clean merges; conflicts mean the write-sets
 weren't actually disjoint.
 
-**Push timing:** The feature branch is pushed when the user asks, not
-automatically after consolidation. Local merges first, then push, then
-PRs — in that order, with user approval at each step.
+**Push timing:** Per-agent branches are never pushed. The consolidated
+feature branch is pushed only when the user asks. Local merges first,
+then push of the feature branch (on user approval), then PRs (on user
+request) — in that order. Worktrees and subagents are an execution
+detail; only the feature branch crosses the local boundary.
 
 ### Step 5 — Report and proceed
 
