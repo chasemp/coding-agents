@@ -126,6 +126,16 @@ py-enforcer (blocking, can run in parallel with tdd-guardian)
 py-enforcer checks type safety independently of TDD compliance. Both can run
 on the same changeset without interference.
 
+**Rust Code** (when writing or reviewing Rust):
+```
+rust-enforcer (blocking, can run in parallel with tdd-guardian)
+```
+rust-enforcer checks Rust-specific safety and idiom discipline (no `unwrap()`
+in production, `Result<T, E>` for fallible operations, `Zeroize` for secret
+material, doc comments on public items, `clippy::pedantic` clean, `unsafe`
+requires `// SAFETY:` comment). Independent of TDD compliance; both can run
+on the same changeset without interference.
+
 ### Dependency Rules
 
 - **Blocking** agents must pass before proceeding. Do not skip or defer their findings.
@@ -166,7 +176,7 @@ frontmatter). Memory lives in `.claude/agent-memory/<agent-name>/` within each
 consuming repo. The first 200 lines of `MEMORY.md` are auto-injected into the
 agent's system prompt at startup.
 
-**Agents with memory:** learn, external-learn, pr-reviewer, refactor-scan, tdd-guardian
+**Agents with memory:** learn, external-learn, pr-reviewer, refactor-scan, tdd-guardian, rust-enforcer
 
 **Memory conventions:**
 - Memory stores project-specific knowledge, not general principles (those belong
@@ -187,9 +197,9 @@ agent's system prompt at startup.
 ### Turn Limits
 
 All agents have `maxTurns` set in frontmatter to prevent runaway execution.
-Analysis-only agents (tdd-guardian, py-enforcer, refactor-scan, learn,
-use-case-data-patterns) have 15 turns. Agents that do more complex work
-(pr-reviewer, progress-guardian, adr, docs-guardian, external-learn)
+Analysis-only agents (tdd-guardian, py-enforcer, rust-enforcer, refactor-scan,
+learn, use-case-data-patterns) have 15 turns. Agents that do more complex
+work (pr-reviewer, progress-guardian, adr, docs-guardian, external-learn)
 have 20 turns.
 
 ## File reference
@@ -198,7 +208,8 @@ have 20 turns.
 |------|------|
 | `CLAUDE.md` | Core TDD/type-safety/style rules — loaded globally |
 | `tdd-guardian.md` | Enforces RED-GREEN-REFACTOR, catches test-after violations |
-| `py-enforcer.md` | Enforces type annotations, immutability, no standalone `Any` |
+| `py-enforcer.md` | Enforces Python type annotations, immutability, no standalone `Any` |
+| `rust-enforcer.md` | Enforces Rust safety/idiom discipline (no `unwrap()` in production, `Result<T, E>`, `Zeroize` for secrets, `// SAFETY:` comments on `unsafe`, doc comments on public items, `clippy::pedantic`) |
 | `pr-reviewer.md` | Reviews PRs for correctness, test coverage, and style |
 | `refactor-scan.md` | Identifies refactoring opportunities after green |
 | `progress-guardian.md` | Tracks WIP state and implementation progress |

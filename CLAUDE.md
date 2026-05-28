@@ -38,8 +38,9 @@ For pre-1.0 projects, backwards compatibility is **not the default**. No depreca
 - **TypeScript**: Strict mode, Jest/Vitest, React Testing Library
 - **Python**: Type hints with mypy, pytest, no mutable defaults
 - **Go**: Strict compilation, table-driven tests, explicit errors
+- **Rust**: `cargo test`, `clippy::pedantic`, `Result<T, E>` always, no `unwrap()` in production, `#[derive(Debug)]` on public types, `Zeroize` for secret material
 
-Choose the language that best fits the domain - TypeScript for web/frontend, Python for data/ML/scripting, Go for systems/performance.
+Choose the language that best fits the domain - TypeScript for web/frontend, Python for data/ML/scripting, Go or Rust for systems/performance (Rust when you need memory safety guarantees, sub-runtime determinism, or tight crypto/FFI; Go when goroutine concurrency or stdlib breadth matters more than fine-grained control).
 
 ## Testing Principles
 
@@ -57,6 +58,7 @@ Choose the language that best fits the domain - TypeScript for web/frontend, Pyt
 - **TypeScript**: Jest, Vitest, React Testing Library
 - **Python**: pytest (with fixtures for immutable setup), unittest
 - **Go**: standard `testing` package, table-driven tests
+- **Rust**: built-in `cargo test`. **Inline unit tests** in `#[cfg(test)] mod tests { ... }` blocks at the bottom of the source file (idiomatic for library crates). **Integration tests** in `tests/` directory (one file per scenario). Table-driven via `#[test_case::test_case]` or `rstest` parameterized tests. Property tests via `proptest` for parsers/crypto round-trips. The `mockall` crate for behavior-mocking interfaces (use sparingly — prefer real types).
 
 For testing anti-patterns and how to fix them, load the `testing-anti-patterns` skill.
 
@@ -80,8 +82,21 @@ For testing anti-patterns and how to fix them, load the `testing-anti-patterns` 
 - Explicit error handling (never ignore errors)
 - Use struct tags for validation/serialization
 
+**Rust:**
+- No `unsafe` blocks without a `// SAFETY:` comment justifying why the invariants hold and what the caller must uphold
+- No `unwrap()` or `expect()` in production code paths — only in tests and in truly-impossible-error paths (with `expect("not possible because <reason>")`)
+- Every public item carries a doc comment (`#![warn(missing_docs)]`)
+- `Result<T, E>` for fallible operations; never panic from library code; reserve panics for `unreachable!()`-shaped invariant violations
+- Define error types with `thiserror`; do not return raw strings
+- Use newtype wrappers (`pub struct UserId(pub u64);`) at semantic boundaries; do not pass primitives where domain types belong
+- Derive `Debug` on all public types unless secrecy demands manual implementation (e.g., key material — see `Zeroize` below)
+- Secret material (keys, passwords, derived secrets) lives in newtype wrappers that derive `Zeroize` + `ZeroizeOnDrop`; never log, never `Debug`-print, never serialize without an explicit "I-know-what-I'm-doing" wrapper
+- `clippy::pedantic` clean (with explicit `#[allow(clippy::name)]` and a comment for justified exceptions)
+- `cargo fmt --check` clean; no skipped formatting
+
 For Python type patterns, use built-in type system with runtime validation at boundaries.
 For Go patterns, follow standard library conventions.
+For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 
 ## Code Style
 
@@ -99,6 +114,7 @@ For Go patterns, follow standard library conventions.
   - **Go**: prefer explicit loops with clear intent, avoid mutation
   - **Python**: list comprehensions, generator expressions
   - **TypeScript**: avoid `for...in`, use `for...of` or array methods
+  - **Rust**: iterator adapters (`.map()`, `.filter()`, `.fold()`, `.collect()`) over loops where it doesn't sacrifice readability; prefer `Option`/`Result` combinators (`.map_err`, `.and_then`, `.ok_or`) over `match` for simple flows; use `?` for error propagation; prefer pattern matching with `match` (not `if let` chains) when handling multiple variants
 
 ## Development Workflow
 
@@ -166,6 +182,14 @@ For Go patterns, follow standard library conventions.
 - [Effective Go](https://go.dev/doc/effective_go)
 - [Go Testing Package](https://pkg.go.dev/testing)
 - [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+
+**Rust:**
+- [The Rust Programming Language ("the book")](https://doc.rust-lang.org/book/)
+- [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+- [Rust by Example](https://doc.rust-lang.org/rust-by-example/)
+- [Clippy Lints](https://rust-lang.github.io/rust-clippy/master/)
+- [The Rustonomicon](https://doc.rust-lang.org/nomicon/) (when `unsafe` is unavoidable)
+- [Effective Rust](https://www.lurklurk.org/effective-rust/) (Brett Slatkin-shape Item-based guide)
 
 ## Summary
 
