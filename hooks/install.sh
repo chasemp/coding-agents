@@ -1,13 +1,18 @@
 #!/bin/bash
-# Install TDD enforcement hooks (Layers 1 & 2) for Claude Code.
+# Install TDD enforcement hooks for Claude Code.
 #
-# What this does:
-#   1. Symlinks hook scripts into ~/.claude/hooks/
-#   2. Patches ~/.claude/settings.json to register the hooks
+# Modes:
+#   (default)        Model A (real-time): symlink the scripts into
+#                    ~/.claude/hooks/ and register the edit + stop guards in
+#                    ~/.claude/settings.json.
+#   --commit-gate    Model B (free editing, gate at commit): remove the edit +
+#                    stop guards from settings.json and install the pre-commit
+#                    guard (run-tests) into the current repo's .git/hooks/.
+#   --uninstall      Remove the symlinks and the edit/stop guard entries.
 #
-# Run from anywhere — the script locates itself.
-#
-# To uninstall, run: hooks/install.sh --uninstall
+# Run from anywhere — the script locates itself. (--commit-gate installs the
+# per-repo pre-commit gate into whatever repo you run it from.) See
+# hooks/README.md for the two models and the multi-workspace wrapper.
 
 set -euo pipefail
 
@@ -47,6 +52,74 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   fi
 
   echo "Done. Restart Claude Code for changes to take effect."
+  exit 0
+fi
+
+# ── Commit-gate mode (model B) ──────────────────────────────
+# Free editing, gate at commit: remove the real-time edit/stop guards from
+# settings.json and install the pre-commit guard (run-tests) into THIS repo.
+if [[ "${1:-}" == "--commit-gate" ]]; then
+  echo "Setting up the commit-gate model (model B)..."
+  echo ""
+
+  if ! command -v jq &>/dev/null; then
+    echo "ERROR: jq is required but not installed."
+    echo "  brew install jq  (macOS)   |   apt install jq  (Debian/Ubuntu)"
+    exit 1
+  fi
+
+  # Symlink the scripts (the pre-commit wrapper references the symlinked guard).
+  mkdir -p "$CLAUDE_HOOKS_DIR"
+  for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh; do
+    ln -sf "$SCRIPT_DIR/$hook" "$CLAUDE_HOOKS_DIR/$hook"
+  done
+  chmod +x "$SCRIPT_DIR"/tdd-edit-guard.sh "$SCRIPT_DIR"/tdd-stop-guard.sh "$SCRIPT_DIR"/pre-commit-tdd-guard.sh
+
+  # Remove the real-time guards from settings.json (keep all non-TDD hooks).
+  if [[ -f "$SETTINGS" ]]; then
+    BACKUP="${SETTINGS}.bak.$(date +%s)"
+    cp "$SETTINGS" "$BACKUP"
+    jq '
+      if .hooks.PreToolUse then
+        .hooks.PreToolUse |= map(select(.hooks | all(.command | test("tdd-edit-guard") | not)))
+      else . end
+      | if .hooks.Stop then
+          .hooks.Stop |= map(select(.hooks | all(.command | test("tdd-stop-guard") | not)))
+        else . end
+      | if .hooks.PreToolUse == [] then del(.hooks.PreToolUse) else . end
+      | if .hooks.Stop == [] then del(.hooks.Stop) else . end
+    ' "$BACKUP" > "$SETTINGS"
+    echo "  [edit] removed edit/stop guards from settings.json (backup: $BACKUP)"
+  else
+    echo "  [skip] no $SETTINGS — nothing to remove"
+  fi
+
+  # Install the pre-commit gate into the current repo.
+  if REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null); then
+    HOOK="$REPO_ROOT/.git/hooks/pre-commit"
+    cat > "$HOOK" <<'PRECOMMIT'
+#!/bin/bash
+# TDD commit-gate (installed by coding-agents hooks/install.sh --commit-gate).
+# Require tests staged with prod (inline Rust #[cfg(test)] counts) AND run the
+# suite. For a multi-workspace repo with no root manifest, replace the export
+# below with the per-workspace wrapper from hooks/README.md.
+export TDD_GUARD_RUN_TESTS=1
+exec "$HOME/.claude/hooks/pre-commit-tdd-guard.sh" "$@"
+PRECOMMIT
+    chmod +x "$HOOK"
+    echo "  [add]  pre-commit gate -> $HOOK (TDD_GUARD_RUN_TESTS=1)"
+  else
+    echo "  [skip] not inside a git repo — run again from a repo root to install the gate"
+  fi
+
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Commit-gate model active. Restart Claude Code so the"
+  echo "  removed edit/stop guards take effect. Editing is now"
+  echo "  uninterrupted; commits run the suite and require tests."
+  echo "  Multi-workspace repos: see hooks/README.md for the"
+  echo "  per-workspace pre-commit wrapper."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   exit 0
 fi
 
