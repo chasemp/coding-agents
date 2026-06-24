@@ -76,11 +76,17 @@ Edit + stop guards **off**; the pre-commit guard is the single gate and runs the
 test suite. You work uninterrupted; a commit is rejected unless tests are staged
 with prod **and** the suite passes.
 
-- Set up:
-  1. Remove the edit/stop entries from `~/.claude/settings.json`
-     (`./hooks/install.sh --uninstall` removes both — keep any non-TDD hooks).
-  2. Install the pre-commit guard per repo (see below), with
-     `TDD_GUARD_RUN_TESTS=1`.
+- Set up (one command, run from the repo you want gated):
+
+  ```bash
+  ./hooks/install.sh --commit-gate
+  ```
+
+  This removes the edit/stop entries from `~/.claude/settings.json` (keeping any
+  non-TDD hooks) and installs a pre-commit gate with `TDD_GUARD_RUN_TESTS=1`
+  into that repo's `.git/hooks/`. Restart Claude Code so the removal takes
+  effect. (Multi-workspace repo with no root manifest? Swap the installed
+  pre-commit for the per-workspace wrapper below.)
 - Trade-off: zero mid-work friction; the gate is later (commit time) and relies
   on the author following RED→GREEN, with the suite as the backstop.
 
@@ -226,4 +232,5 @@ when the file is absent.
 | `tdd-edit-guard.sh` | Claude Code PreToolUse (Edit\|Write) | Global |
 | `tdd-stop-guard.sh` | Claude Code Stop | Global |
 | `pre-commit-tdd-guard.sh` | git pre-commit | Per-repo |
-| `install.sh` | Setup script (symlinks + settings.json) | One-time |
+| `install.sh` | Setup script (model A default; `--commit-gate` for model B; `--uninstall`) | One-time |
+| `test-install.sh` | Sandboxed test for `install.sh` (temp HOME + temp repo) | Dev |
