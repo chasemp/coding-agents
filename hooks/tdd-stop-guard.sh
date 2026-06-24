@@ -55,12 +55,32 @@ if [[ -z "$PROD_FILES" ]]; then
   exit 0
 fi
 
-# Production changes exist — do test changes also exist?
-if [[ -n "$TEST_FILES" ]]; then
-  exit 0  # Both present — TDD likely followed
+# Rust inline unit tests live in the SAME src/*.rs file as the code they
+# test (#[cfg(test)] mod tests { ... } at the bottom of the file — the
+# idiomatic location for library crates, and what our CLAUDE.md prescribes).
+# A path/name-based TEST_PATTERN cannot see them, so detect them by content:
+# a changed .rs file that carries an inline test marker IS a test change.
+HAS_INLINE_RUST_TESTS=0
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  [[ "$f" == *.rs ]] || continue
+  [[ -f "$f" ]] || continue
+  if grep -qE '#\[cfg\(test\)\]|#\[test\]' "$f" 2>/dev/null; then
+    HAS_INLINE_RUST_TESTS=1
+    break
+  fi
+done <<< "$PROD_FILES"
+
+# Production changes exist — do test changes also exist (a separate test
+# file, OR Rust inline tests in the changed source)?
+if [[ -n "$TEST_FILES" || "$HAS_INLINE_RUST_TESTS" == "1" ]]; then
+  exit 0  # Test coverage present — TDD likely followed
 fi
 
-# Production changes WITHOUT test changes — block
+# Production changes WITHOUT any test changes — block.
+# Stop hooks signal a block via the TOP-LEVEL decision/reason fields. The
+# hookSpecificOutput envelope is for events that require a hookEventName
+# (PreToolUse, etc.) and is rejected by the schema for Stop.
 PROD_LIST=$(echo "$PROD_FILES" | head -8 | sed 's/^/  - /')
 PROD_COUNT=$(echo "$PROD_FILES" | wc -l | tr -d ' ')
 
@@ -71,14 +91,13 @@ TDD GUARD (Layer 1): Cannot complete session. ${PROD_COUNT} production file(s) m
 ${PROD_LIST}
 
 Either:
-  1. Write tests for these changes (preferred — TDD)
+  1. Write tests for these changes (preferred — TDD). Rust inline
+     #[cfg(test)] tests in the same .rs file count.
   2. Commit your current work so the pre-commit hook can validate
   3. Revert the production changes if they were exploratory
 MSG
 )" \
   '{
-    "hookSpecificOutput": {
-      "decision": "block",
-      "reason": $reason
-    }
+    "decision": "block",
+    "reason": $reason
   }'
