@@ -63,8 +63,22 @@ fi
 
 PROD_COUNT=$(echo "$PROD_FILES" | wc -l | tr -d ' ')
 
-# --- No test files staged — reject ---
-if [[ -z "$TEST_FILES" ]]; then
+# --- Rust inline tests: a staged .rs file whose STAGED content carries an
+# inline #[cfg(test)] / #[test] marker tests the code in that same file (the
+# idiomatic location for library crates). The path-based TEST_PATTERN can't
+# see these, so detect them by content of the staged blob. ---
+HAS_INLINE_RUST_TESTS=0
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  [[ "$f" == *.rs ]] || continue
+  if git show ":$f" 2>/dev/null | grep -qE '#\[cfg\(test\)\]|#\[test\]'; then
+    HAS_INLINE_RUST_TESTS=1
+    break
+  fi
+done <<< "$PROD_FILES"
+
+# --- No test files staged AND no Rust inline tests — reject ---
+if [[ -z "$TEST_FILES" && "$HAS_INLINE_RUST_TESTS" != "1" ]]; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "  TDD GUARD (Layer 3): Commit rejected"
@@ -75,6 +89,7 @@ if [[ -z "$TEST_FILES" ]]; then
   echo "$PROD_FILES" | sed 's/^/    - /'
   echo ""
   echo "  Write tests first (TDD), then commit both together."
+  echo "  (Rust: inline #[cfg(test)] tests in the same .rs file count.)"
   echo "  Emergency bypass: git commit --no-verify"
   echo ""
   exit 1
@@ -83,7 +98,9 @@ fi
 TEST_COUNT=$(echo "$TEST_FILES" | wc -l | tr -d ' ')
 
 # --- Optional strict mode: require ratio ---
-if [[ "${TDD_GUARD_STRICT:-0}" == "1" ]]; then
+# Skip the ratio check when Rust inline tests are present: an inline-tested
+# .rs file carries its own coverage, so the separate-file ratio is moot.
+if [[ "${TDD_GUARD_STRICT:-0}" == "1" && "$HAS_INLINE_RUST_TESTS" != "1" ]]; then
   if [[ "$TEST_COUNT" -lt "$PROD_COUNT" ]]; then
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

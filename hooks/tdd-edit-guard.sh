@@ -63,6 +63,24 @@ if [[ "$TEST_CHANGES" -gt 0 ]]; then
   exit 0  # Test file changes exist — TDD likely being followed
 fi
 
+# --- Rust inline tests: a changed .rs file carrying #[cfg(test)] / #[test]
+# tests the code in that same file (idiomatic for library crates). The
+# path-based TEST_PATTERN can't see these, so check changed .rs content. ---
+CHANGED_RS=$(
+  {
+    git diff --name-only 2>/dev/null
+    git diff --cached --name-only 2>/dev/null
+    git ls-files --others --exclude-standard 2>/dev/null
+  } | grep -E '\.rs$' | sort -u || true
+)
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  [[ -f "$f" ]] || continue
+  if grep -qE '#\[cfg\(test\)\]|#\[test\]' "$f" 2>/dev/null; then
+    exit 0  # Inline Rust tests present — TDD likely being followed
+  fi
+done <<< "$CHANGED_RS"
+
 # --- Debounce: don't nag more than once per 120 seconds ---
 REPO_ID=$(git rev-parse --show-toplevel 2>/dev/null | md5 2>/dev/null || git rev-parse --show-toplevel 2>/dev/null | md5sum 2>/dev/null | cut -d' ' -f1 || echo "unknown")
 DEBOUNCE_FILE="/tmp/.tdd-edit-guard-${REPO_ID}"
