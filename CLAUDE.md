@@ -60,6 +60,14 @@ Choose the language that best fits the domain - TypeScript for web/frontend, Pyt
 - **Go**: standard `testing` package, table-driven tests
 - **Rust**: built-in `cargo test`. **Inline unit tests** in `#[cfg(test)] mod tests { ... }` blocks at the bottom of the source file (idiomatic for library crates). **Integration tests** in `tests/` directory (one file per scenario). Table-driven via `#[test_case::test_case]` or `rstest` parameterized tests. Property tests via `proptest` for parsers/crypto round-trips. The `mockall` crate for behavior-mocking interfaces (use sparingly — prefer real types).
 
+**Mutation testing — the check on the check.** RED-first proves a test fails *once*, against the one stub you happened to write. It does not prove the test still fails against the bug you'll actually introduce later. Mutation testing does: it perturbs production code one line at a time and reports every mutation the suite still passes. **Expected on any non-trivial module, and the expectation rises with complexity** — rules engines, encoders/decoders, search, parsers, and state machines are where a green suite most easily hides a hole.
+
+- **When**: after a module goes green, before you call the phase done. Not per-commit — it is a periodic audit, not a gate. Re-run it when you change the logic it covered.
+- **Tools**: Rust `cargo mutants` · TypeScript `stryker` · Python `mutmut` or `cosmic-ray` · Go `go-mutesting`.
+- **Read the survivors, don't chase the score.** Every run produces **equivalent mutants** — mutations that provably cannot change behaviour, so no test can kill them. Real examples: `(row + col) % 2` → `(row - col) % 2` (same parity), `a | b` → `a ^ b` on disjoint bit fields, `2 * dr` → `2 / dr` where `dr` is `±1`. Triage each survivor into *equivalent* or *real gap*, and say which in the write-up. A repo chasing 100% adds assertions that pin implementation detail — the exact anti-pattern the rest of this file is about.
+- **A timeout is a kill.** A mutation that makes the suite hang has been detected; it just failed slowly.
+- **What survivors usually mean.** Three patterns dominate: an API added for convenience with no caller in a test; a trait/interface impl that only delegates, where every test calls the underlying function directly; and an unreachable defensive branch. The first two are cheap to close. For the third, extract the policy into a function a test can reach — if a branch cannot be reached from any real input, it cannot be verified in place, and "unreachable" is a claim worth a test of its own.
+
 For testing anti-patterns and how to fix them, load the `testing-anti-patterns` skill.
 
 ## Type Safety Guidelines
