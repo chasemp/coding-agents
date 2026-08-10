@@ -315,6 +315,85 @@ IF you can name a one-line mutation that no test catches:
 
 ---
 
+## Anti-Pattern 7: Assertions a Wrong Implementation Also Satisfies
+
+Anti-Pattern 6 is about assertions that are too *narrow* — one point on a branching curve. This one
+is the opposite failure: the assertion is **too wide**. It is true of the correct implementation,
+and also true of implementations that are badly wrong. Coverage is fine, the boundary is right, the
+test is green, and it is not testing what its name says.
+
+Two forms dominate, and both were caught by mutation testing after passing review.
+
+### Form (a): asserting an absence
+
+```rust
+// Testing that a payload is encrypted.
+assert!(!sealed.windows(plain.len()).any(|w| w == plain),
+        "plaintext must not appear in the sealed bytes");
+```
+
+**Why it is wrong:** "the output does not contain the input" is satisfied by *any* transformation.
+XOR satisfies it. ROT13 satisfies it. Reversing the bytes satisfies it. The assertion cannot
+distinguish real encryption from a placeholder cipher — which is precisely the substitution such a
+test exists to prevent.
+
+**The fix — assert the positive structural property:**
+```rust
+let parsed = MlsMessageIn::tls_deserialize_exact(&sealed).expect("parses as a real MLS message");
+assert_eq!(parsed.wire_format(), WireFormat::PrivateMessage);
+```
+Now the bytes must actually *be* the thing, not merely *not be* the input. Verified by mutation: the
+XOR substitution passes the absence assertion and is killed by the structural one.
+
+**Rule of thumb: an assertion of the form `assert!(!...)` about a transformation is usually too
+wide.** Ask what else would satisfy it. If the answer includes something you are trying to rule out,
+assert the positive property instead.
+
+### Form (b): a laundered observable
+
+```rust
+// Testing that the service stores a fan-out message ONCE.
+service.publish(payload, &[recipient_a, recipient_b]).await?;
+assert_eq!(store.file_count(), 1);
+```
+
+**Why it is wrong:** the store is content-addressed, so it deduplicates. Writing the same bytes five
+times still leaves one file. The assertion measures **the downstream system's idempotence**, not the
+component's behaviour — an implementation that writes once per recipient passes unchanged.
+
+The difference is not cosmetic when the laundered dimension is billed, rate-limited, or audited:
+storage deduplicated, but *transit did not*, so the wrong implementation would move N× the bytes
+while looking identical at the observable under test.
+
+**The fix — count the operation, not the end state:**
+```rust
+assert_eq!(store.write_count(), 1, "deposited once");   // the component's behaviour
+assert_eq!(store.file_count(), 1, "and stored once");   // the store's dedup — a separate claim
+```
+
+**Rule of thumb: if the thing you are asserting sits downstream of something idempotent,
+normalizing, deduplicating, sorting, or caching, that system may be supplying the property you think
+you are testing.** Instrument the boundary the component actually crosses.
+
+### Detecting both
+
+The mental mutation pass (Anti-Pattern 6) asks "if I changed this line, would a test fail?" These two
+forms need the dual question:
+
+```
+For each assertion, ask:
+  "What OTHER implementations would also satisfy this?"
+
+IF the set includes an implementation you would reject in review:
+  the assertion is too wide — assert a property only the correct one has.
+```
+
+Both examples above survived review and were caught only by running the mutation. Neither is exotic;
+they are what a reasonable person writes when the correct behaviour and the observable happen to
+coincide on the happy path.
+
+---
+
 ## How TDD Prevents These Anti-Patterns
 
 | Anti-pattern | Why TDD prevents it |
@@ -325,6 +404,7 @@ IF you can name a one-line mutation that no test catches:
 | Incomplete mocks | You use real schemas from the start; the type system catches gaps |
 | Over-complex mocks | Minimal implementation pressure keeps mocking scoped |
 | Implementation-mirrored assertions | RED-watched-fail forces you to write the assertion before the code exists; you can't mirror a shape that hasn't been written yet |
+| Assertions a wrong implementation satisfies | Writing the assertion from the *contract* ("it must be an MLS PrivateMessage", "we deposit once") rather than from the observable that happens to be handy |
 
 **If you're testing mock behavior, you violated TDD** — you added mocks before watching the test fail against real code.
 
@@ -338,6 +418,8 @@ IF you can name a one-line mutation that no test catches:
 |---|---|
 | `mock_x.assert_called_once()` with no behavior check | Assert on the observable outcome |
 | Method on production class only used in tests | Move to `tests/helpers.py` |
+| `assert!(!output.contains(input))` for a transformation | Assert the positive structural property the correct output has |
+| Asserting an end state downstream of a dedup/normalize/cache | Count the operation at the boundary the component crosses |
 | Mocking a method whose side effect the test needs | Mock at a lower level, preserve the side effect |
 | Hand-rolled partial response dicts | Use the real schema/dataclass to construct test data |
 | Mock setup > test logic | Consider real in-memory objects or `tmp_path` |
@@ -354,3 +436,6 @@ IF you can name a one-line mutation that no test catches:
 - One assertion per branch with no edge cases on either side of the threshold
 - "If I deleted this line of production code, no test would fail"
 - Tests look like a structural mirror of the implementation
+- The assertion is an absence (`not in`, `!contains`) about a transformation
+- The observable sits downstream of something that deduplicates, normalizes, sorts, or caches
+- You cannot name a wrong implementation the assertion would reject
