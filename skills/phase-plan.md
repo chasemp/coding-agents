@@ -609,6 +609,30 @@ phases. Phase 0 discovery operates under the Discovery Exemption — read
   the same item — not a separate task for later. The wiring test is what
   makes this enforceable: if the wiring test is still RED, the wiring isn't
   done regardless of how many unit tests pass.
+- **A new entry point invalidates every prior "wired" claim.** The rule above
+  is applied *per phase, forward only* — and that is where it leaks. When a
+  project grows a boundary it did not have (an HTTP surface, a CLI, a daemon),
+  every capability built *before* it was correctly wired to an entry point
+  **that no longer matters**, and nothing re-checks them. Observed: a service
+  where five modules — one 414 lines with five inline tests and two dedicated
+  suites — had **zero callers**, while the README listed them as features and
+  the docs called the layer "proven." It was proven *as a library*; the
+  implicit next clause, that the boundary exposed it, was false. **When you add
+  a boundary, re-run the wiring question over everything that predates it.**
+- **Coverage measures execution, not reachability — no coverage tool tells them
+  apart.** A thoroughly-tested orphan has excellent coverage. The check that
+  catches this is a **reachability gate**: enumerate modules, count callers
+  outside themselves, compare against an *explicit allowlist of
+  known-unreachable ones with reasons*. Make it fail in **both** directions —
+  an unlisted module with no callers fails (new drift caught the day it
+  appears, without blocking on a cleanup that is its own project), and a listed
+  module that gains callers *also* fails, demanding removal. The second
+  direction is what stops the allowlist rotting into a permanent excuse: it can
+  only shrink or be argued with. Pin its size so the debt cannot quietly grow.
+- **Watch for a test suite in two halves that never meet** — library tests that
+  import modules directly and construct no entry point, plus boundary tests
+  that drive the entry point, with nothing asserting a path between them. Both
+  halves stay green while the middle is missing.
 - **Commit at every stable point.** After each phase passes its checklist,
   commit. No batching phases into a single commit. Each commit is a verified,
   working checkpoint that can be rolled back to independently.
