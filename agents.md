@@ -5,7 +5,11 @@ It is installed globally at `~/.claude/coding-agents/` and loaded via
 `~/.claude/CLAUDE.md` `@` includes.
 
 Org-specific repos (AlpheusCEF/coding-agents, mycelium-agent-framework/coding-agents)
-layer on top with org-only content. See those repos' READMEs for org setup.
+layer on top with org-only content. See those repos' READMEs for org setup. A workspace
+meta-repo can layer between org and project for a tree of sibling repos worked by
+concurrent sessions — cross-repo conventions in its auto-loaded `.claude/`, each rule
+with its recorded why, audited by script (see README "Layering model"; live example
+`chasemp/CroftC`).
 
 ## How it works
 

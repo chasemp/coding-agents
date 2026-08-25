@@ -5,7 +5,9 @@ instructions for coding agents across all orgs and projects.
 
 ## Layering model
 
-This repo is the **personal layer** (Layer 1). Org-specific repos add on top.
+This repo is the **personal layer** (Layer 1). Org, workspace, and project layers add on
+top — each concern written once, at the level it belongs; lower layers point up rather
+than restating.
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -18,10 +20,24 @@ This repo is the **personal layer** (Layer 1). Org-specific repos add on top.
 │ mycelium-agent-framework/coding-agents      │
 │ Cloned into project .claude/org-agents/     │
 ├─────────────────────────────────────────────┤
-│ Layer 3: Project                            │
+│ Layer 3: Workspace (optional)               │
+│ A meta-repo over sibling repos that tracks  │
+│ only .claude/ + .gitignore; its CLAUDE.md   │
+│ auto-loads for any session under the tree   │
+├─────────────────────────────────────────────┤
+│ Layer 4: Project                            │
 │ Each repo's own CLAUDE.md                   │
 └─────────────────────────────────────────────┘
 ```
+
+**The workspace layer** exists for a directory of independent sibling repos worked by
+concurrent agent sessions. The meta-repo version-controls the cross-repo conventions
+(session coordination via worktrees and claims, a shared CI shape, item-tracking routing)
+without owning any repo's content, and an audit script turns each convention into a
+checkable invariant. Every rule carries its recorded why, so future refactors of the
+conventions can tell load-bearing from incidental. Live example:
+`chasemp/CroftC` — `.claude/COORDINATION.md`, `CI-PATTERN.md`, `TRACKING.md`,
+`bin/workspace-audit.sh`.
 
 ## What's here
 
