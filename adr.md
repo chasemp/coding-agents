@@ -303,7 +303,11 @@ Before writing the ADR, gather:
 
 ### 5. Maintain ADR Index
 
-Keep `docs/adr/README.md` updated:
+In a workspace with a meta-repo layer (see agents.md on layering), the workspace
+decision registry (`<workspace>/.claude/DECISIONS.md`) is the ADR index: add the new
+ADR's row (key `<repo>/<NNNN>`, tags, one-line decision) there in the same change, and
+a per-repo `docs/adr/README.md` is optional. Standalone repos keep
+`docs/adr/README.md` updated:
 
 ```markdown
 # Architecture Decision Records
