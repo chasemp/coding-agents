@@ -175,8 +175,7 @@ done
 exec "$HOME/.claude/hooks/pre-commit-tdd-guard.sh" "$@"
 ```
 
-Bash 3.2-safe (no `mapfile`). Live example: the `CroftCommunity/experiments`
-repo, where `croft-group/`, `iroh/`, etc. are separate workspaces.
+Bash 3.2-safe (no `mapfile`). Example: the `CroftCommunity/experiments` repo (now FROZEN — the corpus lives at `discovery/alpha/experiments/`), where `croft-group/`, `iroh/`, etc. are separate workspaces.
 
 ## Emergency bypass
 

@@ -139,7 +139,7 @@ assistant: "That's an important infrastructure decision. Let me use the adr agen
 **Decision Point**: Queue infrastructure selection
 **→ Invoke adr agent** to create ADR-001
 
-[adr agent creates docs/adr/001-queue-infrastructure.md]
+[adr agent creates docs/adr/0001-queue-infrastructure.md]
 ```text
 
 **Invoked by docs-guardian:**
@@ -155,7 +155,7 @@ docs-guardian: "I notice there's no ADR explaining why we chose JWT over session
 ADRs follow a standard format for consistency:
 
 ```markdown
-# ADR-NNN: [Short Title]
+# ADR-NNNN: [Short Title]
 
 **Status**: Accepted | Proposed | Deprecated | Superseded by ADR-XXX
 
@@ -267,11 +267,11 @@ When triggered, create a new ADR:
 
 ```bash
 # Determine next ADR number
-ls docs/adr/ | grep -E '^[0-9]+' | sort -n | tail -1
-# If last is 003, create 004
+ls docs/adr/ | grep -E '^[0-9]+' | sort -n | tail -1   # numbers are 4-digit, zero-padded (NNNN-slug.md)
+# If last is 0003, create 0004 (4-digit, zero-padded — matches workspace audit check 11)
 
 # Create new ADR
-# File: docs/adr/004-validation-library-choice.md
+# File: docs/adr/0004-validation-library-choice.md
 ```text
 
 ### 3. Gather Context

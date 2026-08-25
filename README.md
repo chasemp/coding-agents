@@ -21,8 +21,8 @@ than restating.
 │ Cloned into project .claude/org-agents/     │
 ├─────────────────────────────────────────────┤
 │ Layer 3: Workspace (optional)               │
-│ A meta-repo over sibling repos that tracks  │
-│ only .claude/ + .gitignore; its CLAUDE.md   │
+│ A meta-repo over sibling repos tracking only│
+│ .claude/ + README + .gitignore; its CLAUDE.md│
 │ auto-loads for any session under the tree   │
 ├─────────────────────────────────────────────┤
 │ Layer 4: Project                            │
@@ -36,7 +36,8 @@ concurrent agent sessions. The meta-repo version-controls the cross-repo convent
 without owning any repo's content, and an audit script turns each convention into a
 checkable invariant. Every rule carries its recorded why, so future refactors of the
 conventions can tell load-bearing from incidental. Live example:
-`chasemp/CroftC` — `.claude/COORDINATION.md`, `CI-PATTERN.md`, `TRACKING.md`,
+`chasemp/CroftC` — the convention docs in its `.claude/` (COORDINATION, CI-PATTERN,
+TRACKING, DEPLOYMENT, DECISIONS, ARCHITECTURE, PATTERN, REPO-GRAMMAR) plus
 `bin/workspace-audit.sh`.
 
 ## What's here
