@@ -70,7 +70,7 @@ Choose the language that best fits the domain - TypeScript for web/frontend, Pyt
   - `cp file /tmp/f.bak` — a stale backup from an earlier refactor silently restores the *wrong* version, so you have "restored" a regression into a green suite. Only a compile error caught it; a version that still compiled would have shipped.
   - **`git stash push` + `git checkout -- <path>` + `git stash drop`** — this looks like the disciplined fix and is worse. `stash push` resets the index to `HEAD`, so the later `checkout` restores **HEAD**, not your pre-mutation state, and `drop` then discards the only copy. Recoverable via `git fsck --unreachable` + `git checkout <dangling-sha> -- <paths>`, but only if you notice.
   
-  **The reliable pattern: commit the green state first, mutate, then `git checkout HEAD -- <path>`.** Uncommitted work is not a restore point, and a phase's worth of work should never be the thing standing between a mutation and its undo. Re-run the *full* suite after every restore, not just the mutated test — a bad restore shows up in the tests you weren't looking at.
+  **The reliable pattern: commit the green state first, mutate, then `git checkout HEAD -- <path>`** — and note the ORDER is the rule, not the command. `git checkout HEAD -- <path>` is a restore only when the state you want back is already in HEAD; run it on a file with uncommitted work and it is a delete. See "Destructive git operations" below. Uncommitted work is not a restore point, and a phase's worth of work should never be the thing standing between a mutation and its undo. Re-run the *full* suite after every restore, not just the mutated test — a bad restore shows up in the tests you weren't looking at.
 - **What survivors usually mean.** Three patterns dominate: an API added for convenience with no caller in a test; a trait/interface impl that only delegates, where every test calls the underlying function directly; and an unreachable defensive branch. The first two are cheap to close. For the third, extract the policy into a function a test can reach — if a branch cannot be reached from any real input, it cannot be verified in place, and "unreachable" is a claim worth a test of its own.
 
 For testing anti-patterns and how to fix them, load the `testing-anti-patterns` skill.
@@ -141,6 +141,18 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 - **Wait for commit approval** before every commit
 - Each increment leaves codebase in working state
 - Capture learnings as they occur, merge at end
+- **Destructive git operations discard uncommitted work — check before, not after.**
+  `git checkout HEAD -- <path>`, `git restore <path>`, `git stash drop`, `git reset
+  --hard`, and `git clean` all silently destroy anything not committed. Before any of
+  them, run `git status --porcelain <path>`: if it prints, that content exists nowhere
+  else and the command is a delete, not a restore. Commit or stash first (and if you
+  stash, remember `stash push` resets the index to HEAD — the classic
+  stash/checkout/drop sequence restores HEAD, not your pre-change state, then discards
+  the only copy). *Why this is a top-level rule and not a testing footnote:* agents
+  have hit it while simply reverting a bad edit, and reported afterwards "I hit the
+  exact trap CLAUDE.md warns about" — knowing the rule at session start does not stop
+  it; checking `git status` at the moment of the command does. Recovery if you already
+  ran it: `git fsck --unreachable` may still hold the blob.
 - **Bail on repeated failure**: If an approach fails twice, stop and reassess with the user before trying alternatives. Do not spin on a failing strategy.
 - **No completion claims without fresh evidence**: Before asserting success, run the proving command, read complete output and exit code, confirm it supports the claim. Language like "should work" or "probably" without a fresh run is not acceptable. Confidence from a previous run does not count. Unverified claims are indistinguishable from hallucinations.
 - **Plans record the why, not just the what.** Any plan in `plans/` (or the project's equivalent location) must carry **Problem Statement**, **Approach**, and **Reasoning** — not just a change list. If a future reader cannot reconstruct *why* the change was proposed from the plan alone, the plan is incomplete. Format is flexible; presence of these three semantic elements is not. The `plan-doc-reasoning` skill enforces the floor; `phase-plan` prescribes the full template for complex changes.
