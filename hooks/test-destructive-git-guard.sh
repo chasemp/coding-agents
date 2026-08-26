@@ -37,8 +37,8 @@ clean()  { git -C "$TMP/ws/child" checkout -- tracked.txt 2>/dev/null; }
 
 # want=2 means "must block", want=0 means "must stay out of the way"
 check() {
-  local want="$1" desc="$2" cmd="$3" got
-  got="$(cd "$TMP/ws" && printf '%s' "$cmd" |
+  local want="$1" desc="$2" cmd="$3" wd="${4:-$TMP/ws}" got
+  got="$(cd "$wd" && printf '%s' "$cmd" |
     python3 -c 'import json,sys; print(json.dumps({"tool_input":{"command":sys.stdin.read()}}))' |
     bash "$GUARD" >/dev/null 2>&1; echo $?)"
   if [ "$got" = "$want" ]; then PASS=$((PASS+1)); printf '  ok    %s\n' "$desc"
@@ -53,6 +53,11 @@ check 2 "cd <repo> && git checkout HEAD -- <file>" 'cd child && git checkout HEA
 check 2 "git -C <repo> checkout -- <file>"        'git -C child checkout -- tracked.txt'
 check 2 "git -C <repo> reset --hard"              'git -C child reset --hard'
 check 2 "compound: build && git -C <repo> reset --hard" 'npm run build && git -C child reset --hard'
+# The command that actually destroyed work (croftc-e2, 2026-08-26): the BARE form, run
+# with the CWD already inside the right repo. Nothing about its shape or location marks
+# it destructive — only the working-tree state at that instant does, which is why the
+# guard must RUN the status check rather than pattern-match the invocation.
+check 2 "bare form, CWD inside the repo, file dirty" 'git checkout HEAD -- tracked.txt' "$TMP/ws/child"
 
 echo "must ALLOW — no work at risk, or not destructive:"
 check 0 "same repo, a path that is CLEAN"         'git -C child checkout HEAD -- other.txt'
@@ -62,6 +67,9 @@ check 0 "non-git command mentioning checkout"     'echo "git checkout HEAD -- x"
 clean
 check 0 "destructive, but the tree is clean"      'git -C child checkout HEAD -- tracked.txt'
 check 0 "reset --hard on a clean tree"            'git -C child reset --hard'
+# Same command, same repo, same CWD as the blocking case above — benign purely because
+# the tree is clean. This pair is the whole argument for a state check over a shape check.
+check 0 "bare form, CWD inside the repo, file clean" 'git checkout HEAD -- tracked.txt' "$TMP/ws/child"
 
 echo
 if [ "$FAIL" -eq 0 ]; then echo "PASS: $PASS/$((PASS+FAIL))"; exit 0; fi
