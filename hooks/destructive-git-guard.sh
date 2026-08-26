@@ -29,21 +29,52 @@ case "$cmd" in *git*) : ;; *) exit 0 ;; esac
 
 # Which destructive form is this? Empty = not destructive.
 kind=""
+# NOTE the wildcards between `git` and the subcommand: flags legitimately sit there
+# (`git -C <repo> checkout ...`, `git --git-dir=… restore …`). An earlier version matched
+# the literal "git checkout" and so never classified the workspace's most common shape as
+# destructive at all — it exited before any safety check ran (found 2026-08-26).
 case "$cmd" in
-  *"git checkout"*"--"*|*"git restore"*)   kind="restore-from-HEAD" ;;
-  *"git reset --hard"*)                    kind="reset --hard" ;;
-  *"git clean"*[!-]f*|*"git clean -f"*)    kind="clean -f" ;;
-  *"git stash drop"*|*"git stash clear"*)  kind="stash drop/clear" ;;
+  *git*checkout*" -- "*|*git*restore*)     kind="restore-from-HEAD" ;;
+  *git*"reset --hard"*)                    kind="reset --hard" ;;
+  *git*clean*-*f*)                         kind="clean -f" ;;
+  *git*"stash drop"*|*git*"stash clear"*)  kind="stash drop/clear" ;;
 esac
 [ -z "$kind" ] && exit 0
 
-# Does the working tree actually hold anything the command would destroy?
-dirty="$(git status --porcelain 2>/dev/null | head -20)"
+# WHICH repo, and WHICH paths? A command is rarely run against the cwd in a workspace of
+# nested repos — `git -C <repo> ...` and `cd <repo> && git ...` are the common shapes, and
+# checking the cwd there inspects the wrong tree entirely (verified 2026-08-26: this guard
+# missed `git -C forage checkout HEAD -- sw.js` run from the meta-repo root, because the
+# meta-repo was clean and nested repos are gitignored). Read the repo the command names.
+target="$(printf '%s' "$cmd" | python3 -c '
+import re, shlex, sys
+c = sys.stdin.read()
+d = "."
+m = re.search(r"(?:^|[;&|]\s*)cd\s+([^\s;&|]+)", c)
+if m: d = m.group(1)
+m = re.search(r"git\s+(?:-C|--git-dir=?)\s*([^\s]+)", c)
+if m: d = m.group(1)
+paths = ""
+if " -- " in c:
+    try: paths = " ".join(shlex.split(c.split(" -- ", 1)[1]))
+    except ValueError: paths = c.split(" -- ", 1)[1]
+print(d + "\t" + paths)' 2>/dev/null)"
+repo_dir="${target%%$(printf '\t')*}"; paths="${target#*$(printf '\t')}"
+[ -d "$repo_dir" ] || repo_dir="."
+
+# Does that tree actually hold anything the command would destroy? Scope to the named
+# paths when the command names them — a whole-tree check would block on unrelated dirt.
+if [ -n "$paths" ]; then
+  # shellcheck disable=SC2086
+  dirty="$(git -C "$repo_dir" status --porcelain -- $paths 2>/dev/null | head -20)"
+else
+  dirty="$(git -C "$repo_dir" status --porcelain 2>/dev/null | head -20)"
+fi
 [ -z "$dirty" ] && exit 0   # nothing to lose — stay quiet
 
 # stash drop/clear is about the stash list, not the tree.
 if [ "$kind" = "stash drop/clear" ]; then
-  entries="$(git stash list 2>/dev/null | wc -l | tr -d ' ')"
+  entries="$(git -C "$repo_dir" stash list 2>/dev/null | wc -l | tr -d ' ')"
   [ "${entries:-0}" -eq 0 ] && exit 0
 fi
 
@@ -53,7 +84,8 @@ BLOCKED — destructive git command with uncommitted work present.
 
   command: ${cmd}
   form:    ${kind}
-  tree:    ${count} uncommitted path(s), e.g.
+  repo:    ${repo_dir}
+  tree:    ${count} uncommitted path(s) in scope, e.g.
 $(printf '%s\n' "$dirty" | head -5 | sed 's/^/           /')
 
 Anything listed above exists ONLY in the working tree. This command deletes it —
