@@ -29,6 +29,109 @@ targets refinements to this repo's own skills, agents, and commands.
 **Notes:** <follow-ups, decisions — updated as the user acts on the proposal>
 ```
 
+## 2026-08-26: A green suite is not a verdict — three ways the harness lies
+
+**Observed pattern:** Wrong, confidently-stated, spec-relevant findings surviving
+a green test suite — because the *harness* was wrong, not the code. Each had to
+be publicly withdrawn after the fact.
+
+**Evidence:**
+- 2026-08 MLS exclusion/fold sessions — **a user story fabricated backwards from
+  a test is not a scenario.** A "concurrent remove + re-add" test had a story
+  invented to justify it; the owner asked how a moderator not yet synced with a
+  removal could readmit someone they cannot see removed, and the pairing
+  collapsed as socially unreachable. The reachable shape behaved differently — it
+  hard-stopped.
+- Same sessions — **`let _ = ingest(...)` corrupts verdicts.** Two apparent
+  order-dependence failures were harness artifacts, invisible until error returns
+  were printed. An experiment that discards errors cannot distinguish "resolved
+  differently" from "never saw the fact."
+- Same sessions — **a projection is not a verdict.** A `MEMBER` read from folded
+  state was reported as "the addition won"; the group was actually hard-stopped
+  in contradiction, and the member list was merely the projection of an escalated
+  state. The status channel said the opposite of the value the assertion read.
+
+**Proposed refinement:**
+- **Target:** extend skill `testing-anti-patterns` (first and third points);
+  extend skill `systematic-debugging` (second point). Companion to the
+  *checks that expire* entry below — same family, different surface.
+- **Change:** add *The harness can be the thing that is wrong*:
+  (a) derive scenarios from actor behaviour **before** writing the test, never
+  backwards from a test that already exists — a story invented to justify a test
+  will justify any test;
+  (b) print the outcome of every fallible harness call; a swallowed error in the
+  *instrument* is worse than one in the code, because it corrupts the verdict
+  rather than the run;
+  (c) when a system exposes a status channel alongside a value (fork status,
+  contradiction heads, validation state), assert on the status too — the value
+  an assertion happens to read may be a projection of a state that contradicts it.
+- **Rationale:** the existing "no completion claims without fresh evidence" rule
+  assumes the evidence, once fresh, is sound. These are cases where the evidence
+  was fresh, green, and *wrong* — and each produced a claim that had to be
+  retracted in public.
+
+**Status:** proposed
+
+**Notes:** Promoted from agent memory 2026-08-26 at the user's direction, after
+they asked "memory is not portable off this machine, when do we put things in
+memory and when in repos?". The workspace-scoped sibling (quote sources
+verbatim; verify a claim before repeating it) went to
+`CroftC/.claude/COORDINATION.md` `fdeb3d3`, since cross-session messaging is
+where that one bites.
+
+## 2026-08-26: A check that was true when it ran, and a plausible cause that fit
+
+**Observed pattern:** Verification failing while the work is careful — not by
+being skipped, but by going *stale* or by stopping at the first cause that fits.
+"Check more carefully" is not the remedy for either, which is what makes them
+worth a rule.
+
+**Evidence:**
+- forage, 2026-08-26 — scanned a registry for duplicate ids, got a true answer
+  (`DL-001..DL-034`, no gaps), then allocated `DL-035` later **from a newer base
+  without re-scanning**. A peer had taken it. The check was correct when it ran;
+  a rebase invalidated it with nothing visibly changing. Worse than not
+  checking, because it leaves *justified* confidence.
+- forage, same day — a CI failure sat in a file that also contained a visible
+  `waitForTimeout(300)`. Three sessions independently blamed the sleep. The real
+  cause was an invisible race: the assertion already had a `waitForSelector`,
+  the element *was* found, and a repaint replaced it before `.count()` ran.
+  Waiting longer could never have fixed it.
+- forage, same day, third instance — a peer ran `git show <sha> | head -8`, saw
+  the unrelated change in frame and the fix below the fold, and reported
+  "verified independently rather than take it on faith". A verification claim
+  travelled on a truncated read, reaching their owner as "flaky test".
+
+**Proposed refinement:**
+- **Target:** extend skill `systematic-debugging`; possibly one line in `CLAUDE.md`
+  beside "No completion claims without fresh evidence".
+- **Change:** add a section, *Checks that expire and causes that merely fit*:
+  (a) a uniqueness/allocation check is valid only against the tree you are
+  committing — re-evaluate after any rebase, or use a reserving allocator;
+  (b) before naming a cause, capture the actual failure output — a mechanism
+  that *fits* the evidence is not the evidence;
+  (c) when a fix changes two things, say which one was the fix, or the visible
+  one gets the credit downstream;
+  (d) never let a piped `head`/`tail` back the word "verified" — read `--stat`
+  first to learn the size, then the full hunks, especially when the conclusion
+  is "X is *not* the cause";
+  (e) distinguish "load *revealed* it" from "load *caused* it" — calling a real
+  latent race a flake is how races live forever.
+- **Rationale:** these three failures occurred in one day across three sessions
+  doing careful work, and every one produced a confidently-stated wrong claim
+  that then travelled to someone else. The existing rule ("no completion claims
+  without fresh evidence") covers unverified claims; it does not cover claims
+  whose evidence was real and has since expired, or is real but partial.
+
+**Status:** proposed
+
+**Notes:** Raised by the user asking the right question — "memory is not
+portable off this machine, when do we put things in memory and when in repos?"
+The workspace-scoped half (registry id allocation) went to
+`CroftC/.claude/TRACKING.md` (`0da573b`). This half is general engineering
+discipline and belongs in the global layer, hence a proposal here rather than a
+memory entry that dies with the machine.
+
 ## Status lifecycle
 
 - **proposed** — created by `learn`, awaiting user review.
