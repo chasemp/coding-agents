@@ -346,12 +346,38 @@ four commits and two entries instead of one plan doc. The plan doc
 is the artifact whose absence we would not immediately feel but
 would regret in three months.
 
-**Status:** proposed
+**Status:** accepted (Option A) — 2026-08-26
 
 **Notes:** User's framing — "this is maybe just barely at that
 threshold" — suggests the refinement should be conservative. Option
 A (trigger tweak) is my lean; Option B if A proves insufficient
-after another strike. Meta-observation: this session's work itself
+after another strike.
+
+**SECOND STRIKE, 2026-08-26 — and it decided this.** The entry's own
+parking condition was "revisit if a second session replays the same
+shape". It did, in the CroftC/forage work: a rename touching 49
+files changed the event vocabulary (`field.created` →
+`feed.created`), a published lexicon (`fyi.forage.field` →
+`fyi.forage.feed`), and deliberately broke stored logs — approved in
+a single conversational exchange, executed with no plan doc. In the
+same session, `phase-plan` DID fire correctly when the user said
+"make a plan for it", so the gap is specifically the conversational
+"yes" that turns into a large change.
+
+**Decided by the user: Option A.** Implemented — the trigger now also
+fires on a batch approved in conversation that would create files,
+change a data contract (schema, event vocabulary, published lexicon,
+stored format, public API), or span several files, and the skill body
+gains a short *A batch approved in conversation* section carrying both
+strikes as the recorded why. The threshold wording deliberately leads
+with "data contract" rather than a file count: 3+ files is a weak
+signal on its own (plenty of trivial changes touch three), while the
+data-contract clause would have caught both strikes.
+
+**What to watch:** whether this fires so often it becomes noise on
+ordinary multi-file edits. If it does, tighten to data-contract and
+file-creation only, and drop the file-count clause. Option B (a
+dedicated skill) remains the escalation if A proves insufficient. Meta-observation: this session's work itself
 is the kind of thing the new `Documentation Impact` requirement
 would have caught at plan time (we had to update README, agents.md,
 CLAUDE.md repeatedly as reactive patches).

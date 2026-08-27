@@ -12,6 +12,12 @@ description: >
   template and cross-cutting guardrails. Trigger when the user says
   "phase plan", "three-pass plan", "plan review", or when starting
   non-trivial changes that benefit from structured reasoning before execution.
+  ALSO trigger when a batch of work approved in CONVERSATION — a "yes, do all
+  that" — would create files, change a data contract (schema, event vocabulary,
+  published lexicon, stored format, public API), or span several files: persist
+  the proposal to plans/ BEFORE executing, even if the plan is short. The
+  session-level accumulation is what crosses the threshold, not any single turn,
+  so this fires on the batch even when each increment felt small.
 ---
 
 # Phase Plan
@@ -538,6 +544,29 @@ User: [clears context] "Here's our plan doc. Let's execute."
 Combine all three passes into a single context if the change is small and
 well-understood. The user can say "plan and finalize" or "quick plan". Load
 `pass1.md`, `pass2.md`, and `pass3.md` together.
+
+### A batch approved in conversation
+
+The commonest way a plan fails to get written is not refusal — it is that nobody
+noticed one was due. Work gets proposed in chat, approved with "yes, do all
+that", and executed well: good commits, sound reasoning, nothing lost *today*.
+What is lost is the one place that says why, so in three months the answer has
+to be reconstructed from a dozen commit messages.
+
+**Write the plan doc first when an approved batch would create files, change a
+data contract, or span several files** — even a short one. A single paragraph of
+Problem Statement / Approach / Reasoning is enough; the point is that it exists
+and is one artifact.
+
+*Why this trigger exists (two strikes, four months apart):* 2026-04-17, an
+18-commit session built a new agent, three skills, three commands and two
+ledgers with no plan doc, because each turn's increment felt small — it was the
+accumulation that crossed the threshold. 2026-08-26, a rename touched 49 files,
+changed an event vocabulary and a published lexicon, and deliberately broke
+stored data, approved in one exchange, with no plan doc. In the second case the
+plan doc would have paid immediately: it would have forced "what happens to logs
+already written?" *before* the rename, rather than mid-flight when the reducer's
+missing default branch turned a legacy log into a silently empty world.
 
 ### With Phase 0 Discovery
 
