@@ -147,7 +147,7 @@ worth a rule.
   without fresh evidence") covers unverified claims; it does not cover claims
   whose evidence was real and has since expired, or is real but partial.
 
-**Status:** proposed
+**Status:** accepted, REFRAMED by the user — 2026-08-26
 
 **Notes:** Raised by the user asking the right question — "memory is not
 portable off this machine, when do we put things in memory and when in repos?"
@@ -155,6 +155,35 @@ The workspace-scoped half (registry id allocation) went to
 `CroftC/.claude/TRACKING.md` (`0da573b`). This half is general engineering
 discipline and belongs in the global layer, hence a proposal here rather than a
 memory entry that dies with the machine.
+
+**THE USER'S REFRAMING IS THE REFINEMENT, and it is better than what was
+proposed.** I had framed this as "checks expire". Their formulation:
+
+> *fresh is not prescriptive enough — fresh since the change, fresh since a
+> time? Validation needs to be CONCURRENT with completion claims.*
+
+That is the sharper rule, because **"fresh" invites the question *fresh enough?*,
+which has no answer, while "concurrent" is binary**: did anything change between
+the validation and the claim? It also subsumes all three observations more
+cleanly than my framing did, along three axes:
+
+| Observation | Under "fresh" | Under "concurrent" |
+|---|---|---|
+| id scan, then rebase, then allocate | arguably fresh — same session | not concurrent in **time** |
+| `git show \| head -8` → "verified" | fresh, ran seconds prior | not concurrent in **extent** |
+| visible sleep blamed for invisible race | fresh output | not concurrent in **subject** |
+
+**Landed in `CLAUDE.md`** (always-loaded core), replacing *"No completion claims
+without fresh evidence"* with **"Validation must be CONCURRENT with the
+completion claim"** and the three axes — time, extent, subject — each carrying
+its observed failure. The closing line is the part that makes it a rule rather
+than an exhortation: *none of the three is caught by running the check more
+often*, which is what separates them from carelessness and why "check more
+carefully" is the wrong remedy.
+
+The prior wording is preserved inside the new rule (run the proving command,
+read complete output and exit code, no "should work", confidence from a previous
+run does not count) — the reframing extends it, it does not discard it.
 
 ## Status lifecycle
 
