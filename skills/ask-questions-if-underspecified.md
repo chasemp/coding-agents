@@ -149,6 +149,20 @@ they are still cheap to fix.
 > defaults. No tests being added beyond what already exists. Starting
 > now."
 
+**A terse reply answers the question you asked yourself.** The restatement above covers
+answers to questions you *asked*. The more expensive case is the unprompted short reply:
+any answer under roughly five words that gates a naming or implementation decision gets
+restated as a full sentence — "You want the display name, not the handle — implementing
+that now" — and you wait, before editing any file.
+
+Observed cost, three separate sessions: `gtg` read as "got to go" (it meant "good to go")
+started a session-handoff file that had to be interrupted; `forage` heard as "four edge";
+a bare yes/no answered the wrong half of a two-part question and built the author handle
+instead of the display name, which cascaded into a repo-wide rename. *Why a rule rather
+than care:* the failure is not that the reply was unclear, it is that a short reply reads
+as *unambiguous* — there is no felt uncertainty to prompt a check. The restatement is one
+line and it replaces a rename.
+
 ## Relationship to phase-plan
 
 This skill is the front door — it resolves interpretation. `phase-plan`

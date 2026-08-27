@@ -160,6 +160,23 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
   - **Concurrent in SUBJECT** — the evidence must support *this* claim, not an adjacent one. A mechanism that FITS the evidence is not the evidence. Capture the actual failure before naming a cause, and when a fix changes two things, say which one was the fix or the visible one takes the credit. *(Observed: a visible `sleep` was blamed by three sessions for a failure actually caused by an invisible repaint race.)*
 
   **None of the three is caught by running the check more often** — that is what separates them from carelessness, and why "check more carefully" is the wrong remedy.
+- **Push runs the repo's DECLARED gate, named and resolved.** Before `git push`, run the
+  single gate command the repo declares — the same one CI runs — and **name it in your
+  output**. Not a gate inferred from the diff's file extensions. Two failure shapes, both
+  observed: the **wrong gate** (eslint run over a diff that added Rust; two clippy errors
+  reached CI and blocked a deploy), and the **right command against the wrong binary** (a
+  Homebrew `cargo-clippy` shadowing rustup's by two minor versions — green locally, red in
+  CI, on code nobody had touched). So resolve the toolchain explicitly (`rustup which
+  cargo-clippy`; the version manager that reads `.nvmrc`), never off bare `PATH`. A diff
+  spanning two languages runs both gates. If the repo declares **no** single gate command,
+  that absence is the finding — say it rather than inventing one, because an invented gate
+  that passes is worse than no gate: it manufactures justified confidence. Never let
+  `clippy --fix` / `eslint --fix` autofix reach a commit unreviewed — one such autofix
+  broke a build outright. *Why this is its own bullet and not a case of the rule above:*
+  the Validation rule governs whether your evidence is good; this one governs whether you
+  ran the evidence-producing command **at all**, and the observed failure was always the
+  second — a real gate, run, on the wrong target.
+
 - **Plans record the why, not just the what.** Any plan in `plans/` (or the project's equivalent location) must carry **Problem Statement**, **Approach**, and **Reasoning** — not just a change list. If a future reader cannot reconstruct *why* the change was proposed from the plan alone, the plan is incomplete. Format is flexible; presence of these three semantic elements is not. The `plan-doc-reasoning` skill enforces the floor; `phase-plan` prescribes the full template for complex changes.
 
 ## External APIs
@@ -176,6 +193,29 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 - Do not write "likely follows this pattern" stubs — leave a TODO and get confirmation first
 - For any new API integration: write a minimal probe script first, print the raw response, confirm field names before building logic on top of it
 - Never trust field names inferred from other parts of the codebase or documentation that says "likely" or "expected"
+
+## Explaining Design and Protocol Work
+
+**Core principle**: plain English first, jargon second — and never jargon in the question.
+
+- **Lead with an actor narrative.** "Alice mints a pass; Bob's relay checks it and refuses
+  an expired one" *before* "admission is gated on capability freshness". The narrative is
+  what a reader can check your design against; the noun phrase is what they nod at.
+- **No domain noun in a framing question without a one-line gloss.** A question the reader
+  has to decode is a question they answer wrong — and you then build on the wrong answer.
+  This bites hardest at session start, when the reader has the least context loaded.
+- **Lead with the decision and its options**; mechanics after, and the full detail in the
+  repo rather than in the reply.
+- **Name layer boundaries; do not collapse them.** "Bob is cut off" conflates a relay
+  refusing a call with a directory dropping a record — one recovers in a second, the other
+  needs an operator. A sentence that would be true at two layers is describing neither.
+- **Do not use exclamation points or emoji, and skip the meta-commentary** ("this is
+  actually pretty clever", "does that make sense?"). Let the technical content carry it.
+
+Why: repeated, measured correction cost. Jargon-heavy framing questions had to be
+re-explained before work could start, and layer-collapsing phrasings were each corrected
+only after the design had been written down. A wrong sentence caught in conversation costs
+nothing; the same sentence in a canonical doc costs a revision block to unwind.
 
 ## Working with Claude
 
