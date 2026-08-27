@@ -20,6 +20,37 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_HOOKS_DIR="$HOME/.claude/hooks"
 SETTINGS="$HOME/.claude/settings.json"
 
+# ── Destructive-git guard (NOT a TDD guard; installed by BOTH models) ───────
+# WHY IT IS HERE AND UNCONDITIONAL: this guard blocks git commands that DELETE
+# uncommitted work (checkout HEAD -- <path>, restore, reset --hard, clean -f,
+# stash drop) when the target is actually dirty. It has nothing to do with TDD,
+# so --commit-gate must not turn it off: an agent that stops being watched for
+# test-first discipline has not stopped being able to destroy an hour of work.
+#
+# WHY IT IS IN THE INSTALLER AT ALL: it was written, debugged through three wrong
+# versions, given 14 harvested fixtures, committed, and symlinked — and this
+# installer did not know it existed, so it was never registered and never fired
+# for anyone, while agents kept hitting the exact trap it blocks. That gap is the
+# reason the workspace audit now checks registration (CroftC check 23).
+register_destructive_git_guard() {
+  local cmd="$CLAUDE_HOOKS_DIR/destructive-git-guard.sh"
+  local exists
+  exists=$(jq '[.hooks.PreToolUse // [] | .[].hooks[]?.command] | any(test("destructive-git-guard"))' "$SETTINGS" 2>/dev/null || echo "false")
+  if [[ "$exists" == "true" ]]; then
+    echo "  [skip] Destructive-git guard already registered"
+    return
+  fi
+  local entry
+  entry=$(jq -n --arg cmd "$cmd" '{
+    "matcher": "Bash",
+    "hooks": [{"type": "command", "command": $cmd, "timeout": 10}]
+  }')
+  jq --argjson entry "$entry" '.hooks.PreToolUse = (.hooks.PreToolUse // []) + [$entry]' \
+    "$SETTINGS" > "${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
+  echo "  [add]  Destructive-git guard registered (PreToolUse: Bash)"
+}
+
+
 # ── Uninstall mode ──────────────────────────────────────────
 if [[ "${1:-}" == "--uninstall" ]]; then
   echo "Removing TDD enforcement hooks..."
@@ -27,6 +58,7 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   rm -f "$CLAUDE_HOOKS_DIR/tdd-edit-guard.sh"
   rm -f "$CLAUDE_HOOKS_DIR/tdd-stop-guard.sh"
   rm -f "$CLAUDE_HOOKS_DIR/pre-commit-tdd-guard.sh"
+  rm -f "$CLAUDE_HOOKS_DIR/destructive-git-guard.sh"
 
   if [[ -f "$SETTINGS" ]] && command -v jq &>/dev/null; then
     BACKUP="${SETTINGS}.bak.$(date +%s)"
@@ -40,6 +72,10 @@ if [[ "${1:-}" == "--uninstall" ]]; then
       |
       if .hooks.Stop then
         .hooks.Stop |= map(select(.hooks | all(.command | test("tdd-stop-guard") | not)))
+      else . end
+      |
+      if .hooks.PreToolUse then
+        .hooks.PreToolUse |= map(select(.hooks | all(.command | test("destructive-git-guard") | not)))
       else . end
       |
       # Clean up empty arrays
@@ -70,10 +106,10 @@ if [[ "${1:-}" == "--commit-gate" ]]; then
 
   # Symlink the scripts (the pre-commit wrapper references the symlinked guard).
   mkdir -p "$CLAUDE_HOOKS_DIR"
-  for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh; do
+  for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh destructive-git-guard.sh; do
     ln -sf "$SCRIPT_DIR/$hook" "$CLAUDE_HOOKS_DIR/$hook"
   done
-  chmod +x "$SCRIPT_DIR"/tdd-edit-guard.sh "$SCRIPT_DIR"/tdd-stop-guard.sh "$SCRIPT_DIR"/pre-commit-tdd-guard.sh
+  chmod +x "$SCRIPT_DIR"/tdd-edit-guard.sh "$SCRIPT_DIR"/tdd-stop-guard.sh "$SCRIPT_DIR"/pre-commit-tdd-guard.sh "$SCRIPT_DIR"/destructive-git-guard.sh
 
   # Remove the real-time guards from settings.json (keep all non-TDD hooks).
   if [[ -f "$SETTINGS" ]]; then
@@ -112,6 +148,10 @@ PRECOMMIT
     echo "  [skip] not inside a git repo — run again from a repo root to install the gate"
   fi
 
+  # Orthogonal to the TDD model: an agent no longer watched for test-first
+  # discipline has not stopped being able to destroy an hour of uncommitted work.
+  register_destructive_git_guard
+
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "  Commit-gate model active. Restart Claude Code so the"
@@ -122,6 +162,7 @@ PRECOMMIT
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   exit 0
 fi
+
 
 # ── Install mode ────────────────────────────────────────────
 echo "Installing TDD enforcement hooks (Layers 1 & 2)..."
@@ -139,7 +180,7 @@ fi
 mkdir -p "$CLAUDE_HOOKS_DIR"
 
 # Symlink all hook scripts (including pre-commit for consuming repos to reference)
-for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh; do
+for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh destructive-git-guard.sh; do
   SOURCE="$SCRIPT_DIR/$hook"
   TARGET="$CLAUDE_HOOKS_DIR/$hook"
 
@@ -152,7 +193,7 @@ for hook in tdd-edit-guard.sh tdd-stop-guard.sh pre-commit-tdd-guard.sh; do
 done
 
 # Make scripts executable
-chmod +x "$SCRIPT_DIR/tdd-edit-guard.sh" "$SCRIPT_DIR/tdd-stop-guard.sh" "$SCRIPT_DIR/pre-commit-tdd-guard.sh"
+chmod +x "$SCRIPT_DIR/tdd-edit-guard.sh" "$SCRIPT_DIR/tdd-stop-guard.sh" "$SCRIPT_DIR/pre-commit-tdd-guard.sh" "$SCRIPT_DIR/destructive-git-guard.sh"
 
 # ── Patch settings.json ─────────────────────────────────────
 if [[ ! -f "$SETTINGS" ]]; then
@@ -201,6 +242,8 @@ else
 
   echo "  [add]  Stop guard registered (Stop event)"
 fi
+
+register_destructive_git_guard
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
