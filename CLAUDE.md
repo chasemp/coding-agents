@@ -209,8 +209,12 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 - **Name layer boundaries; do not collapse them.** "Bob is cut off" conflates a relay
   refusing a call with a directory dropping a record — one recovers in a second, the other
   needs an operator. A sentence that would be true at two layers is describing neither.
-- **Do not use exclamation points or emoji, and skip the meta-commentary** ("this is
-  actually pretty clever", "does that make sense?"). Let the technical content carry it.
+
+Tone — exclamation points, emoji, meta-commentary, closing pleasantries — is NOT restated
+here. It has a home in `~/.claude/CLAUDE.md` § Communication Style; this section covers only
+whether the framing is *comprehensible*, which that one does not. (An earlier draft of this
+section duplicated the tone rules verbatim, examples included. Caught same-day. The second
+copy is where the contradiction would have lived.)
 
 Why: repeated, measured correction cost. Jargon-heavy framing questions had to be
 re-explained before work could start, and layer-collapsing phrasings were each corrected

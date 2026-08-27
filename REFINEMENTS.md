@@ -126,10 +126,21 @@ unwinding it costs a revision block.
 
 **Status:** accepted (2026-08-26)
 
-**Notes:** Structural finding worth its own follow-up — `~/.claude/CLAUDE.md` is untracked
-and machine-local while `@`-importing this repo's versioned `CLAUDE.md`. Rules that land in
-the importing file cannot travel or be reviewed. Candidate: move its durable content here
-and leave only machine-local paths behind.
+**Notes:** The first draft of this section duplicated the tone rules that already live in
+`~/.claude/CLAUDE.md` § Communication Style — same guidance, same examples. Removed the same
+day, on the owner's challenge. Recorded because the failure is instructive: the duplication
+was introduced *by* an entry arguing the versioned layer is the durable one, which is exactly
+how "put it somewhere safer" turns into a second copy.
+
+Structural finding, restated correctly after that challenge: the problem with
+`~/.claude/CLAUDE.md` is **not** that durable content lives there — it is that the file plays
+two roles at once, manifest (`@`-imports) and content. The sorting test is **not** durable vs
+ephemeral but **portable vs machine-local**: would this still be true on a different machine?
+Git identity by path, SSH host aliases, MCP/Barndoor routing, scratchpad paths — machine-local,
+correctly placed, and actively wrong to move into a shared repo. Communication style, subagent
+model selection, visual-communication and progress-output conventions — portable, and currently
+unversioned and unreviewable. Any correction is a **move**, never a copy; a rule that ends up
+in both files has made things worse, not safer.
 
 ## 2026-08-26: A green suite is not a verdict — three ways the harness lies
 
