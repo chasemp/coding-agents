@@ -29,6 +29,108 @@ targets refinements to this repo's own skills, agents, and commands.
 **Notes:** <follow-ups, decisions — updated as the user acts on the proposal>
 ```
 
+## 2026-08-26: The gate that was run, but not the repo's gate
+
+**Observed pattern:** A push goes out after a verification step that was *real, and ran, and
+passed* — but was not the gate the repo declares. CI then catches what a local check should
+have. This is distinct from skipping validation: the agent did validate, against the wrong
+target, and therefore held justified confidence.
+
+**Evidence:**
+- eslint run as the pre-push check over a diff that added a new Rust file; two
+  `clippy::pedantic` errors reached CI, went red, and blocked a deploy.
+- A Homebrew `cargo-clippy` shadowing rustup's on `PATH` and lagging it by two minor
+  versions (local 0.1.94, CI 0.1.97) — every "clean" local run was a different program.
+  Cost three round trips before anyone read the version numbers. A scrubbed
+  `CARGO_TARGET_DIR` ruled out caching and still disagreed.
+- A gate non-reproducible in a fresh worktree because `android/local.properties` is
+  gitignored and CI generates it — so the worktree lacked a file the gate assumed.
+
+**Proposed refinement:**
+- **Target:** extend `CLAUDE.md` § Development Workflow (adopted), plus workspace audit
+  check 27 in the CroftC layer.
+- **Change:** new bullet "Push runs the repo's DECLARED gate, named and resolved" — run the
+  single command the repo declares rather than one inferred from the diff's file
+  extensions; name it in the output; resolve the toolchain explicitly rather than off bare
+  `PATH`; run both gates for a two-language diff; treat a repo that declares no gate
+  command as a finding rather than an invitation to invent one; never let `--fix` autofix
+  reach a commit unreviewed.
+- **Rationale:** the existing "Validation must be CONCURRENT" rule governs whether the
+  evidence is *good*; it does not govern whether the evidence-producing command was aimed
+  at the right thing. Every observed failure was a real gate, honestly run, on the wrong
+  target — which the CONCURRENT rule's three tests (time, extent, subject) do not catch,
+  because the check was current, complete, and about the code under review. It was about
+  the wrong *language*.
+
+**Status:** accepted (2026-08-26)
+
+**Notes:** The workspace-side half is CroftC audit check 27 (advisory): a repo whose CI runs
+a gate must name that command in its own docs, so a session can find it without reading
+`.github/workflows`. Fired on croft-stack and discovery on its first run. The diagnosis half
+of this — pin *and* resolve, declare/read/refuse/resolve — already lived in
+`CroftC/.claude/CI-PATTERN.md` rule 7; only the actor-side rule was missing.
+
+## 2026-08-26: A short reply reads as unambiguous, which is why it is not checked
+
+**Observed pattern:** Terse user input is over-interpreted rather than confirmed, and the
+misreading is acted on immediately because a short answer carries no felt uncertainty to
+prompt a check. Cost is rework, occasionally repo-wide.
+
+**Evidence:**
+- `gtg` read as "got to go" (the user meant "good to go"); the session began writing a
+  session-state handoff file and had to be interrupted mid-write.
+- `forage` heard as "four edge" — the project name, in the project's own session.
+- A bare yes/no answered the wrong half of a two-part question; the author **handle** was
+  built where the **display name** was meant, and the correction cascaded into a
+  terminology rename across the repo.
+
+**Proposed refinement:**
+- **Target:** extend skill `ask-questions-if-underspecified` § Restate before starting.
+- **Change:** the existing rule restates answers to questions *you asked*. Add the
+  unprompted case: any reply under roughly five words that gates a naming or
+  implementation decision gets restated as a full sentence, and you wait, before editing
+  any file.
+- **Rationale:** the skill's restatement rule already existed and did not fire, because it
+  is scoped to a question round. The expensive misreads all happened outside one.
+
+**Status:** accepted (2026-08-26)
+
+**Notes:** Deliberately scoped to *naming and implementation* decisions rather than all
+short replies — a rule that fires on every "yes" gets ignored, which is how the original
+scoping problem started.
+
+## 2026-08-26: Jargon in the framing question, and layers collapsed into one sentence
+
+**Observed pattern:** Design and protocol explanations lead with domain nouns instead of
+actor narratives, and phrasings silently merge two system layers. Both are corrected by the
+user — but often only after the sentence has been written into a canonical doc, where
+unwinding it costs a revision block.
+
+**Evidence:**
+- A session opened with three jargon-heavy framing questions; the user required them
+  re-explained before any work started.
+- Layer-collapsing phrasings ("Bob is cut off", "silent dormant return") each drew an
+  explicit correction: one described a relay refusing a call, the other a directory
+  dropping a record, and the sentence did not distinguish them.
+- A `tree.croft.ing` layering description conflated two layers and was corrected.
+
+**Proposed refinement:**
+- **Target:** new short section in `CLAUDE.md`, "Explaining Design and Protocol Work".
+- **Change:** lead with an actor narrative before the noun phrase; no domain noun in a
+  *framing question* without a one-line gloss; lead with the decision and its options;
+  name layer boundaries rather than collapsing them.
+- **Rationale:** this repo's `CLAUDE.md` covered tone (no exclamation points, no
+  meta-commentary) but not *comprehensibility of the framing itself*. The rule belongs in
+  the versioned layer: the tone guidance lives in `~/.claude/CLAUDE.md`, which is not in
+  any git repo, so anything placed there is as durable as session memory.
+
+**Status:** accepted (2026-08-26)
+
+**Notes:** Structural finding worth its own follow-up — `~/.claude/CLAUDE.md` is untracked
+and machine-local while `@`-importing this repo's versioned `CLAUDE.md`. Rules that land in
+the importing file cannot travel or be reviewed. Candidate: move its durable content here
+and leave only machine-local paths behind.
+
 ## 2026-08-26: A green suite is not a verdict — three ways the harness lies
 
 **Observed pattern:** Wrong, confidently-stated, spec-relevant findings surviving
