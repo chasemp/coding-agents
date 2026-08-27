@@ -31,6 +31,23 @@ Before touching any code, gather evidence:
 
 ---
 
+## Phase 1.4: Verify the Instrument Itself
+
+Before doubting the code, confirm the thing measuring it is honest. A harness that
+discards errors cannot distinguish *"the system resolved this differently"* from
+*"the system never saw the input"* — and it will report the first while meaning the
+second.
+
+- **Print the outcome of every fallible harness call.** `let _ = ingest(...)`, a
+  bare `except:`, an unchecked exit code. Two apparent order-dependence bugs were
+  the harness rejecting its own inputs, invisible until the errors were printed.
+- **A swallowed error in the instrument corrupts the VERDICT, not just the run.**
+  This is why the fail-loud rule binds test scaffolding harder than production code,
+  not more loosely.
+- **Check that the suite is grading what you think.** A runner that globs a
+  directory will happily grade in-progress work left there; three of four "hits" in
+  one flake hunt were the hunter's own unfinished test file (observed 2026-08-26).
+
 ## Phase 1.5: Verify the Test Itself
 
 Before investigating production code, rule out the test as the source of the

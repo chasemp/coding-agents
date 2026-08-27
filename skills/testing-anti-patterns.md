@@ -425,6 +425,68 @@ coincide on the happy path.
 | Mock setup > test logic | Consider real in-memory objects or `tmp_path` |
 | Single-point assertion on branching code | Add boundary cases; run the mental mutation pass |
 
+## Anti-Pattern 8: The Harness Is the Thing That Is Wrong
+
+Anti-Patterns 1–7 are about tests that pass when the *code* is wrong. This one is
+about tests that pass, and a *finding* that is wrong — because the instrument was
+wrong. Both failures below produced confident, spec-relevant claims that had to be
+publicly withdrawn, and in both cases the suite was green throughout.
+
+### Form (a): a scenario written backwards from a test
+
+A test exists, so a user story gets written to justify it. The story sounds
+plausible because it was *derived* from something real — the test — rather than
+from anything an actor would actually do.
+
+Caught by a reviewer's question, not by any test: a "concurrent remove + re-add"
+case had a story invented for it, and the question *"how can a moderator not yet
+synced with the removal readmit someone they cannot see removed?"* collapsed the
+pairing as socially unreachable. The reachable shape — a rejoin approval racing a
+ban — behaved completely differently. It hard-stopped.
+
+**Why it is wrong:** a story invented to justify a test will justify *any* test.
+The test then measures a situation that cannot occur, and its result gets reported
+as a property of the system.
+
+**The fix:** derive scenarios from actor behaviour **before** writing the test.
+If you cannot say who does this, in what order, and why, you do not have a
+scenario — you have a shape you can execute.
+
+### Form (b): the instrument swallows its own errors
+
+```rust
+let _ = ingest(&mut group, fact);   // the discard is the bug
+```
+
+**Why it is wrong:** an experiment that discards errors cannot distinguish
+*"the system resolved this differently"* from *"the system never saw the input."*
+Two apparent order-dependence failures were harness artifacts — inputs the harness
+itself rejected — and were invisible until the error returns were printed.
+
+A swallowed error in the *instrument* is worse than one in the code: it does not
+corrupt a run, it corrupts the **verdict**.
+
+**The fix:** print the outcome of every fallible harness call. The main codebase
+rule ("fail loud, fail early — no silent fallbacks or swallowed errors") applies
+with more force to test scaffolding, not less.
+
+### And where a status channel exists, assert on it
+
+*Conditional — skip where it does not apply.* If the system under test exposes a
+status surface **alongside** the value you read (fork status, contradiction heads,
+validation state, health), assert on the status too. A `MEMBER` read from folded
+state was reported as "the addition won"; the group was in fact hard-stopped in
+contradiction, and the member list was merely the projection of an escalated
+state. The value the assertion happened to read said the opposite of the status.
+
+### Gate Function
+
+- Can you name the actor, the order, and the motive for this scenario — without
+  referring to the test?
+- Does every fallible call in the harness report its outcome?
+- Does the system expose a status alongside this value, and are you asserting on
+  only one of them?
+
 ## Red Flags
 
 - Assertion checks for mock invocation with no outcome assertion
@@ -439,3 +501,6 @@ coincide on the happy path.
 - The assertion is an absence (`not in`, `!contains`) about a transformation
 - The observable sits downstream of something that deduplicates, normalizes, sorts, or caches
 - You cannot name a wrong implementation the assertion would reject
+- The scenario's story was written after the test it justifies
+- A fallible call in the *harness* discards its result (`let _ =`, bare `except:`)
+- You are asserting on a value while the system also publishes a status for it

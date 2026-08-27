@@ -70,11 +70,35 @@ be publicly withdrawn after the fact.
   was fresh, green, and *wrong* — and each produced a claim that had to be
   retracted in public.
 
-**Status:** proposed
+**Status:** accepted, NARROWED — 2026-08-26
 
 **Notes:** Promoted from agent memory 2026-08-26 at the user's direction, after
 they asked "memory is not portable off this machine, when do we put things in
 memory and when in repos?". The workspace-scoped sibling (quote sources
+verbatim; verify a claim before repeating it) went to
+`CroftC/.claude/COORDINATION.md` `fdeb3d3`, since cross-session messaging is
+where that one bites.
+
+**Accepted narrowed, by the user's decision.** The narrowing: the first two
+points generalise to any project and land as full material, while the third —
+"assert on the status channel too" — is *conditional*, since a system without a
+status surface cannot have that bug. It is phrased so it simply does not apply
+where there is nothing to apply it to, rather than presenting as a universal
+rule that half of readers must decide to ignore.
+
+**Landed as:**
+- `skills/testing-anti-patterns.md` → **Anti-Pattern 8: The Harness Is the Thing
+  That Is Wrong**, with form (a) a scenario written backwards from a test, form
+  (b) the instrument swallowing its own errors, the conditional status-channel
+  note, and a three-question gate. Three new entries in the closing Red Flags.
+- `skills/systematic-debugging.md` → **Phase 1.4: Verify the Instrument Itself**,
+  placed before the existing "Verify the Test Itself" because a dishonest
+  instrument invalidates the test check too. Carries the fail-loud-binds-harnesses
+  -harder point and the runner-globs-your-scratch-work observation.
+
+**Why it earns a place next to "no completion claims without fresh evidence":**
+that rule assumes evidence, once fresh, is sound. All three of these had fresh,
+green evidence and were wrong. The workspace-scoped sibling (quote sources
 verbatim; verify a claim before repeating it) went to
 `CroftC/.claude/COORDINATION.md` `fdeb3d3`, since cross-session messaging is
 where that one bites.
