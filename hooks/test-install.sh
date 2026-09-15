@@ -34,7 +34,9 @@ JSON
 git -C "$TMPREPO" init -q
 
 echo "test: install.sh --commit-gate"
-( cd "$TMPREPO" && HOME="$TMPHOME" bash "$SCRIPT_DIR/install.sh" --commit-gate ) >/dev/null 2>&1
+# env -u: the developer running this suite may have CLAUDE_CONFIG_DIR set, and install.sh now
+# honors it — without the unset, this sandboxed run patched the REAL config dir (2026-09-14).
+( cd "$TMPREPO" && HOME="$TMPHOME" env -u CLAUDE_CONFIG_DIR bash "$SCRIPT_DIR/install.sh" --commit-gate ) >/dev/null 2>&1
 
 S="$TMPHOME/.claude/settings.json"
 check "edit-guard removed from settings.json" \
@@ -51,5 +53,21 @@ check "pre-commit calls the shared guard" \
   'grep -q "pre-commit-tdd-guard.sh" "$TMPREPO/.git/hooks/pre-commit"'
 check "settings.json is still valid JSON" \
   'jq -e . "$S" >/dev/null'
+
+# ── CLAUDE_CONFIG_DIR: the settings file that COUNTS is the one the session reads ──
+# Found 2026-09-14: every session on the owner's machine runs with CLAUDE_CONFIG_DIR set,
+# so ~/.claude/settings.json — where this installer registered the destructive-git guard
+# on 2026-08-26 — is read by nothing. The guard passed its 27 fixtures and never fired
+# once. Registration must go to $CLAUDE_CONFIG_DIR/settings.json when that is set.
+CFG="$TMPHOME/cfg"
+mkdir -p "$CFG"
+echo '{"hooks":{}}' > "$CFG/settings.json"
+echo '{"hooks":{}}' > "$TMPHOME/.claude/settings.json"
+echo "test: install.sh (default) honors CLAUDE_CONFIG_DIR"
+( cd "$TMPREPO" && HOME="$TMPHOME" CLAUDE_CONFIG_DIR="$CFG" bash "$SCRIPT_DIR/install.sh" ) >/dev/null 2>&1
+check "destructive-git guard registered in \$CLAUDE_CONFIG_DIR/settings.json" \
+  'jq -e "[.hooks.PreToolUse[]?.hooks[]?.command] | any(test(\"destructive-git-guard\"))" "$CFG/settings.json" >/dev/null'
+check "~/.claude/settings.json left untouched when CLAUDE_CONFIG_DIR is set" \
+  '! jq -e "[.hooks.PreToolUse[]?.hooks[]?.command] | any(test(\"destructive-git-guard\"))" "$TMPHOME/.claude/settings.json" >/dev/null'
 
 if [ "$fail" -eq 0 ]; then echo "ALL PASS"; else echo "FAILURES"; exit 1; fi

@@ -4,7 +4,7 @@
 # Modes:
 #   (default)        Model A (real-time): symlink the scripts into
 #                    ~/.claude/hooks/ and register the edit + stop guards in
-#                    ~/.claude/settings.json.
+#                    $CLAUDE_CONFIG_DIR/settings.json (default ~/.claude).
 #   --commit-gate    Model B (free editing, gate at commit): remove the edit +
 #                    stop guards from settings.json and install the pre-commit
 #                    guard (run-tests) into the current repo's .git/hooks/.
@@ -18,7 +18,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_HOOKS_DIR="$HOME/.claude/hooks"
-SETTINGS="$HOME/.claude/settings.json"
+# The settings file the session READS: $CLAUDE_CONFIG_DIR when set (2026-09-14 — the
+# guard sat registered in ~/.claude/settings.json for three weeks while every session read
+# a different file; see test-install.sh). The hooks themselves stay in ~/.claude/hooks.
+SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
 
 # ── Destructive-git guard (NOT a TDD guard; installed by BOTH models) ───────
 # WHY IT IS HERE AND UNCONDITIONAL: this guard blocks git commands that DELETE

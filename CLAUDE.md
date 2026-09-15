@@ -178,6 +178,20 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
   second — a real gate, run, on the wrong target.
 
 - **Plans record the why, not just the what.** Any plan in `plans/` (or the project's equivalent location) must carry **Problem Statement**, **Approach**, and **Reasoning** — not just a change list. If a future reader cannot reconstruct *why* the change was proposed from the plan alone, the plan is incomplete. Format is flexible; presence of these three semantic elements is not. The `plan-doc-reasoning` skill enforces the floor; `phase-plan` prescribes the full template for complex changes.
+- **Enforcement code is production code, and its proof is a refusal through the layer
+  that invokes it.** A hook, audit check, bats assertion or CI gate ships with two fixtures
+  — one it must refuse, one it must pass — and you watched both **through the mechanism
+  that actually runs it**: a hook through a tool call in a live session, an audit check
+  through the harness's own summary line, a CI gate through a pushed PR. Piping a payload
+  into the script by hand proves the predicate, not the wiring, and a check is only as live
+  as its wiring. *Why (2026-09-14):* the destructive-git guard passed 27 hand-piped fixtures
+  for three weeks while registered in `~/.claude/settings.json` — a file no session on that
+  machine reads, because `CLAUDE_CONFIG_DIR` points elsewhere — and the audit check that
+  existed to catch an unregistered hook read the same wrong file and reported green. Both
+  were correct in isolation; both were dark. The false-green shapes seen so far, each worth
+  a fixture: a truncation cap (`head -N`) hiding the match; a grep window too narrow to
+  hold it; a check grading an empty set; a tool missing from PATH so the check no-ops; a
+  hook registered in a file the session does not read.
 
 ## External APIs
 
@@ -209,6 +223,13 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 - **Name layer boundaries; do not collapse them.** "Bob is cut off" conflates a relay
   refusing a call with a directory dropping a record — one recovers in a second, the other
   needs an operator. A sentence that would be true at two layers is describing neither.
+- **Echo a short answer before acting on it.** When the reply is a word or a line —
+  "gtg", "yes", "the handle" — restate in one line what you took it to mean and what you
+  are about to do, then proceed; wait only if the action is destructive or touches
+  production. *Why (insights review, 2026-09-14):* "gtg" was read as "got to go" and a
+  handoff file was started; a yes/no about handle-versus-display-name was read backwards
+  and built the wrong field, tests included; "forage" was heard as "four edge". Each cost
+  a rework that one echoed line would have caught for free.
 
 Tone — exclamation points, emoji, meta-commentary, closing pleasantries — is NOT restated
 here. It has a home in `~/.claude/CLAUDE.md` § Communication Style; this section covers only
