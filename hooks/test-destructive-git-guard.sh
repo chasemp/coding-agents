@@ -127,6 +127,25 @@ dirty
 check 2 "stash drop with a stash present"         'git stash drop' "$TMP/ws/child"
 git -C "$TMP/ws/child" stash drop -q >/dev/null 2>&1
 
+# ---- THE TARGET IS WHAT THE SHELL WILL RESOLVE, NOT THE TEXT AS TYPED (croft-stack, 2026-09-14) -
+#
+# Live-fired from a session: `S=/abs/path; ... git -C "$S" checkout HEAD -- f` ran against a dirty
+# tree and the guard said nothing. It classified the form correctly, then read the `-C` target as
+# the literal characters `"$S"`, found no such directory, fell back to the CWD (clean), and exited
+# 0. Shell state does not persist between an agent's Bash calls, so "assign, then use" inside ONE
+# command is the dominant shape for any path an agent computes — and a quoted or variable target
+# is exactly the case the v1 `-C` fix was for, one layer up. Resolve the target the way the shell
+# will: same-command assignments, environment variables, `~`, and surrounding quotes.
+export TMP
+dirty
+check 2 "-C target quoted"                        'git -C "child" checkout HEAD -- tracked.txt'
+check 2 "-C target is a same-command variable"    'R=child; git -C "$R" checkout HEAD -- tracked.txt'
+check 2 "cd target is a same-command variable"    'R=child; cd "$R" && git checkout HEAD -- tracked.txt'
+check 2 "-C target is an environment variable"    'git -C "$TMP/ws/child" checkout HEAD -- tracked.txt'
+check 2 "-C target is a braced variable"              'git -C "${TMP}/ws/child" checkout HEAD -- tracked.txt'
+HOME="$TMP" check 2 "-C target is tilde-relative" 'git -C ~/ws/child checkout HEAD -- tracked.txt'
+check 0 "variable -C target, but the path is clean" 'R=child; git -C "$R" checkout HEAD -- other.txt'
+
 echo
 if [ "$FAIL" -eq 0 ]; then echo "PASS: $PASS/$((PASS+FAIL))"; exit 0; fi
 echo "FAIL: $FAIL of $((PASS+FAIL)) cases"; exit 1

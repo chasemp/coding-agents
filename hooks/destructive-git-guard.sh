@@ -146,13 +146,31 @@ kind="$classify"
 # missed `git -C forage checkout HEAD -- sw.js` run from the meta-repo root, because the
 # meta-repo was clean and nested repos are gitignored). Read the repo the command names.
 target="$(printf '%s' "$cmd" | python3 -c '
-import re, shlex, sys
+import os, re, shlex, sys
 c = sys.stdin.read()
+
+# RESOLVE THE TARGET THE WAY THE SHELL WILL, NOT AS TYPED. Live-fired 2026-09-14:
+# `S=/abs/path; ... git -C "$S" checkout HEAD -- f` against a dirty tree was classified
+# correctly and then allowed, because the target read as the literal characters `"$S"`,
+# no such directory existed, and the check fell back to the (clean) cwd. Shell state does
+# not persist between an agent'"'"'s Bash calls, so assign-then-use inside one command is
+# the dominant shape for any path an agent computes. Same-command assignments are applied
+# left to right, then the environment, `~`, and surrounding quotes.
+env = dict(os.environ)
+def expand(s):
+    s = re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)",
+               lambda m: env.get(m.group(1) or m.group(2), ""), s)
+    if len(s) >= 2 and s[0] in "\x27\"" and s[-1] == s[0]:
+        s = s[1:-1]
+    return os.path.expanduser(s)
+for m in re.finditer(r"(?:^|[;&|\n]\s*)(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(\"[^\"]*\"|\x27[^\x27]*\x27|[^\s;&|]*)", c):
+    env[m.group(1)] = expand(m.group(2))
+
 d = "."
-m = re.search(r"(?:^|[;&|]\s*)cd\s+([^\s;&|]+)", c)
-if m: d = m.group(1)
-m = re.search(r"git\s+(?:-C|--git-dir=?)\s*([^\s]+)", c)
-if m: d = m.group(1)
+m = re.search(r"(?:^|[;&|]\s*)cd\s+(\"[^\"]*\"|\x27[^\x27]*\x27|[^\s;&|]+)", c)
+if m: d = expand(m.group(1))
+m = re.search(r"git\s+(?:-C|--git-dir=?)\s*(\"[^\"]*\"|\x27[^\x27]*\x27|[^\s]+)", c)
+if m: d = expand(m.group(1))
 paths = ""
 if " -- " in c:
     tail = c.split(" -- ", 1)[1]
@@ -160,7 +178,7 @@ if " -- " in c:
     # into a bogus path — `git status --porcelain -- <bogus>` comes back empty and the guard
     # exits 0, allowing the delete. An unparseable path list must widen to the whole tree, never
     # narrow to nothing. (udm, 2026-08-27: the more dangerous half of the same bug.)
-    try: paths = " ".join(shlex.split(tail))
+    try: paths = " ".join(expand(p) for p in shlex.split(tail))
     except ValueError: paths = ""
 print(d + "\t" + paths)' 2>/dev/null)"
 repo_dir="${target%%$(printf '\t')*}"; paths="${target#*$(printf '\t')}"
