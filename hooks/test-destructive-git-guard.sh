@@ -63,13 +63,88 @@ echo "must ALLOW — no work at risk, or not destructive:"
 check 0 "same repo, a path that is CLEAN"         'git -C child checkout HEAD -- other.txt'
 check 0 "harmless command in a dirty repo"        'git -C child status'
 check 0 "harmless diff in a dirty repo"           'git -C child diff'
-check 0 "non-git command mentioning checkout"     'echo "git checkout HEAD -- x"'
+# NOTE (2026-08-27): this used to name `x`, a path that does not exist — so it passed because the
+# status check found nothing, not because the guard recognised an `echo`. It now names the DIRTY
+# file, which is the only version that tests the classifier rather than the filesystem.
+check 0 "non-git command mentioning checkout"     'echo "git checkout HEAD -- tracked.txt"' "$TMP/ws/child"
 clean
 check 0 "destructive, but the tree is clean"      'git -C child checkout HEAD -- tracked.txt'
 check 0 "reset --hard on a clean tree"            'git -C child reset --hard'
 # Same command, same repo, same CWD as the blocking case above — benign purely because
 # the tree is clean. This pair is the whole argument for a state check over a shape check.
 check 0 "bare form, CWD inside the repo, file clean" 'git checkout HEAD -- tracked.txt' "$TMP/ws/child"
+
+
+# ---- QUOTED DATA IS NOT A COMMAND (all harvested from udm, 2026-08-27) ----------------------
+#
+# Four sessions in a row, an agent was blocked for writing ABOUT a destructive command: the
+# classifier globs the whole command string, so prose in a heredoc body or a commit message
+# matches as readily as an invocation. The agent learned within two blocks to route around the
+# guard by writing messages to a file — which is the failure this guard's own header warns
+# about: "a guard that fires on safe uses teaches everyone to ignore it".
+dirty
+check 0 "python heredoc whose BODY mentions the phrase" 'python3 - <<EOF
+# git checkout HEAD -- tracked.txt
+EOF' "$TMP/ws/child"
+check 0 "commit message quoting the phrase" 'git commit -m "explain why git checkout HEAD -- tracked.txt is unsafe"' "$TMP/ws/child"
+check 0 "commit message body via -F, mentioning it" 'git commit -q -F msg.txt' "$TMP/ws/child"
+# The `clean -f` glob is the loosest of the four: "clean" anywhere after "git", then ANY hyphen,
+# then ANY "f". Ordinary prose satisfies it. This is the exact shape that blocked a commit.
+check 0 "prose with clean + a hyphen + an f, downstream of a git token" 'git add -A && echo "cleanup save; three field-specific runs, 0 failures"' "$TMP/ws/child"
+
+# ---- BUT A REAL COMMAND INSIDE A SHELL HEREDOC STILL EXECUTES --------------------------------
+# So the body may only be discarded when the receiving command is NOT a shell. Stripping heredocs
+# wholesale would fix the four cases above and silently regress this one, which the guard catches
+# today. Verified 2026-08-27 before changing anything.
+check 2 "bash heredoc whose body IS a destructive command" 'bash <<EOF
+git checkout HEAD -- tracked.txt
+EOF' "$TMP/ws/child"
+check 2 "sh -c with a destructive command in the string" 'sh -c "git checkout HEAD -- tracked.txt"' "$TMP/ws/child"
+
+# ---- FAIL CLOSED ON AN UNPARSEABLE PATH LIST ------------------------------------------------
+# The dangerous direction. `except ValueError: paths = <raw>` turns an unparseable list into a
+# bogus path; `git status --porcelain -- <bogus>` is empty; the guard exits 0 and the delete
+# proceeds. An unparseable path list must widen to the whole tree, never narrow to nothing.
+check 2 "unbalanced quote in the path list must not disarm the check" 'git checkout HEAD -- "tracked.txt' "$TMP/ws/child"
+
+# A `;` inside a commit message is punctuation, not a separator. The first version of the v4 fix
+# split into segments BEFORE stripping quotes, so this message tore apart and its tail looked like
+# its own git invocation. Caught by probing the real shapes rather than by the fixtures — which is
+# why it is a fixture now.
+check 0 "commit message containing a semicolon before the phrase" 'git commit -m "the restore put it back wrong; git checkout HEAD -- tracked.txt"' "$TMP/ws/child"
+
+# Wrapper prefixes agents actually type. `command git` is the workspace default (it bypasses the
+# rtk rewrite hook), so a guard that misses it misses nearly everything.
+check 2 "command-prefixed"                        'command git checkout HEAD -- tracked.txt' "$TMP/ws/child"
+check 2 "env-prefixed"                            'env FOO=1 git checkout HEAD -- tracked.txt' "$TMP/ws/child"
+check 2 "clean --force (long flag)"               'git clean --force' "$TMP/ws/child"
+
+# stash drop/clear is about the STASH LIST, not the working tree — so it must stay quiet when there
+# is nothing to drop, and fire when there is. Both halves, because only the pair proves the check.
+check 0 "stash drop with an EMPTY stash list"     'git stash drop' "$TMP/ws/child"
+git -C "$TMP/ws/child" stash push -q -m fixture >/dev/null 2>&1
+dirty
+check 2 "stash drop with a stash present"         'git stash drop' "$TMP/ws/child"
+git -C "$TMP/ws/child" stash drop -q >/dev/null 2>&1
+
+# ---- THE TARGET IS WHAT THE SHELL WILL RESOLVE, NOT THE TEXT AS TYPED (croft-stack, 2026-09-14) -
+#
+# Live-fired from a session: `S=/abs/path; ... git -C "$S" checkout HEAD -- f` ran against a dirty
+# tree and the guard said nothing. It classified the form correctly, then read the `-C` target as
+# the literal characters `"$S"`, found no such directory, fell back to the CWD (clean), and exited
+# 0. Shell state does not persist between an agent's Bash calls, so "assign, then use" inside ONE
+# command is the dominant shape for any path an agent computes — and a quoted or variable target
+# is exactly the case the v1 `-C` fix was for, one layer up. Resolve the target the way the shell
+# will: same-command assignments, environment variables, `~`, and surrounding quotes.
+export TMP
+dirty
+check 2 "-C target quoted"                        'git -C "child" checkout HEAD -- tracked.txt'
+check 2 "-C target is a same-command variable"    'R=child; git -C "$R" checkout HEAD -- tracked.txt'
+check 2 "cd target is a same-command variable"    'R=child; cd "$R" && git checkout HEAD -- tracked.txt'
+check 2 "-C target is an environment variable"    'git -C "$TMP/ws/child" checkout HEAD -- tracked.txt'
+check 2 "-C target is a braced variable"              'git -C "${TMP}/ws/child" checkout HEAD -- tracked.txt'
+HOME="$TMP" check 2 "-C target is tilde-relative" 'git -C ~/ws/child checkout HEAD -- tracked.txt'
+check 0 "variable -C target, but the path is clean" 'R=child; git -C "$R" checkout HEAD -- other.txt'
 
 echo
 if [ "$FAIL" -eq 0 ]; then echo "PASS: $PASS/$((PASS+FAIL))"; exit 0; fi
