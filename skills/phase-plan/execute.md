@@ -334,6 +334,12 @@ Before moving from Phase N to Phase N+1, confirm:
       "Keep the plan doc in sync with reality" § When the plan
       closes. Per-phase markers are not a substitute; the close-out
       is the narrative that ties the arc together for a cold reader.
+- [ ] **If Phase N is the final phase, the plan's worktrees and
+      branches are removed after everything (the close-out commit
+      included) has landed.** Checks before each removal (nothing
+      uncommitted, nothing unlanded, no `--force`) and the scope rule
+      (only worktrees this plan created) are in "When the plan
+      closes", step 6.
 
 Report this checklist to the user at each phase boundary. Do not silently
 move on.
@@ -427,6 +433,19 @@ Typical mid-execution updates:
 
 ### When the plan closes
 
+<!-- TRACKING: Worktree removal at plan close (2026-10-09)
+     Added step 6 to execute.md § When the plan closes, plus a final-phase
+     checklist item. After everything has landed (the close-out commit
+     included), remove every worktree and branch the plan created,
+     across repos. Before each removal: porcelain --ignored shows nothing
+     unexpected; the branch is landed, or for a squash merge its content
+     is on the base; no --force. Never remove a worktree this plan did
+     not create. Triggered by a three-repo plan (cyclops, infosec-actions,
+     samp) that closed with four worktrees and five local branches still
+     in place. Monitor whether agents remove worktrees before the
+     close-out PR merges (the ordering trap), and whether the scope rule
+     holds when other sessions' worktrees share the list. -->
+
 Closing a plan is not just "I wrote the last commit." It's a specific
 act:
 
@@ -472,6 +491,46 @@ act:
    Per-phase `✅ SHIPPED (sha)` markers are necessary but not
    sufficient. The close-out is the paragraph the next reader will
    open first when they ask "why does the code do X?"
+
+6. **The plan's worktrees and branches are removed**, as the last act,
+   after everything they hold has landed, *including the close-out
+   commit itself*. If the plan doc lives in a feature worktree, the PR
+   that records the close-out merges first; then the worktree goes.
+   Scope is **every worktree this plan created**: the feature
+   worktree, per-agent worktrees from parallel sets, read-only
+   baseline or scratch checkouts, and worktrees in other repos the
+   plan touched (a pin bump, a docs repo). Never one this plan did not
+   create: other sessions' worktrees sit in the same `git worktree
+   list`, and a list entry is not evidence of ownership. For each one:
+
+   - **Nothing uncommitted.** `git -C <wt> status --porcelain --ignored`
+     prints only expected ignored entries (a `.venv`, caches, a
+     symlinked local config). `git worktree remove` discards anything
+     else, so any other line stops the removal. This is the
+     destructive-git rule in `CLAUDE.md` applied to worktrees.
+   - **Nothing unlanded.** `git log origin/<base>..<branch>` is empty.
+     A squash- or rebase-merged branch is never empty here, so for
+     those, compare content instead: `git diff <branch> origin/<base>
+     -- <the files the PR changed>` must print nothing. Only then is
+     `git branch -D` a delete of a copy, not of the work.
+   - **Remove without force.** `git worktree remove <path>` (never
+     `--force`; if it refuses, find out why), then `git branch -d`
+     (or `-D` after the content check above), then
+     `git worktree prune`. Delete the merged remote branch if the
+     host did not, and remove a parent `*.worktrees/` directory that
+     is left empty.
+   - **Record it.** The close-out Review Log entry, or the final report
+     if the entry has already merged, lists what was removed, so
+     "where did the branch go" has an answer.
+
+   *Why (2026-10-09):* a plan spanning three repos closed with four
+   worktrees and five local branches still in place. The close-out
+   list ended at the Review Log entry, so nothing prompted their
+   removal. A leftover worktree is not harmless. It pins a branch name
+   so the next plan cannot reuse it, it holds symlinked secrets, and
+   it sits in the same `git worktree list` as other sessions' live
+   worktrees, where the next cleanup has to guess which ones are
+   safe to remove.
 
 ### Why this matters
 
