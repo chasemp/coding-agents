@@ -311,6 +311,44 @@ run does not count) — the reframing extends it, it does not discard it.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-11-09: phase-plan's passes look inward; the freeform pass that keeps finding defects looks outward
+
+**Observed pattern:** After Pass 3 declares a plan ready, the user routinely adds a freeform pass ("work
+backwards from anticipated outcomes … through deployment and issues being created"), and it keeps finding
+real defects. The productive extra passes differ from Passes 1–3 in direction (outward to sibling systems,
+other plans, live data and record lifecycle; backward from the outcome), stance (refute, not confirm) and
+author (a non-author reviewer per lens). Separately, several required template sections are filled as
+boilerplate, and the user repeats the same process instructions in most sessions.
+
+**Evidence:**
+- Usage review, 2026-11-09: 41 sessions (2026-10-13 → 11-09) → 105 incidents; 101 extra review entries in 49
+  plan docs → 555 findings (47% under checks that already exist, 52% where no pass looks); 149 recent plans →
+  30 execution-time gaps and section-compliance metrics; the user's `/insights` report as a cross-check.
+- Pass 3 "ready" followed by blocker-class findings in at least 15 plans. Independent non-author reviews: 8.7
+  findings per entry; generic fresh re-runs of a defined pass: 4.2.
+- Concurrency Map: 61% "all sequential", 21 declared parallel sets, 0 recorded parallel dispatches. Close-out
+  entries in 20 of 83 plans with execution evidence. 14 user requests across 9 sessions for a "prompt to clear
+  context and come back for pass N". Repeated requests to walk questions "one at a time, in plain English".
+- Raw evidence contains employer-internal detail and is kept outside this public repo.
+
+**Proposed refinement:**
+- **Target:** extend skill `phase-plan` (main file, all per-pass files, `execute.md`); touch
+  `ask-questions-if-underspecified.md`, `CLAUDE.md`, `commands/audit.md`, `plan-doc-reasoning.md`, `agents.md`.
+- **Change:** new pass order (Pass 1 plan + explicit gap-analysis step with an outward sweep → Pass 2
+  independent three-lens review → Pass 3 quality gates); read-only probe rules; late-change re-checks and
+  in-place replacement of superseded text; test-validity gates; external-write rollout tier and
+  built → merged → deployed → observed phase states; Delivery shape and Next pass template sections; a
+  decision-first walk-through; template cuts (Concurrency Map, Read-set, Shared-state contract, 4-file rule
+  wording, Review Log hygiene); close-out as a numbered phase with "which pass should have caught this?".
+  Full decision list (D1–D11) in `plans/2026-11-09-1-plan-phase-plan-v2.md`.
+- **Rationale:** checks that cannot see a category do not see it on a second run; the gain comes from changing
+  direction, stance and author. Cutting boilerplate pays for the additions so the main file shrinks.
+
+**Status:** accepted (decisions confirmed by the user 2026-11-09, one at a time; implementation pending)
+
+**Notes:** Implementation tracked in `plans/2026-11-09-1-plan-phase-plan-v2.md`. Record files changed here at
+plan close-out.
+
 ## 2026-05-04: Mutation accommodation in TDD + concurrency planning with isolation invariants
 
 **Observed pattern:** Two related gaps in the existing guidance:
