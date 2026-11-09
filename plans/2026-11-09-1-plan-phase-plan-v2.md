@@ -151,6 +151,20 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   scratchpad. Trigger fixes: bulk external writes trigger the skill without code changes; execution refuses to
   start without the Pass 3 Review Log entry; walk-through answers that add work count toward the
   batch-approved-in-conversation trigger.
+- **D12 The test for skill text (was OQ-1; user, 2026-11-09).** Three layers: the Phase 1 structural check
+  (`scripts/check-phase-plan.sh`, with a refusal fixture and a pass fixture) for wiring between files; `/audit`
+  for repo hygiene; dogfooding the new Pass 2 on this plan for whether the instructions produce the intended
+  behaviour. Each phase adds its assertion to the structural check and watches it fail before editing text.
+- **D13 Size budgets (was OQ-2; user, 2026-11-09).** `skills/phase-plan.md` must end under 500 lines, enforced
+  as a failing assertion in the structural check, not a report. Route: TRACKING history to
+  `skills/phase-plan/CHANGELOG.md` (one marker line stays in the main file for `/audit` Check 6), the D10
+  Concurrency Map cut, and Usage Patterns detail into the per-pass files where needed. `CLAUDE.md` is held at
+  net zero lines: the D8 rule is folded into the existing "Lead with the decision and its options" bullet. Its
+  pre-existing overage (291 vs 200) is out of scope and noted as a follow-up.
+- **D14 Evidence stays local (was OQ-3; user, 2026-11-09).** The raw usage-review evidence (session excerpts,
+  plan citations from employer repos) is never committed to this public repo, cleaned or otherwise. Public text
+  carries only counts and generic descriptions; the local folder is named by basename only (VA-8). The
+  decisions rest on the user's direct confirmation, not on readers re-checking the evidence.
 
 ## Verified Assumptions
 
@@ -172,7 +186,7 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   over). Per-pass files are exempt individually. *Evidence:* `wc -l`, 2026-11-09.
 - **VA-5** The repo has no CI and no review bot; PRs #1 and #2 merged with zero reviews. Tests exist only for
   hooks (`hooks/test-*.sh`). *Evidence:* `ls -a`, `gh pr list`, 2026-11-09. Consequence: there is no declared
-  single gate command (see OQ-1).
+  single gate command (see D12).
 - **VA-6** The Agent tool accepts an explicit `model` (`sonnet`, `opus`, `haiku`, `fable`), which takes
   precedence over agent-definition pins; `~/.claude/CLAUDE.md` requires passing it to match the session.
   *Evidence:* tool schema and CLAUDE.md § Subagent Model Selection, read 2026-11-09.
@@ -232,7 +246,7 @@ the skill text (GREEN), run the check and the hook tests, then commit.
 skill files.
 **Wiring test:** `scripts/test-check-phase-plan.sh` exits 0 with both fixtures exercised; the refusal fixture
 is watched failing first.
-**Depends on:** OQ-1.
+**Depends on:** D12.
 **Write-set:** `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`, `agents.md`.
 **Risks:** a check that passes on an empty set (no files found) is the classic false green; the refusal fixture
 covers it.
@@ -307,11 +321,13 @@ checks (D10).
 **Goal:** the D8 format is the default everywhere it is described.
 **Changes:**
 - [ ] `skills/ask-questions-if-underspecified.md` lines 54 and 186: describe the decision-first walk-through.
-- [ ] `CLAUDE.md` § Explaining Design and Protocol Work: one line making it the default for any decision list.
+- [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
+  decision and its options" bullet; net line count unchanged (D13).
+- [ ] Check assertion: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
 - [ ] Check assertion: no file in the repo describes phase-plan's walk-through as severity-based.
 **Depends on:** Phase 2.
 **Write-set:** `skills/ask-questions-if-underspecified.md`, `CLAUDE.md`, `scripts/check-phase-plan.sh`.
-**Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); adding a line widens it (see OQ-2).
+**Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
 **Done when:** check passes.
 **Validation:** narrow.
 
@@ -333,7 +349,8 @@ hygiene.
 
 **Goal:** description and triggers (D11), "one plan, three passes" text and loading table (D2), usage patterns
 (quick plan skips Pass 2), guardrails ("extend structure; replace superseded text", D5), and the main file under
-its 500-line budget (OQ-2) by moving TRACKING history to `skills/phase-plan/CHANGELOG.md`.
+its 500-line budget (D13) by moving TRACKING history to `skills/phase-plan/CHANGELOG.md`, applying the D10
+Concurrency Map cut, and moving Usage Patterns detail into per-pass files if still needed.
 **Changes:**
 - [ ] `skills/phase-plan.md`: frame and guardrails.
 - [ ] `skills/phase-plan/CHANGELOG.md`: TRACKING history moved verbatim, with a pointer left in the main file.
@@ -387,21 +404,18 @@ when declared) and D11 (refuse to start without the Pass 3 entry; close-out phas
 
 ## Open Questions
 
-- [RECOMMENDED: PHASE-GATED (Phase 1)] **OQ-1 What counts as the test for skill text?** The repo declares no
-  single gate (VA-5). Recommendation: the structural check script in Phase 1 (with a refusal fixture), plus
-  `/audit`, plus dogfooding the new Pass 2 on this plan. *A docs change still needs a check that can go red.*
-- [RECOMMENDED: PHASE-GATED (Phase 8)] **OQ-2 Size budgets.** `phase-plan.md` (673) and `CLAUDE.md` (291) are
-  already over budget. Recommendation: bring `phase-plan.md` under 500 by moving TRACKING history to a changelog
-  and detail into the per-pass files; leave the `CLAUDE.md` overage out of scope and note it. *Budget drift
-  predates this plan, but this plan should not add to it.*
-- [RECOMMENDED: ADVISORY] **OQ-3 Evidence location.** Raw evidence stays local (VA-8); this plan carries generic
-  summaries. Confirm that is acceptable for a public repo. *Keeps employer-internal detail out of a public repo.*
+- [RESOLVED → D12] **OQ-1 What counts as the test for skill text?** Option A chosen 2026-11-09: structural
+  check + `/audit` + dogfooding.
+- [RESOLVED → D13] **OQ-2 Size budgets.** Option A chosen 2026-11-09: skill under 500 as a hard check;
+  `CLAUDE.md` net zero; its existing overage is a separate follow-up.
+- [RESOLVED → D14] **OQ-3 Evidence location.** Option A chosen 2026-11-09: local only, generic summaries in
+  public text.
 
 ## Review Log
 
 ### Pass 1 (draft) — 2026-11-09
 - Built from the 2026-11-09 usage review and the user's one-at-a-time walk-through of its recommendations
-  (D1–D11, all user-confirmed).
+  (D1–D11, all user-confirmed; D12–D14 from OQ-1–OQ-3).
 - Grounded against the repo: install path (VA-1), consumer references (VA-2, VA-3), budgets (VA-4), gates
   (VA-5), visibility (VA-8).
 - Not yet run: the explicit gap-analysis checklist step (D3), Pass 2, Pass 3.
@@ -411,7 +425,7 @@ when declared) and D11 (refuse to start without the Pass 3 entry; close-out phas
 Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in the worktree
 `~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (base `origin/main` `8e6fc33`). Run the **gap-analysis
 step of Pass 1** using the current skill's `skills/phase-plan/pass2.md` checklist plus the D3 outward sweep from
-this plan (the new pass files do not exist yet). Locked: D1–D11. Open: OQ-1, OQ-2, OQ-3 (walk them per D8).
+this plan (the new pass files do not exist yet). Locked: D1–D14. No open questions.
 Attack first: whether 11 sequential phases each stay at 3 files or fewer once the reverse search traces the real
 write-set, and whether Phase 9 must split. Deliverable: a Review Log entry for the gap-analysis step and any plan
 edits, replacing superseded text in place. Done when the entry is written and this section is rewritten for
