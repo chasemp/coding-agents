@@ -1,7 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Pass 1 complete (gap-analysis step done; GA-W1 → D15, GA-W2 → D16). Pass 2
-(independent review) and Pass 3 (quality gates) not yet run. No skill files changed yet.
+**Status:** Pass 1 and Pass 2 done (D1–D20, no open questions). Pass 3 not yet run. No skill files changed yet.
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
 
@@ -116,7 +115,9 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   or a new write path. Each pass starts by reviewing the previous pass's additions. "Ready" only after
   walk-through answers are in the plan and re-checked. Replace superseded text in place across the plan and
   sibling plans; history lives only in the Review Log. Hedges ("consider", "grep to confirm") are run or become
-  open questions before ready.
+  open questions before ready. *Scope (decided by agent in Pass 2, override if wanted):* replacement applies to
+  planning text. Execution-time records stay append-only: "Delivered:" notes and skip records
+  (`execute.md` § When a phase ships / § When a phase is skipped) keep the original spec as the contract.
 - **D6 Tests and validation that can fail** (Pass 3): each named test states what it shows if the feature is
   missing or wrong; fakes refuse what the real service refuses; fixtures match probed real states with timestamps
   relative to now; the expected value is independent of the changed code; sets compared where identity matters;
@@ -150,7 +151,8 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   pass should have caught this?". Probe results kept as fixtures go into the repo at capture, never a session
   scratchpad. Trigger fixes: bulk external writes trigger the skill without code changes; execution refuses to
   start without the Pass 3 Review Log entry; walk-through answers that add work count toward the
-  batch-approved-in-conversation trigger.
+  batch-approved-in-conversation trigger. *Scope (decided by agent in Pass 2):* the Pass 3 start gate applies to
+  full and quick plans; a batch-approved plan (`### A batch approved in conversation`) is exempt.
 - **D12 The test for skill text (was OQ-1; user, 2026-11-09).** Three layers: the Phase 1 structural check
   (`scripts/check-phase-plan.sh`, with a refusal fixture and a pass fixture) for wiring between files; `/audit`
   for repo hygiene; dogfooding the new Pass 2 on this plan for whether the instructions produce the intended
@@ -168,20 +170,45 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - **D15 In-flight plans (was GA-W1; user, 2026-11-09).** One compatibility rule in the main file: before any
   pass, read the plan's Review Log; if it has no gap-analysis entry (an old "Pass 2: Gap Analysis" entry counts),
   run the gap-analysis step first. Applies to plans begun under the old labels; harmless on new plans.
+  *Matching (decided by agent in Pass 2):* any Review Log entry labelled Pass 2 or Pass 1+2 and dated before the
+  v2 merge counts as gap analysis; an execution already started continues under its existing structure; an old
+  "Pass 3: Quality Gates" entry satisfies the start gate. Sessions open at pull time re-invoke `/phase-plan`.
 - **D16 Close-out records (was GA-W2; user, 2026-11-09).** Records that can only exist after merge (observed
   check, Outcome Summary, `REFINEMENTS.md` Notes line) land in a second, records-only `land:` PR touching only
   this plan and `REFINEMENTS.md`. Nothing is recorded before it happens; nothing is pushed to `main` directly.
+- **D17 Size route (was Pass2-W1; user, 2026-11-09).** The Phase 0 (Discovery) template block (48 lines) moves
+  from the main file's template into `pass1.md`, the only pass that drafts a Phase 0; the main template keeps a
+  one-line pointer. Usage Patterns and Guardrails stay in the main file.
+- **D18 Keeping the checks live (was Pass2-W2; user, 2026-11-09).** `/audit` becomes the repo's gate: a
+  project-local `.claude/commands/audit.md → ../../commands/audit.md` symlink (the existing `pr.md` pattern); a new
+  `/audit` check runs `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh`; `README.md`
+  declares the gate (structure check, its test, hook tests). A refusal fixture is watched failing through
+  `/audit` itself.
+- **D19 Work names in touched TRACKING text (was Pass2-W3; user, 2026-11-09).** Text this plan moves or edits
+  beside is made generic, keeping the reasoning: the main file's 2026-04-16 Discovery-exemption block (moved to
+  `CHANGELOG.md` in Phase 8a) and `execute.md`'s 2026-10-09 worktree-removal block (beside Phase 9b's edit). No
+  repo-wide sweep; earlier public history is unchanged.
+- **D20 Commit cadence (was Pass2-W4; user, 2026-11-09).** Standing OK for local commits on `phase-plan-v2`, one
+  per phase, after that phase's checks pass. Push, opening either PR, merge and the main-checkout pull each still
+  need the user's say-so.
 
 ## Verified Assumptions
 
 - **VA-1** The skill is registered through `~/.claude/commands/phase-plan.md`, a symlink to
   `../coding-agents/skills/phase-plan.md`; `~/.claude/coding-agents` is a symlink to
-  `~/git/chasemp/coding-agents` (the main checkout). Per-pass files are read by relative path
-  `skills/phase-plan/*.md`. *Evidence:* `ls -la`/`readlink` on 2026-11-09. Consequence: worktree edits are inert
-  until merged to `main` and the main checkout is updated.
-- **VA-2** No other repo's instruction files reference the pass files or pass numbers. *Evidence:* grep of
-  the user's personal and work repo trees for `pass[123].md|phase-plan/pass|Pass 2 (gap|Pass 3 (quality|three-pass`
-  restricted to `.claude/`, `CLAUDE.md`, `AGENTS.md`: 0 hits outside this repo, 2026-11-09. The two org-layer
+  `~/git/chasemp/coding-agents` (the main checkout); `CLAUDE_CONFIG_DIR` is unset. Per-pass files are named by
+  relative path `skills/phase-plan/*.md` and the **model** resolves them: across 2026-10/11 transcripts, 172 reads
+  went to `~/.claude/coding-agents/skills/phase-plan/`, 5 to the main checkout, and 16 to
+  `~/.claude/skills/phase-plan/`, which does not exist. *Evidence:* `readlink`, transcript grep, 2026-11-09.
+  Consequence: edits are inert until merged and pulled **except** in a session whose working directory is this
+  worktree, which may read `main`'s main file with the worktree's per-pass files. Phase 4 names the absolute
+  base directory in the loading table.
+- **VA-2** No other repo's instruction files reference the pass files by name. *Evidence:* Pass 2 found the
+  first recorded grep had unbalanced parentheses and could not match; re-run with
+  `phase-plan|Pass 2|gap analysis|three passes` over `.claude/`, `CLAUDE.md`, `AGENTS.md` in the personal and work
+  trees, 2026-11-09. Consumers of phase-plan *conventions* do exist: a workspace meta-repo's `CLAUDE.md` and
+  `.claude/TRACKING.md` require a Status line and Review Log (unchanged by this plan); two auto-memory files in
+  other projects describe the old pass order and the "Pass 2 disjointness check" (updated at close-out, Phase 11). The two org-layer
   `coding-agents` repos named in `agents.md` were searched in full (all files): 0 references to phase-plan or its
   pass files; their only "Pass 1/2/3" hits are an unrelated command's own passes. *Evidence:* grep, 2026-11-09.
 - **VA-3** In-repo references to the pass structure outside the skill: `skills/ask-questions-if-underspecified.md`
@@ -203,19 +230,39 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   citations from employer repos) is kept in a local folder outside any git repo
   (`phase-plan-review-2026-11-09/`) and is not committed here.
 - **VA-9** Baseline gates at base `8e6fc33`: `hooks/test-destructive-git-guard.sh` PASS 34/34;
-  `hooks/test-install.sh` ALL PASS (both sandbox `HOME` via `mktemp`). *Evidence:* run 2026-11-09.
+  `hooks/test-install.sh` ALL PASS, 9 checks (both sandbox `HOME` via `mktemp`). `/audit` flags at base (the
+  baseline "no new flags" is measured against): Check 1 `skills/phase-plan.md` 673 and
+  `skills/testing-anti-patterns.md` 506 (500 budget); agents `adr` 898, `docs-guardian` 799, `pr-reviewer` 750,
+  `py-enforcer` 662, `refactor-scan` 558, `tdd-guardian` 486 (400 budget); `CLAUDE.md` 291 (200 budget). Checks 2
+  and 7 clean. *Evidence:* run 2026-11-09 (two independent runs agree).
 - **VA-10** `REFINEMENTS.md` Status domain is `proposed | accepted | rejected | parked` (header line 27; 15
   accepted, 1 parked, 1 proposed). "Applied" is recorded in an entry's **Notes**, not its Status.
-  *Evidence:* read + count, 2026-11-09.
-- **VA-11** Applied refinements already living in the files this plan rewrites, which the rewrite must keep:
-  `pass1.md` step 1 cross-reference to `ask-questions-if-underspecified` (2026-04-16); the Documentation Impact
-  inventory step in `pass1.md` and Check 7 in `pass3.md` (2026-04-17); the "not a plan template" banner in each
-  per-pass file (2026-04-17); the batch-approved-in-conversation trigger in the description (`d7cd0d7`); the
-  close-out narrative and worktree removal in `execute.md` § When the plan closes (2026-04-17, 2026-10-09).
-  *Evidence:* `REFINEMENTS.md` entries and `git log`, 2026-11-09.
-- **VA-12** Neighbours at 2026-11-09: `origin/main` is `8e6fc33` after `git fetch`; no open PRs; worktrees are
-  the main checkout and this one; no other plan in `plans/` touches phase-plan. Repo delivery pattern: work
-  commits on a branch, merged as a `land: …` PR (#1, #2).
+  Counts at base: 14 accepted, 1 parked, 0 proposed (the "proposed" hit is the template line); this plan adds
+  1 accepted. Notes wording varies ("Applied", "Implemented"). *Evidence:* read + count, 2026-11-09.
+- **VA-11** Applied changes already living in the files this plan rewrites, which the rewrite must keep. Phase 1
+  asserts each by literal anchor, scoped to its section, ignoring `<!-- -->` comments:
+  - `pass1.md` step 1 cross-reference to `ask-questions-if-underspecified` (2026-04-16).
+  - Documentation Impact: the template section, the `pass1.md` inventory step, `pass3.md`
+    `**7. Documentation impact coverage**`, the `execute.md` completion-checklist item (2026-04-17).
+  - `## One plan, three passes` and the "not a plan template" banner in `pass1.md`, `pass2.md`, `pass3.md` (no
+    banner in `execute.md`; 2026-04-17).
+  - The batch-approved trigger in the description and `### A batch approved in conversation` (`d7cd0d7`).
+  - "A new entry point invalidates every prior 'wired' claim" and the reachability gate (`aa6c43f`).
+  - The `**Plan file:**` line in every pass close-out (`e048db3`).
+  - "Plan matches reality" in `execute.md` § The execution reminder (`557bbad`).
+  - Load-bearing repeated guardrails: `execute.md` § Execution guardrails, each pass file's § Reminders, and the
+    main file's `TRACKING: File split (2026-04-16)` block (2026-04-16; `commands/audit.md` Check 6 and
+    `skills/skill-hygiene.md` lines 96-100 name it).
+  - `execute.md` § Step 4 Consolidate locally (2026-05-04).
+  - Close-out narrative and worktree removal in `execute.md` § When the plan closes (2026-04-17, 2026-10-09).
+  *Evidence:* `REFINEMENTS.md` Notes, `git log -- skills/phase-plan*`, 2026-11-09 (Pass 2 found six missing from
+  the first version of this list).
+- **VA-12** Neighbours at 2026-11-09: `origin/main` is `8e6fc33` (`git ls-remote`); no open PRs; worktrees are
+  the main checkout and this one. `plans/xml-tag-enhancement.md` targets `skills/phase-plan.md` but is dormant (no
+  Status line, written against the pre-split 794-line file); recorded as superseded for the files this plan
+  touches. Delivery pattern: work commits on a branch, merged through a PR whose merge commit is titled
+  `land: …` (#1, #2). This branch tracks `origin/main` with commits only local; PR 1 needs
+  `git push -u origin phase-plan-v2`. `main` is unprotected. *Evidence:* `git`, `gh`, 2026-11-09.
 
 ## Documentation Impact
 
@@ -226,26 +273,45 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - `commands/audit.md` Check 1 (exemption names the per-pass files; `walk-through.md` and `CHANGELOG.md` now
   land in `skills/phase-plan/`) and Check 6 (its `grep -l 'TRACKING:'` covers `skills/phase-plan/*.md`, so once
   history moves to `CHANGELOG.md` the check stays green even if the main file loses its marker; name the main
-  file explicitly): Phase 10.
+  file explicitly): Phase 10a. (Pass 2: line 141 already names the main file, and line 143 already requires its
+  split marker; the remaining gap is that the check is read by eye, so Phase 10a adds a line that prints MISSING
+  when the main file has no split marker.)
 - `commands/skills.md` line 38: excludes `skills/phase-plan/*.md`; confirmed still correct for
   `walk-through.md` and `CHANGELOG.md`, and `scripts/` is not a skill directory. No change.
-- `agents.md` § File reference: add the new `scripts/` check and the new per-pass files. Phases 1 and 10.
+- `agents.md` § File reference (line 225 lists `skills/` as one row): add a `scripts/` row only. Phase 1.
 - `CLAUDE.md` § Explaining Design and Protocol Work: one line (D8). Phase 6.
 - `REFINEMENTS.md`: new entry for this plan (written with the plan); Status stays `accepted`; an "Applied
   <date> in <PR>" line is added to its Notes at close-out (VA-10).
-- `skills/skill-hygiene.md` line 98: historical example; no change expected. Confirm in Phase 10.
+- `skills/skill-hygiene.md` lines 96-100: names the split TRACKING marker; the marker stays (VA-11), so no change.
+- `commands/audit.md` Check 7 (line 156) depends on the template headings `## Problem Statement` and
+  `## Reasoning`; Phase 7 asserts both stay.
+- `README.md` § What's here (lines 43-51): add a `scripts/` row. Phase 10b.
+- `EXTERNAL-LEARNINGS.md` line 117: parked question on a walk-through "defaults" fast-path, answered by D8
+  ("accept all as recommended" kept). Phase 10b.
+- Auto-memory outside this repo (two files, VA-2): refresh to the new pass order at close-out. Phase 11.
+- `plans/xml-tag-enhancement.md`: dormant, superseded for phase-plan files (VA-12); no edit.
 - Grep terms used: `phase-plan`, `three-pass`, `pass ?[123]`, `pass[123].md`, `execute.md`, across `*.md` and
   `*.sh`.
 
 ## Delivery shape
 
 - **PRs:** two. PR 1 carries all skill and repo changes (`phase-plan-v2` → `main`), opened at the end of
-  Phase 10. PR 2 is records only (this plan, `REFINEMENTS.md`), opened after the observed check (D16).
-- **Gates:** the structural check from Phase 1 passes; `/audit` run with no new flags; user review and merge
+  Phase 10b. PR 2 is records only (this plan, `REFINEMENTS.md`), opened after the observed check (D16).
+- **Gates:** `/audit` (D18), which runs the structural check and its test, with no flags beyond VA-9; hook tests; user review and merge
   (no review bot in this repo).
 - **Going live:** after merge, update the main checkout (`git -C ~/git/chasemp/coding-agents pull`), which the
   `~/.claude` symlinks read. Then the observed check in Phase 11.
-- **Manual steps:** none beyond the pull.
+- **Rollback:** trigger: the observed check fails, or a session loads the wrong pass file. On a new branch,
+  restore the skill files, `CLAUDE.md`, `skills/ask-questions-if-underspecified.md`, `commands/audit.md`,
+  `skills/plan-doc-reasoning.md`, `agents.md`, `README.md` and `EXTERNAL-LEARNINGS.md` from `8e6fc33`; delete
+  `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`, `skills/phase-plan/walk-through.md`,
+  `skills/phase-plan/CHANGELOG.md`; land it as a PR; pull. Keep this plan and add a Discovery entry. Do not
+  `git revert -m1` PR 1 whole: that also deletes this plan.
+- **Status on `main` between PRs:** PR 1 sets this plan's Status to "merged; awaiting observed check and PR 2", so
+  `main` reads correctly if PR 2 is delayed.
+- **Commits:** local, one per phase after its checks pass, under D20's standing OK; push, PRs, merge and pull
+  need the user's say-so each time.
+- **Manual steps:** the pull; re-invoke `/phase-plan` in any session open at pull time (D15).
 - **Calendar or unattended jobs:** none.
 
 ## Concurrency Map
@@ -257,31 +323,39 @@ reference earlier ones.
 
 Every phase follows the same verification loop: add the phase's assertions to the structural check (RED), edit
 the skill text (GREEN), run `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` and the
-hook tests (`for t in hooks/test-*.sh; do bash "$t" || exit 1; done`; baseline VA-9), then commit.
+hook tests (`for t in hooks/test-*.sh; do bash "$t" || exit 1; done`; baseline VA-9), then commit (D20).
 
 ### Phase 1: Structural check for the skill
 
 **Goal:** a test-first harness for skill text, so each later phase has a RED → GREEN check.
 **Changes:**
-- [ ] `scripts/check-phase-plan.sh`: asserts invariants that must survive the rewrite: every file named in the
-  main file's loading table exists; every `skills/phase-plan/*.md` path referenced in a live instruction file
-  resolves (scope: `skills/`, `commands/`, root agent `.md` files, `CLAUDE.md`, `agents.md`, `README.md`; brace
-  forms such as `pass{1,2,3}.md` expanded; ledgers and `plans/` excluded because they hold history); main file
-  keeps a TRACKING marker; each applied refinement in VA-11 keeps its anchor text; prints line counts against
-  the budgets in VA-4.
-- [ ] `scripts/test-check-phase-plan.sh`: fixtures built in a `mktemp -d` copy of the tree, mirroring
-  `hooks/test-*.sh`. Refusals: a loading table naming a missing file; a VA-11 anchor removed; an empty
-  `skills/phase-plan/` (the check must fail, not pass on zero files). Pass: the current tree.
-- [ ] `agents.md` § File reference: list `scripts/`.
-**Call chain:** maintainer or agent → `scripts/test-check-phase-plan.sh` → `scripts/check-phase-plan.sh` →
+- [ ] `scripts/check-phase-plan.sh [ROOT]`: takes the tree root as an argument (default: repo root) so fixtures
+  run against a mutated copy. Each assertion prints a stable id on failure (`CHK-TABLE`, `CHK-REFS`,
+  `CHK-SECTION`, `CHK-MARKER`, `CHK-ANCHOR:<name>`, ...). Assertions at this phase:
+  - every file named in the main file's loading table exists, and the table has at least 5 parseable rows;
+  - every `` `<name>.md` § <Heading> `` reference in a live instruction file resolves to a heading in that file
+    (prefix match), and at least 10 references are extracted (a broken extractor fails, not passes);
+  - every `skills/phase-plan/*.md` path (brace forms expanded) in a live file exists;
+  - live scope: `skills/` (excluding `skills/phase-plan/CHANGELOG.md`), `commands/`, root agent `.md` files,
+    `CLAUDE.md`, `agents.md`, `README.md`; ledgers and `plans/` excluded because they hold history;
+  - `skills/phase-plan.md` itself contains `TRACKING: File split (2026-04-16)`;
+  - each VA-11 anchor present in its own section, outside `<!-- -->` comments;
+  - prints line counts against the VA-4 budgets (made a failing assertion in Phase 8b).
+- [ ] `scripts/test-check-phase-plan.sh`: builds each fixture in a `mktemp -d` copy, runs the check on it, and
+  passes only when the check exits non-zero **and** prints the expected id. Refusal fixtures: loading table
+  names a missing file; loading table with zero parseable rows; a referenced heading renamed (`## Output` in
+  `pass1.md`); reference extraction finds zero (pattern broken); split marker present only in `execute.md`; each
+  VA-11 anchor removed separately. Pass fixture: the current tree, exit 0.
+- [ ] `agents.md` § File reference: a `scripts/` row.
+**Call chain:** maintainer or agent → `scripts/test-check-phase-plan.sh` → `scripts/check-phase-plan.sh ROOT` →
 skill files.
-**Wiring test:** `scripts/test-check-phase-plan.sh` exits 0 with both fixtures exercised; the refusal fixture
-is watched failing first.
+**Wiring test:** `scripts/test-check-phase-plan.sh` exits 0 with every fixture exercised; each refusal is watched
+failing first (the assertion written before the check exists).
 **Depends on:** D12.
 **Write-set:** `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`, `agents.md`.
-**Risks:** a check that passes on an empty set (no files found) is the classic false green; the refusal fixture
-covers it.
-**Done when:** the check refuses the broken fixture and passes the current tree. Verified by
+**Risks:** false greens from grading an empty or wrong set, or counting a crash as a refusal; the id match and
+the minimum counts cover these.
+**Done when:** every refusal fixture is refused with its id and the current tree passes. Verified by
 `bash scripts/test-check-phase-plan.sh`.
 **Validation:** narrow; tests sufficient.
 
@@ -290,7 +364,10 @@ covers it.
 **Goal:** one decision-first walk-through procedure (D8) that every pass and execution reference.
 **Changes:**
 - [ ] `skills/phase-plan/walk-through.md`: the procedure from D8, with one worked example item.
-- [ ] Check assertions: the file exists; it contains no "Confirm as BLOCKING" severity-confirmation prompt.
+- [ ] `walk-through.md` states the mapping: a BLOCKER finding that needs a user decision becomes a BLOCKING question.
+- [ ] Check assertions: the file exists; no live file contains `Confirm as [SEVERITY]`, `confirm the severity` or
+  `override to BLOCKING` (RED today: `pass1.md:192`, `pass3.md:76`; allowlist: the mapping line in
+  `walk-through.md`). This assertion stays RED until Phase 7 and is marked expected-red until then.
 **Call chain:** pass file close-out → `walk-through.md`.
 **Wiring test:** check asserts `walk-through.md` is referenced by the main file's loading table or guardrails
 (made GREEN here by one reference line in the main file).
@@ -298,7 +375,7 @@ covers it.
 **Write-set:** `skills/phase-plan/walk-through.md`, `skills/phase-plan.md` (one reference line),
 `scripts/check-phase-plan.sh`.
 **Done when:** the walk-through exists and is referenced; check passes.
-**Validation:** moderate; also run the procedure on this plan's open questions once (dogfood).
+**Validation:** moderate; dogfood the procedure on a fixed item set (this plan's Pass 2 findings) once.
 
 ### Phase 3: Pass 1 = plan + gap analysis
 
@@ -327,16 +404,21 @@ the D5 trigger for re-running it on late changes.
 **Changes:**
 - [ ] `skills/phase-plan/pass2.md`: replaced (old gap-analysis content now lives in `pass1.md`); banner kept
   (VA-11).
-- [ ] `skills/phase-plan.md` § Loading the Per-Pass Files: table rows only. "gap analysis" → `pass1.md`; "pass 2" /
-  "independent review" → `pass2.md`; the "pass 1+2" row removed (D2 merges it into Pass 1).
-- [ ] Check assertions: three lens headings, the brief template, the vetting step, explicit `model` instruction;
-  loading-table rows as above.
+- [ ] `skills/phase-plan.md` § Loading the Per-Pass Files: table rows and one base-directory line naming
+  `~/.claude/coding-agents/skills/phase-plan/` (VA-1). Rows: "pass 1" / "let's plan" → `pass1.md`; "gap analysis"
+  → `pass1.md` § the gap-analysis step ("plan exists: start here"); "pass 2" / "independent review" /
+  "review the plan" / "plan review" → `pass2.md`; "pass 3" / "quality gates" / "final review" → `pass3.md`; the
+  "pass 1+2" row removed (D2). Quick plan loads `pass1.md` + `pass3.md` (D1 skips Pass 2).
+- [ ] Check assertions: three lens headings, the brief template, the vetting step, explicit `model` instruction,
+  the D9 Next pass close-out; loading-table rows as above; quick plan does not name `pass2.md`; the base-directory
+  line present.
 **Call chain:** "pass 2" / "independent review" → loading table → `pass2.md` → Agent tool ×3.
 **Wiring test:** check asserts the loading table maps "pass 2" to the independent review.
 **Depends on:** Phase 3.
 **Write-set:** `skills/phase-plan/pass2.md`, `skills/phase-plan.md` (loading table rows), `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
-**Validation:** moderate; dogfood: run the new Pass 2 on this plan from the worktree files (Phase 11 records it).
+**Validation:** moderate; dogfood: run the new Pass 2 on this plan with the brief naming absolute worktree paths;
+confirm the loaded file's H1 reads "Independent review" (Phase 11 records it).
 
 ### Phase 5: Pass 3 = quality gates
 
@@ -344,12 +426,16 @@ the D5 trigger for re-running it on late changes.
 the bounded spot-check and deliverable anchor (from the review's Pass 3 drift finding), and slimmed concurrency
 checks (D10).
 **Changes:**
-- [ ] `skills/phase-plan/pass3.md`: extended; spot-check step bounded; its walk-through references (today
-  "the walk-through procedure from `pass1.md` § Output") repointed to `walk-through.md`; Check 7 kept (VA-11).
+- [ ] `skills/phase-plan/pass3.md`: extended; spot-check step bounded; severity-confirmation bullets in Check 4
+  (lines 73-77) and the § Output severity flow (lines 183-232) replaced by the D8 walk-through; walk-through
+  references repointed to `walk-through.md`; "Pass 2" references with the gap-analysis meaning (lines 102,
+  145-153, 242) reworded; D9 Next pass close-out; D5 "start by reviewing the previous pass's additions"; Check 7
+  and § Reminders kept (VA-11).
 - [ ] Check assertions: test-validity check present; "ready" requires the walk-through answers to be integrated;
-  no live file points to `pass1.md § Output` for the walk-through.
+  no live file contains `` `pass1.md` § Output ``; Next pass close-out present.
 **Call chain:** "pass 3" / "quality gates" → loading table → `pass3.md`.
-**Wiring test:** check asserts the loading table maps "pass 3" to the quality gates.
+**Wiring test:** check asserts `pass3.md` names `walk-through.md` (RED before this phase; the "pass 3" row is
+already true at base, so it cannot serve as the RED step).
 **Depends on:** Phase 4.
 **Write-set:** `skills/phase-plan/pass3.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
@@ -359,11 +445,12 @@ checks (D10).
 
 **Goal:** the D8 format is the default everywhere it is described.
 **Changes:**
-- [ ] `skills/ask-questions-if-underspecified.md` lines 54 and 186: describe the decision-first walk-through.
+- [ ] `skills/ask-questions-if-underspecified.md` lines 54-56 and 186-189: describe the decision-first walk-through.
 - [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
   decision and its options" bullet; net line count unchanged (D13).
 - [ ] Check assertion: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
-- [ ] Check assertion: no file in the repo describes phase-plan's walk-through as severity-based.
+- [ ] Check assertion: no live file (Phase 1 scope) contains `severity-based walk-through` or
+  `uses a severity-based`.
 **Depends on:** Phase 2.
 **Write-set:** `skills/ask-questions-if-underspecified.md`, `CLAUDE.md`, `scripts/check-phase-plan.sh`.
 **Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
@@ -377,33 +464,56 @@ optional Read-set and Shared-state contract, traced Write-set, Verified Assumpti
 observed live"), close-out as a numbered final phase with "which pass should have caught this?", Review Log
 hygiene.
 **Changes:**
-- [ ] `skills/phase-plan.md` § The Plan Doc.
-- [ ] Check assertions: required template headings present; Read-set not listed as required.
+- [ ] `skills/phase-plan.md` § The Plan Doc, including § Open Questions (lines 491-498: severity stays a proposed
+  tag; the "user confirms or overrides the severity" line replaced by the D8 walk-through).
+- [ ] Check assertions: required template headings present, including `## Problem Statement` and `## Reasoning`
+  (audit Check 7); Read-set not listed as required; the Phase 2 severity assertion turns GREEN.
 **Depends on:** Phase 5.
 **Write-set:** `skills/phase-plan.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
 
-### Phase 8: Main file, frame, triggers and size
+### Phase 8a: Main file, frame, triggers and history
 
 **Goal:** description and triggers (D11), "one plan, three passes" text (D2; loading table done in Phase 4), the
-in-flight compatibility rule (D15), usage patterns
-(quick plan skips Pass 2), guardrails ("extend structure; replace superseded text", D5), and the main file under
-its 500-line budget (D13) by moving TRACKING history to `skills/phase-plan/CHANGELOG.md`, applying the D10
-Concurrency Map cut, and moving Usage Patterns detail into per-pass files if still needed.
+in-flight compatibility rule (D15), usage patterns (quick plan skips Pass 2; Combined Pass 1+2 pattern removed),
+guardrails ("extend structure; replace superseded planning text", D5 with its scope note), and TRACKING history
+moved to `skills/phase-plan/CHANGELOG.md`.
 **Changes:**
-- [ ] `skills/phase-plan.md`: frame and guardrails.
-- [ ] `skills/phase-plan/CHANGELOG.md`: TRACKING history moved verbatim, with a pointer left in the main file.
-- [ ] Check assertions: main file under 500 lines; a TRACKING marker kept in the main file; the D15 rule present.
+- [ ] `skills/phase-plan.md`: frame, usage patterns and guardrails; stale "Pass 2 fills gaps" (line 517-518) and
+  Read-set text (line 428) reworded.
+- [ ] `skills/phase-plan/CHANGELOG.md`: TRACKING blocks moved except `TRACKING: File split (2026-04-16)`, which
+  stays in the main file (VA-11) with one added line pointing to the changelog. Project names in the moved
+  2026-04-16 Discovery-exemption block made generic (D19).
+- [ ] Verification (not a committed assertion, because a deny-list in a public repo would publish the names):
+  grep the touched files locally for the names Pass 2 found, using a list kept outside the repo; record "0 hits"
+  and the date in the Review Log.
+- [ ] Check assertions: the D15 rule present; the split marker present in the main file; CHANGELOG exists.
 **Depends on:** Phase 7.
 **Write-set:** `skills/phase-plan.md`, `skills/phase-plan/CHANGELOG.md`, `scripts/check-phase-plan.sh`.
 **Risks:** the description is what triggers the skill; keep the existing trigger phrases ("phase plan",
-"three-pass plan", "plan review") and the batch-approved trigger (VA-11). Size estimate: 673 − 115 TRACKING + 3
-pointer − ~40 Concurrency Map template − ~30 optional-field text − ~20 Combined Pass 1+2 pattern + ~45 new
-template sections ≈ 516, so Usage Patterns or the Discovery Exemption summary must also move ~20 lines to a
-per-pass file to clear 500.
-**Done when:** check passes, including the size assertion.
+"three-pass plan", "plan review") and the batch-approved trigger (VA-11).
+**Done when:** check passes.
 **Validation:** moderate; confirm the skill still lists and triggers after merge (Phase 11).
+
+### Phase 8b: Main file under 500 lines
+
+**Goal:** the D13 size assertion turns GREEN. Pass 2 measured: TRACKING 122 lines out minus the 14-line split
+block kept, Concurrency Map 55 → ~13, optional-field text −29, Combined Pass 1+2 −22, new sections ≈ +64, giving
+≈ 534-545. The remaining ~45 lines move per D17.
+**Changes:**
+- [ ] `skills/phase-plan.md`: the Phase 0 (Discovery) template block replaced by a one-line pointer to `pass1.md`.
+- [ ] `skills/phase-plan/pass1.md`: receives the Phase 0 template under its Phase 0 drafting step.
+- [ ] Check assertion: `pass1.md` contains the Phase 0 template heading; the main file's pointer resolves (Phase 1
+  section-reference check).
+- [ ] Check assertion: `skills/phase-plan.md` under 500 lines (failing, not printed); the Discovery Exemption
+  summary stays in the main file (load-bearing repetition, VA-11).
+**Depends on:** Phase 8a.
+**Write-set:** `skills/phase-plan.md`, `skills/phase-plan/pass1.md`, `scripts/check-phase-plan.sh`.
+**Risks:** if the count is still ≥500 after the move, stop and walk the user through it rather than trimming
+load-bearing text to pass the assertion.
+**Done when:** check passes, including the size assertion.
+**Validation:** moderate.
 
 ### Phase 9a: Execution rules, gates and states
 
@@ -411,11 +521,12 @@ per-pass file to clear 500.
 (D11), re-measure gating figures at start (D4), phase states built → merged → deployed → observed and the
 external-write tier (D7), parallel protocol reached only when declared (D10).
 **Changes:**
-- [ ] `skills/phase-plan/execute.md` § The execution reminder, § Phase completion checklist, § Executing Parallel
-  Phases (entry condition only).
+- [ ] `skills/phase-plan/execute.md` § The execution reminder, § Phase completion checklist (including D6:
+  mutation testing as an exit step for logic-heavy phases), § Executing Parallel Phases (entry condition; and
+  line 252's "Pass 2 disjointness check" reworded to the gap-analysis step). "Plan matches reality" kept.
 - [ ] Check assertions: start-of-execution Pass 3 gate present; phase-state vocabulary present; external-write tier
   steps present.
-**Depends on:** Phase 8.
+**Depends on:** Phase 8b.
 **Write-set:** `skills/phase-plan/execute.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
@@ -426,8 +537,9 @@ external-write tier (D7), parallel protocol reached only when declared (D10).
 for execution decisions (D8), close-out as a numbered final phase with "which pass should have caught this?" and
 probe fixtures in the repo (D11). Close-out narrative and worktree removal kept (VA-11).
 **Changes:**
-- [ ] `skills/phase-plan/execute.md` § Keep the plan doc in sync with reality (all subsections) and § When the plan
-  closes.
+- [ ] `skills/phase-plan/execute.md` § Keep the plan doc in sync with reality, including its § When the plan
+  closes subsection; "Delivered:" and skip records stay append-only (D5 scope); D9 "a compacted context is not
+  fresh: say so and hand off"; the 2026-10-09 TRACKING block's three repo names made generic (D19).
 - [ ] Check assertions: late-change re-check present; "which pass should have caught this?" present; VA-11
   close-out anchors present.
 **Depends on:** Phase 9a.
@@ -435,17 +547,33 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
 **Done when:** check passes.
 **Validation:** moderate.
 
-### Phase 10: Repo docs and audit
+### Phase 10a: Audit and plan-doc references
 
-**Goal:** references outside the skill are current (Documentation Impact).
+**Goal:** `/audit` and `plan-doc-reasoning` match the new shape; `/audit` is runnable and is the gate (D18).
 **Changes:**
-- [ ] `commands/audit.md` Check 1 (exemption covers `walk-through.md`, `CHANGELOG.md`) and Check 6 (names
-  the main file explicitly; see Documentation Impact).
+- [ ] `commands/audit.md`: Check 1 exemption wording ("per-pass content files" → "files under
+  `skills/phase-plan/`"); Check 6 prints MISSING when `skills/phase-plan.md` lacks the split marker; plus the
+  new check (D18) that runs `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` and prints
+  its output.
+- [ ] `.claude/commands/audit.md`: symlink to `../../commands/audit.md` (D18).
 - [ ] `skills/plan-doc-reasoning.md` line 108 wording.
-- [ ] `agents.md` § File reference: new per-pass files and `CHANGELOG.md`.
 **Depends on:** Phase 9b.
-**Write-set:** `commands/audit.md`, `skills/plan-doc-reasoning.md`, `agents.md`.
-**Done when:** `/audit` reports no new flags; the structural check passes.
+**Write-set:** `commands/audit.md`, `skills/plan-doc-reasoning.md`, `.claude/commands/audit.md`.
+**Wiring test:** in a session opened in this worktree, `/audit` runs and prints the structure-check output;
+then, on a throwaway copy with the split marker removed, the new check reports the failure through `/audit`.
+**Done when:** `/audit` shows no flags beyond the VA-9 baseline (and `phase-plan.md` 673 cleared); the structural
+check passes through `/audit`.
+**Validation:** narrow.
+
+### Phase 10b: Repo docs
+
+**Goal:** README and the external-learn ledger are current.
+**Changes:**
+- [ ] `README.md` § What's here: a `scripts/` row and one line declaring the gate (D18).
+- [ ] `EXTERNAL-LEARNINGS.md` line 117: close the parked walk-through question with a pointer to D8.
+**Depends on:** Phase 10a.
+**Write-set:** `README.md`, `EXTERNAL-LEARNINGS.md`.
+**Done when:** structural check passes; README lists every top-level directory.
 **Validation:** narrow.
 
 ### Phase 11: Close-out
@@ -453,13 +581,17 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
 **Goal:** the plan closes in the v2 shape it introduces.
 **Changes:**
 - [ ] Open PR 1; after merge, update the main checkout.
-- [ ] **Observed check:** in a fresh session, invoke the skill and confirm it loads `pass2.md` as the
-  independent review and `walk-through.md` for questions; record the session date.
+- [ ] **Observed check:** in a fresh session whose working directory is a repo outside coding-agents, run the
+  skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
+  three Agent calls each with `model` set, one question per message, and D15 behaviour on a plan with old labels.
+  Record the session date.
+- [ ] Refresh the two auto-memory files outside this repo that describe the old pass order (VA-2).
+- [ ] Record the `CLAUDE.md` overage (291 vs 200) as a `REFINEMENTS.md` follow-up entry (D13).
 - [ ] Outcome Summary, status line, Discoveries with "which pass should have caught this?".
 - [ ] `REFINEMENTS.md` entry: Status stays `accepted`; add "Applied <date> in <PR>" to Notes (VA-10).
 - [ ] Open PR 2 (records only: this plan, `REFINEMENTS.md`; D16); after merge, update the main checkout.
 - [ ] Remove the `phase-plan-v2` worktree and branch after both PRs have landed.
-**Write-set:** this plan, `REFINEMENTS.md`.
+**Write-set:** this plan, `REFINEMENTS.md` (plus the two auto-memory files outside the repo).
 **Done when:** the skill is observed live in the new shape and the worktree is removed.
 **Validation:** broad; live session observation.
 
@@ -473,6 +605,10 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
   public text.
 - [RESOLVED → D15] **GA-W1 Plans already in flight under the old pass labels.** Option A chosen 2026-11-09.
 - [RESOLVED → D16] **GA-W2 Where close-out records land after merge.** Option A chosen 2026-11-09.
+- [RESOLVED → D17] **Pass2-W1 Size route.** Option A chosen 2026-11-09.
+- [RESOLVED → D18] **Pass2-W2 Keeping the checks live.** Option A chosen 2026-11-09.
+- [RESOLVED → D19] **Pass2-W3 Work names in moved TRACKING text.** Option A chosen 2026-11-09.
+- [RESOLVED → D20] **Pass2-W4 Commit cadence during execution.** Option A chosen 2026-11-09.
 - **Decided by agent (override if wanted): review grades vs question tags.** D1's finding grades
   (BLOCKER / REVISE / CONFIRMED) sit next to the question tags (BLOCKING / PHASE-GATED / ADVISORY). Keep both,
   because they label different things (a reviewer's finding vs a decision the user owns); `walk-through.md` states
@@ -528,15 +664,65 @@ org-layer repos (0 relevant), `plans/` (2 files: this plan and one historical re
   worktrees.
 - D1–D14 still hold against the full plan; no rejected alternative looks better given the traced write-sets.
 
+### Pass 2: Independent review — 2026-11-09
+Run from D1's text (the new `pass2.md` does not exist yet). Three `general-purpose` subagents on the session
+model (`model: opus` passed explicitly), one per lens, each briefed refute-first with the plan path and the
+files its lens needs, read-only. Raw totals: outcome + failure walk 4 BLOCKER / 5 REVISE / 3 CONFIRMED; outward
+consistency 2 / 10 / 6; facts vs code 0 / 13 / 8. The main session re-checked each BLOCKER and each new fact
+against the files before folding it in (all held); duplicates across lenses merged.
+**Found (merged):**
+- The old severity-confirmation gate survives where no phase rewrote it (`pass3.md` Check 4 and § Output; the
+  template's § Open Questions), and Phase 2's assertion string never existed, so it could not go red.
+- Phase 1's check could not see the references that break (`` `X.md` § Heading `` form, 13 in live files); its
+  empty-set fixture already failed for another reason; a marker check written like audit Check 6 passes with
+  the main file's marker removed (`execute.md` has 3); refusals were judged by exit code only.
+- Moving all TRACKING history breaks `/audit` Check 6 and `skill-hygiene.md`, which name the split marker; the
+  size estimate was unmeasured (measured ≈534-545), and Phase 8 had no file to receive the overflow.
+- `/audit` is not registered where any session reads it; nothing runs the structural check after close.
+- D5's "replace in place" contradicted `execute.md`'s append-only "Delivered:" rule; D11's start gate would
+  refuse batch-approved plans; D15's matching did not fit real Review Log headings (157 "Pass 2: Gap Analysis",
+  19 bare "Pass 2", 7 "Pass 1 + Pass 2"), and sessions open at pull time keep the old table.
+- No rollback; `git revert -m1` of PR 1 would delete this plan.
+- Loading table: "review the plan" / "plan review" unmapped; quick plan would load the new `pass2.md`; stale
+  gap-analysis meanings of "Pass 2" in five places; Phase 5's wiring test was already true at base.
+- VA corrections: per-pass paths are resolved by the model (16 reads to a nonexistent path); VA-2's grep could
+  not match; VA-11 missed six applied changes; VA-12 missed a dormant plan targeting the main file; `/audit` had
+  no recorded baseline; REFINEMENTS counts and the entry's "D1–D11" were stale.
+- Unassigned decision parts: D6 mutation exit step, D9 Next pass in every pass, D5 "review the previous pass's
+  additions", D13 overage follow-up.
+- Docs: README § What's here lacks `scripts/`; `EXTERNAL-LEARNINGS.md` has a parked question D8 answers; two
+  auto-memory files outside the repo describe the old pass order.
+**Concurrency:**
+- No changes; map confirmed. Every phase still writes `scripts/check-phase-plan.sh`.
+**Changed:**
+- Phase 1 rewritten: root argument, assertion ids, section-reference resolution, minimum counts, split-marker
+  assertion on the main file, per-anchor section-scoped checks, seven refusal fixtures matched by id.
+- Phase 2/5/6/7: literal severity patterns over live files; `pass3.md` severity flow and template § Open
+  Questions added to the write; stale "Pass 2" meanings reworded; Phase 5 wiring test replaced.
+- Phase 4: base-directory line and a row for every trigger phrase; quick plan skips `pass2.md`.
+- Phase 8 split into 8a (frame, D15, history move keeping the split block) and 8b (size, route per Pass2-W1).
+- Phase 9a/9b: D6, D9, D5 scope assigned. Phase 10 split into 10a (audit, plan-doc-reasoning; Pass2-W2) and 10b
+  (README, EXTERNAL-LEARNINGS). Phase 11: observed check from outside the repo with recorded behaviour; memory
+  refresh; overage follow-up.
+- Delivery shape: rollback procedure, status on `main` between PRs, re-invoke in open sessions.
+- VA-1, VA-2, VA-9, VA-10, VA-11, VA-12 corrected; Documentation Impact extended.
+- Decided by agent (override if wanted): D5 scope (planning text replaced, execution records append-only); D11
+  gate scope (batch-approved plans exempt); D15 matching (date-keyed; executions already started continue).
+- `REFINEMENTS.md` entry: Target and decision range corrected in place.
+- Walk-through: Pass2-W1 → D17, W2 → D18, W3 → D19, W4 → D20 (all option A).
+**Confirmed:**
+- VA-4, VA-5, VA-6 (the `opus` alias resolving to the exact session model is unverified), VA-7, VA-8, VA-9 hold.
+- The `CLAUDE.md` net-zero assertion can go red (291 at base and HEAD; target bullet at `CLAUDE.md:221`).
+- The going-live pull fast-forwards: main checkout clean at `8e6fc33`, `pull.rebase=true`.
+- TDD hooks cannot interfere (they classify only code under `src|lib|app|pkg|cmd|internal`).
+- The 4-file rule has one home (`pass1.md:129-133`); audit Check 1 and Check 2 already handle the new files.
+
 ## Next pass
 
-Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in the worktree
+Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in
 `~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (branch `phase-plan-v2`, base `origin/main` `8e6fc33`;
-re-fetch and confirm). Run **Pass 2, independent review**, from D1's text (the new `pass2.md` does not exist
-yet): three subagents, one per lens (outcome + failure walk; outward consistency; facts vs code and live data),
-each passed `model` explicitly to match the session, each briefed refute-first with this plan path and the files
-its lens needs, grading findings BLOCKER / REVISE / CONFIRMED. The main session re-checks every claim before
-folding it in, then walks the user through changes one at a time (D8). Locked: D1–D16. No open questions. Attack first: whether the Phase 1 check can go red on the failure shapes that matter (empty set, wrong
-set, missing anchor), and whether the ≈516-line estimate for the main file holds. Deliverable: a "Pass 2:
-Independent review" Review Log entry and in-place plan edits. Done when the entry is written and this section is
-rewritten for Pass 3.
+re-check with `git ls-remote`). Run **Pass 3, quality gates**, with the current `skills/phase-plan/pass3.md`
+plus D6 (tests that can fail) and D5 (start by reviewing Pass 2's additions, which are large). Locked: D1–D20. Attack first: whether each Phase 1 fixture would really be refused by its id, and
+whether the Phase 2 severity assertion staying RED until Phase 7 is workable or needs moving. Deliverable: a
+"Pass 3: Quality gates" Review Log entry and in-place edits. Done when the entry is written and this section
+points at execution.
