@@ -225,6 +225,6 @@ have 20 turns.
 | `skills/` | On-demand skills (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (`/pr`, `/generate-pr-review`) |
 | `hooks/` | Programmatic TDD enforcement (edit guard, stop guard, pre-commit) |
-| `scripts/` | Repo checks: `check-phase-plan.sh` (structure of the phase-plan skill text) and its fixture test |
+| `scripts/` | Repo checks: `check-phase-plan.sh` (structure of the phase-plan skill text), `audit-checks.sh` (the shell checks `/audit` runs), and their tests |
 | `REFINEMENTS.md` | Global refinement-proposal ledger — managed by `learn`, fed by `external-learn` via user promotion |
 | `EXTERNAL-LEARNINGS.md` | Ledger of external sources reviewed and what we took away — managed by `external-learn` |

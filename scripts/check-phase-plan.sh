@@ -147,7 +147,9 @@ x-closeout-phase|skills/phase-plan/execute.md|When the plan closes|the plan'"'"'
 x-which-pass|skills/phase-plan/execute.md|When the plan closes|which pass should have caught this?
 x-fixtures-repo|skills/phase-plan/execute.md|When the plan closes|Probe results kept as fixtures go into the repo
 readme-scripts-row|README.md|What'"'"'s here|`scripts/`
-readme-gate|README.md|What'"'"'s here|**Gate:** run `/audit`'
+readme-gate|README.md|What'"'"'s here|**Gate:** run `/audit`
+el-walkthrough-answered|EXTERNAL-LEARNINGS.md|2026-04-16: ask-questions-if-underspecified|Answered 2026-11-12
+agents-audit-scripts|agents.md|File reference|`audit-checks.sh`'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
