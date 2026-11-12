@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phase 1 shipped; next Phase 2. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–2 shipped; next Phase 3. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -10,6 +10,7 @@ decisions by agent listed under Open Questions).
 | Phase | Outcome | Commit | Note |
 |---|---|---|---|
 | 1 | ✅ | `3d39dd1`, `07bd294` | Structural check (68 assertions) and its test (38 fixtures); 9 hand mutations all killed after 2 fixtures added |
+| 2 | ✅ | `c3660fd` | `walk-through.md` (67 lines) and its Guardrails reference; 3 anchors |
 
 ## Problem Statement
 
@@ -435,7 +436,7 @@ without the allowlist the pass fixture fails on day one.
   mutants.
 - A full test run takes about 40 seconds (38 fixtures, each a fresh copy).
 
-### Phase 2: Canonical walk-through file
+### Phase 2: Canonical walk-through file — ✅ SHIPPED (`c3660fd`)
 
 **Goal:** one decision-first walk-through procedure (D8) that every pass and execution reference.
 **Changes:**
@@ -455,6 +456,10 @@ without the allowlist the pass fixture fails on day one.
 **Done when:** the walk-through exists and is referenced; check passes.
 **Validation:** moderate; read `walk-through.md` cold against one walk-through this plan recorded (Pass2-W1 → D17)
 and confirm each step of the procedure appears in it. Live use comes from the execution decisions that follow.
+**Delivered (2026-11-12):** wired from the main file's § Guardrails (one bullet; main file 674 lines). Anchors
+`walkthrough-procedure`, `walkthrough-mapping`, `walkthrough-wired`; the mapping anchor first failed on a
+line-wrapped literal, so the mapping sentence sits on its own line. Cold read against the Pass2-W1 → D17 walk:
+every step present. The worked example is generic (a size-budget item).
 
 ### Phase 3: Pass 1 = plan + gap analysis
 
