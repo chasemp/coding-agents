@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9b shipped (Phase 4 dogfood review folded in); next Phase 10a (user checkpoint). Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9b shipped; Phase 10a built (`283a014`), waiting on the user's `/audit` run in a new session. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -20,8 +20,9 @@ decisions by agent listed under Open Questions).
 | 8a | ✅ | `e1dd358` | Frame, triggers, § Compatibility rule, D5 guardrail; 6 TRACKING blocks → `CHANGELOG.md`; main file 524; 174 assertions, 134 fixtures |
 | 8b | ✅ | `bf6760d` | Phase 0 template → `pass1.md` § Phase 0 template; main file **478** (D13 met); `CHK-SIZE`; 183 assertions, 141 fixtures |
 | 9a | ✅ | `5020a8f` | `execute.md` § Before starting (Pass 3 gate, re-measure), phase states, external-write tier, mutation exit; 195 assertions |
-| — | ✅ | `eb0d4f8` | Check speed-up (decision before 10a): about 1 s a run, test about 165 s |
 | 9b | ✅ | `a1a3e29` | `execute.md` late-change re-check, walk-through, append-only records, close-out as last phase with "which pass"; 203 assertions, about 155 fixtures |
+| — | ✅ | `eb0d4f8` | Check speed-up (decision before 10a): about 1 s a run, test about 165 s |
+| 10a | built `283a014`, validation pending | | `/audit` Check 6 OK/MISSING, Check 8 structure check; `.claude/commands/audit.md`; waiting on the user's `/audit` run |
 
 ## Problem Statement
 
@@ -799,6 +800,11 @@ check passes through `/audit`.
 processes), and grows with each anchor. Time it through `/audit` and record the time. If it is near a timeout,
 make the check cheaper first: strip comments once per file and resolve all references in one `awk` pass.
 **Validation:** narrow.
+
+**Delivered so far (2026-11-12):** Check 8 runs the check inline (`!`, about 1 s) and the fixture test as an
+instructed Bash step with `timeout: 600000`. Not in the spec: `allowed-tools` gains `Bash(grep:*)`, `Bash(echo:*)`
+and the two script commands, since the checks call them. The check caught an illustrative reference in the new
+Check 8 text, which was reworded. Fixture test 161 s, 156 passed.
 
 ### Phase 10b: Repo docs
 
