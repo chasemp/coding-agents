@@ -1,6 +1,7 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Pass 1 and Pass 2 done (D1–D20, no open questions). Pass 3 not yet run. No skill files changed yet.
+**Status:** Passes 1–3 done (D1–D20, no open questions; Pass 3 decisions by agent listed under Open Questions).
+Ready for execution at Phase 1. No skill files changed yet.
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
 
@@ -269,7 +270,7 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - `skills/ask-questions-if-underspecified.md` (lines 54, 186): describes phase-plan's walk-through as
   severity-based. Update to the decision-first format. Phase 6.
 - `skills/plan-doc-reasoning.md` (line 108): "three passes" stays true; re-read wording against the new pass
-  names. Phase 10.
+  names. Phase 10a.
 - `commands/audit.md` Check 1 (exemption names the per-pass files; `walk-through.md` and `CHANGELOG.md` now
   land in `skills/phase-plan/`) and Check 6 (its `grep -l 'TRACKING:'` covers `skills/phase-plan/*.md`, so once
   history moves to `CHANGELOG.md` the check stays green even if the main file loses its marker; name the main
@@ -325,27 +326,70 @@ Every phase follows the same verification loop: add the phase's assertions to th
 the skill text (GREEN), run `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` and the
 hook tests (`for t in hooks/test-*.sh; do bash "$t" || exit 1; done`; baseline VA-9), then commit (D20).
 
+Rules for every assertion a phase adds (Pass 3):
+- **Literals first.** Before editing text, the phase writes the exact strings it will require (headings,
+  sentences) into the check's anchor or absence table, runs the check, and records the RED ids in its commit
+  message. "Contains the gap-analysis step heading" is not an assertion until the heading text is named.
+- **Every assertion has a refusal fixture.** Anchors and absences get theirs generated from the check's own
+  tables (`--list-anchors`, `--list-absent`), so a phase that adds an entry gets its fixture for free. Other
+  assertions name their fixture in the phase.
+- **No expected-red.** The loop must be green at every commit. An assertion that only a later phase can satisfy
+  belongs to that later phase.
+- The real tree is the independent oracle: a typo in a table literal fails the pass fixture, so generating
+  refusal fixtures from the same table does not make them circular.
+
 ### Phase 1: Structural check for the skill
 
 **Goal:** a test-first harness for skill text, so each later phase has a RED → GREEN check.
 **Changes:**
-- [ ] `scripts/check-phase-plan.sh [ROOT]`: takes the tree root as an argument (default: repo root) so fixtures
-  run against a mutated copy. Each assertion prints a stable id on failure (`CHK-TABLE`, `CHK-REFS`,
-  `CHK-SECTION`, `CHK-MARKER`, `CHK-ANCHOR:<name>`, ...). Assertions at this phase:
-  - every file named in the main file's loading table exists, and the table has at least 5 parseable rows;
-  - every `` `<name>.md` § <Heading> `` reference in a live instruction file resolves to a heading in that file
-    (prefix match), and at least 10 references are extracted (a broken extractor fails, not passes);
-  - every `skills/phase-plan/*.md` path (brace forms expanded) in a live file exists;
+- [ ] `scripts/check-phase-plan.sh [ROOT]`: takes the tree root as an argument so fixtures run against a mutated
+  copy; the default is the script's own parent directory (`$(cd "$(dirname "$0")/.." && pwd)`), not `git`,
+  because fixture copies have no `.git`. Written for bash 3.2 and BSD tools (no associative arrays, `mapfile`,
+  `grep -P`, or suffix-less `sed -i`). Output: one line per failure, `FAIL <id>: <file>:<line> <detail>`, then
+  `check-phase-plan: <n> assertions, <m> failed`; exit 1 when m > 0. Ids and assertions at this phase:
+  - `CHK-TABLE`: the main file's loading table has at least 5 parseable rows, and every file a row names exists.
+    Cells are resolved by basename under `ROOT/skills/phase-plan/` (rows use both `skills/phase-plan/pass1.md`
+    and bare `pass1.md`). The Phase 4 base-directory line names the installed checkout, not ROOT, and is not
+    resolved.
+  - `CHK-PATH`: every `skills/phase-plan/<name>.md` path in a live file exists, brace forms expanded
+    (`pass{1,2,3}.md`). Glob and directory forms (`skills/phase-plan/*.md`, `skills/phase-plan/.`) are skipped.
+  - `CHK-SECTION`: every `` `<file>.md` § <words> `` reference in a live file resolves, and at least 10 are
+    extracted (22 today; Phases 4–5 remove two). The file is found by basename across the live scope; zero or
+    two or more matches fail. References run on into prose (`` `execute.md` § Step 4 for the consolidation
+    procedure ``, heading `### Step 4 — Consolidate locally`), so the rule is word-wise: drop markdown
+    punctuation and dashes from both, and the reference resolves when its leading words match a heading's
+    leading words for at least min(2, words in heading, words in reference).
+  - `CHK-SECTION-ALLOW`: an allowlist of illustrative references that are not meant to resolve, each with a
+    reason. Today it holds one: `external-learn.md` cites `skills/testing-anti-patterns.md` § Mock misuse twice
+    (lines 322 and 375) as an example of a specific overlap claim, and no such heading exists. A listed
+    reference that starts to resolve also fails, so the list can only shrink.
   - live scope: `skills/` (excluding `skills/phase-plan/CHANGELOG.md`), `commands/`, root agent `.md` files,
-    `CLAUDE.md`, `agents.md`, `README.md`; ledgers and `plans/` excluded because they hold history;
-  - `skills/phase-plan.md` itself contains `TRACKING: File split (2026-04-16)`;
-  - each VA-11 anchor present in its own section, outside `<!-- -->` comments;
+    `CLAUDE.md`, `agents.md`, `README.md`. Ledgers (`REFINEMENTS.md`, `EXTERNAL-LEARNINGS.md`), `plans/` and
+    `.claude/` are excluded because they hold history or symlinks.
+  - `CHK-MARKER`: `skills/phase-plan.md` itself contains `TRACKING: File split (2026-04-16)`.
+  - `CHK-ANCHOR:<name>`: each VA-11 anchor present in its own section (from its heading line to the next
+    heading of the same or higher level), outside `<!-- -->` comments. The table is printed by `--list-anchors`
+    as `name|file|section|literal`.
   - prints line counts against the VA-4 budgets (made a failing assertion in Phase 8b).
-- [ ] `scripts/test-check-phase-plan.sh`: builds each fixture in a `mktemp -d` copy, runs the check on it, and
-  passes only when the check exits non-zero **and** prints the expected id. Refusal fixtures: loading table
-  names a missing file; loading table with zero parseable rows; a referenced heading renamed (`## Output` in
-  `pass1.md`); reference extraction finds zero (pattern broken); split marker present only in `execute.md`; each
-  VA-11 anchor removed separately. Pass fixture: the current tree, exit 0.
+- [ ] `scripts/test-check-phase-plan.sh`: copies the live scope into a `mktemp -d` per fixture, mutates it, runs
+  the check, and passes a fixture only when the check exits non-zero **and** prints a line matching
+  `^FAIL <expected id>:` (exact id, so `CHK-ANCHOR:plan-file` does not match `CHK-ANCHOR:plan-file-x`). Prints
+  `PASS|FAIL <fixture> (expected <id>, got <ids>)` per fixture. Edits use fixed-string matching (`grep -vF`, awk
+  `index()`), because the literals hold `**`, `§` and backticks. Refusal fixtures:
+  - a loading-table cell renamed to a missing file → `CHK-TABLE`;
+  - the loading table's rows deleted → `CHK-TABLE`;
+  - the description's brace form changed to `pass{1,2,4}.md` → `CHK-PATH`;
+  - a line `` `execute.md` § No such heading `` appended to `pass3.md` → `CHK-SECTION` (injected rather than a
+    renamed heading, so it does not depend on references that later phases remove);
+  - every `§` stripped from the live scope → `CHK-SECTION` (fewer than 10 extracted);
+  - the allowlisted Mock misuse reference made to resolve (a `## Mock misuse` heading added) →
+    `CHK-SECTION-ALLOW`;
+  - the split marker removed from the main file only (`execute.md` keeps its own `TRACKING:` blocks) →
+    `CHK-MARKER`;
+  - per anchor from `--list-anchors`: every line holding the literal deleted → `CHK-ANCHOR:<name>`;
+  - one anchor left only inside a `<!-- -->` comment → `CHK-ANCHOR:<name>`;
+  - one anchor moved under a different heading → `CHK-ANCHOR:<name>`.
+  Pass fixture: the current tree, exit 0, zero `FAIL` lines, assertion count above zero.
 - [ ] `agents.md` § File reference: a `scripts/` row.
 **Call chain:** maintainer or agent → `scripts/test-check-phase-plan.sh` → `scripts/check-phase-plan.sh ROOT` →
 skill files.
@@ -354,10 +398,18 @@ failing first (the assertion written before the check exists).
 **Depends on:** D12.
 **Write-set:** `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`, `agents.md`.
 **Risks:** false greens from grading an empty or wrong set, or counting a crash as a refusal; the id match and
-the minimum counts cover these.
+the minimum counts cover these. Today's tree has one reference that does not resolve (the Mock misuse example);
+without the allowlist the pass fixture fails on day one.
 **Done when:** every refusal fixture is refused with its id and the current tree passes. Verified by
 `bash scripts/test-check-phase-plan.sh`.
-**Validation:** narrow; tests sufficient.
+**Validation:** moderate (the check is the logic every later phase relies on):
+- run the test once under `/bin/bash` (3.2) as well as the `PATH` bash (5.3);
+- **mutation exit step (D6), by hand, since no mutation tool covers bash.** Commit the green state first. Then,
+  one at a time: drop the comment stripping; drop the section scoping; loosen the § rule to one word; set the
+  minimum counts to 0; force exit 0; misspell one id. Each must turn at least one fixture red. Before each
+  restore, `git status --porcelain scripts/check-phase-plan.sh` must show only that mutation; restore with
+  `git checkout HEAD -- scripts/check-phase-plan.sh`, then re-run the full test. Record each survivor as
+  equivalent or a real gap (and close real gaps with a fixture) in the phase's execution note.
 
 ### Phase 2: Canonical walk-through file
 
@@ -365,9 +417,11 @@ the minimum counts cover these.
 **Changes:**
 - [ ] `skills/phase-plan/walk-through.md`: the procedure from D8, with one worked example item.
 - [ ] `walk-through.md` states the mapping: a BLOCKER finding that needs a user decision becomes a BLOCKING question.
-- [ ] Check assertions: the file exists; no live file contains `Confirm as [SEVERITY]`, `confirm the severity` or
-  `override to BLOCKING` (RED today: `pass1.md:192`, `pass3.md:76`; allowlist: the mapping line in
-  `walk-through.md`). This assertion stays RED until Phase 7 and is marked expected-red until then.
+- [ ] Check assertions: the file exists; it contains the mapping line. The severity-gate wording is asserted
+  absent file by file in the phase that rewrites each file (Phases 3, 5, 6, 7), not here: an assertion that
+  stays red until Phase 7 would block every commit from Phase 2 to 6 under the verification loop, and the
+  original patterns matched only `pass1.md:192` (`pass3.md:76` reads "confirmed the severity", the template
+  line 498 "confirms or overrides the severity").
 **Call chain:** pass file close-out → `walk-through.md`.
 **Wiring test:** check asserts `walk-through.md` is referenced by the main file's loading table or guardrails
 (made GREEN here by one reference line in the main file).
@@ -375,7 +429,8 @@ the minimum counts cover these.
 **Write-set:** `skills/phase-plan/walk-through.md`, `skills/phase-plan.md` (one reference line),
 `scripts/check-phase-plan.sh`.
 **Done when:** the walk-through exists and is referenced; check passes.
-**Validation:** moderate; dogfood the procedure on a fixed item set (this plan's Pass 2 findings) once.
+**Validation:** moderate; read `walk-through.md` cold against one walk-through this plan recorded (Pass2-W1 → D17)
+and confirm each step of the procedure appears in it. Live use comes from the execution decisions that follow.
 
 ### Phase 3: Pass 1 = plan + gap analysis
 
@@ -387,7 +442,9 @@ close-out (D9). Old `pass2.md` content folds in here.
   keeps a one-line pointer to `walk-through.md` so `pass3.md`'s existing reference still resolves until Phase 5;
   VA-11 anchors kept.
 - [ ] Check assertions: `pass1.md` contains the gap-analysis step heading, reverse search, sibling table,
-  neighbour check, probe rules, and the Next pass close-out.
+  neighbour check, probe rules, and the Next pass close-out (literals named first).
+- [ ] Check assertion (absence, `pass1.md`): no `Confirm as [SEVERITY]`, no `to confirm severity` (lines 178,
+  192 today).
 **Call chain:** "pass 1" / "let's plan" → main loading table → `pass1.md`.
 **Wiring test:** check asserts the loading table maps "pass 1" to `pass1.md` and that `pass1.md` has the
 required headings.
@@ -417,8 +474,11 @@ the D5 trigger for re-running it on late changes.
 **Depends on:** Phase 3.
 **Write-set:** `skills/phase-plan/pass2.md`, `skills/phase-plan.md` (loading table rows), `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
-**Validation:** moderate; dogfood: run the new Pass 2 on this plan with the brief naming absolute worktree paths;
-confirm the loaded file's H1 reads "Independent review" (Phase 11 records it).
+**Validation:** moderate; dogfood (D12): run the new Pass 2 on this plan by reading the worktree's
+`skills/phase-plan/pass2.md` by absolute path (the Skill tool still loads `main`'s files, VA-1), with the briefs
+naming absolute worktree paths. Record in Phase 4's execution note that the file read has the "Independent
+review" H1, that three Agent calls each set `model`, and the findings. Findings are handled as a late change (D5):
+walk-through, then a scoped re-check before Phase 5.
 
 ### Phase 5: Pass 3 = quality gates
 
@@ -433,6 +493,8 @@ checks (D10).
   and § Reminders kept (VA-11).
 - [ ] Check assertions: test-validity check present; "ready" requires the walk-through answers to be integrated;
   no live file contains `` `pass1.md` § Output ``; Next pass close-out present.
+- [ ] Check assertion (absence, `pass3.md`): no `confirmed the severity`, no `confirmed every open question's
+  severity`, no `Apply the confirmed severities` (lines 76, 187, 226 today).
 **Call chain:** "pass 3" / "quality gates" → loading table → `pass3.md`.
 **Wiring test:** check asserts `pass3.md` names `walk-through.md` (RED before this phase; the "pass 3" row is
 already true at base, so it cannot serve as the RED step).
@@ -448,9 +510,11 @@ already true at base, so it cannot serve as the RED step).
 - [ ] `skills/ask-questions-if-underspecified.md` lines 54-56 and 186-189: describe the decision-first walk-through.
 - [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
   decision and its options" bullet; net line count unchanged (D13).
-- [ ] Check assertion: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
-- [ ] Check assertion: no live file (Phase 1 scope) contains `severity-based walk-through` or
-  `uses a severity-based`.
+- [ ] Check assertion `CHK-LINES`: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
+  Fixture: one line appended.
+- [ ] Check assertion (absence, `skills/ask-questions-if-underspecified.md`): no `severity-based` (lines 56, 186,
+  189 today). Scoped to that file because `py-enforcer.md:645` uses "severity-based recommendations" for its own
+  reports, which is unrelated.
 **Depends on:** Phase 2.
 **Write-set:** `skills/ask-questions-if-underspecified.md`, `CLAUDE.md`, `scripts/check-phase-plan.sh`.
 **Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
@@ -467,7 +531,12 @@ hygiene.
 - [ ] `skills/phase-plan.md` § The Plan Doc, including § Open Questions (lines 491-498: severity stays a proposed
   tag; the "user confirms or overrides the severity" line replaced by the D8 walk-through).
 - [ ] Check assertions: required template headings present, including `## Problem Statement` and `## Reasoning`
-  (audit Check 7); Read-set not listed as required; the Phase 2 severity assertion turns GREEN.
+  (audit Check 7); the optional fields read `**Read-set (optional):**` and `**Shared-state contract
+  (optional for sequential phases):**`.
+- [ ] Check assertion (absence, `skills/phase-plan.md`): no `confirms or overrides the severity` (line 498 today).
+  Then the live-scope sweep: no live file contains `Confirm as [SEVERITY]`, `confirm the severity`, `confirmed
+  the severity` or `confirms or overrides the severity`. No allowlist: the `walk-through.md` mapping line uses
+  none of these strings.
 **Depends on:** Phase 5.
 **Write-set:** `skills/phase-plan.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
@@ -506,8 +575,9 @@ block kept, Concurrency Map 55 → ~13, optional-field text −29, Combined Pass
 - [ ] `skills/phase-plan/pass1.md`: receives the Phase 0 template under its Phase 0 drafting step.
 - [ ] Check assertion: `pass1.md` contains the Phase 0 template heading; the main file's pointer resolves (Phase 1
   section-reference check).
-- [ ] Check assertion: `skills/phase-plan.md` under 500 lines (failing, not printed); the Discovery Exemption
-  summary stays in the main file (load-bearing repetition, VA-11).
+- [ ] Check assertion `CHK-SIZE`: `skills/phase-plan.md` under 500 lines (failing, not printed); the Discovery
+  Exemption summary stays in the main file (load-bearing repetition, VA-11). Fixture: the main file padded to
+  exactly 500 lines is refused; the real tree must be at 499 or fewer.
 **Depends on:** Phase 8a.
 **Write-set:** `skills/phase-plan.md`, `skills/phase-plan/pass1.md`, `scripts/check-phase-plan.sh`.
 **Risks:** if the count is still ≥500 after the move, stop and walk the user through it rather than trimming
@@ -559,8 +629,12 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
 - [ ] `skills/plan-doc-reasoning.md` line 108 wording.
 **Depends on:** Phase 9b.
 **Write-set:** `commands/audit.md`, `skills/plan-doc-reasoning.md`, `.claude/commands/audit.md`.
-**Wiring test:** in a session opened in this worktree, `/audit` runs and prints the structure-check output;
-then, on a throwaway copy with the split marker removed, the new check reports the failure through `/audit`.
+**Wiring test (user checkpoint):** project commands are read at session start, so after Phase 10a's commit the
+user opens a new Claude Code session with this worktree as its working directory and types `/audit`; it prints
+the structure-check output. Refusal through the same session: remove the split marker from
+`skills/phase-plan.md` (uncommitted), re-run `/audit`, and see the new check report `CHK-MARKER` and Check 6 print
+MISSING. Restore only after `git status --porcelain skills/phase-plan.md` shows that one edit and nothing else:
+`git checkout HEAD -- skills/phase-plan.md`, then re-run the check.
 **Done when:** `/audit` shows no flags beyond the VA-9 baseline (and `phase-plan.md` 673 cleared); the structural
 check passes through `/audit`.
 **Validation:** narrow.
@@ -569,10 +643,12 @@ check passes through `/audit`.
 
 **Goal:** README and the external-learn ledger are current.
 **Changes:**
-- [ ] `README.md` § What's here: a `scripts/` row and one line declaring the gate (D18).
+- [ ] `README.md` § What's here: a `scripts/` row and one line declaring the gate (D18). The row lands here, not
+  in Phase 1 (which would be a fourth file there); one PR means `main` never sees the gap. Asserted as anchors
+  (`README.md` names `scripts/` and `/audit` in § What's here); `agents.md`'s Phase 1 row is asserted the same way.
 - [ ] `EXTERNAL-LEARNINGS.md` line 117: close the parked walk-through question with a pointer to D8.
 **Depends on:** Phase 10a.
-**Write-set:** `README.md`, `EXTERNAL-LEARNINGS.md`.
+**Write-set:** `README.md`, `EXTERNAL-LEARNINGS.md`, `scripts/check-phase-plan.sh`.
 **Done when:** structural check passes; README lists every top-level directory.
 **Validation:** narrow.
 
@@ -581,7 +657,8 @@ check passes through `/audit`.
 **Goal:** the plan closes in the v2 shape it introduces.
 **Changes:**
 - [ ] Open PR 1; after merge, update the main checkout.
-- [ ] **Observed check:** in a fresh session whose working directory is a repo outside coding-agents, run the
+- [ ] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
+  directory is a repo outside coding-agents, run the
   skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
   three Agent calls each with `model` set, one question per message, and D15 behaviour on a plan with old labels.
   Record the session date.
@@ -613,6 +690,17 @@ check passes through `/audit`.
   (BLOCKER / REVISE / CONFIRMED) sit next to the question tags (BLOCKING / PHASE-GATED / ADVISORY). Keep both,
   because they label different things (a reviewer's finding vs a decision the user owns); `walk-through.md` states
   the mapping: a BLOCKER finding that needs a user decision becomes a BLOCKING question.
+- **Decided by agent in Pass 3 (override if wanted):**
+  - *Severity wording asserted per file, not by one expected-red assertion.* Each phase that rewrites a file
+    asserts the old wording gone from that file; Phase 7 adds the live-scope sweep. Keeps every commit green.
+  - *An allowlist for illustrative § references* instead of editing `external-learn.md` (a file no phase
+    touches). It fails if a listed reference starts to resolve, so it cannot grow quietly.
+  - *Word-wise § matching* (at least two leading words) instead of exact headings, because references run on into
+    prose. Exact matching would refuse today's tree; one-word matching would let most renames pass.
+  - *README `scripts/` row stays in Phase 10b* (Phase 1 is at its 3-file limit); asserted, and never stale on
+    `main` because PR 1 carries both.
+  - *Two user checkpoints made explicit:* opening a session in the worktree for `/audit` (Phase 10a) and in
+    another repo for the observed check (Phase 11).
 
 ## Review Log
 
@@ -717,12 +805,65 @@ against the files before folding it in (all held); duplicates across lenses merg
 - TDD hooks cannot interfere (they classify only code under `src|lib|app|pkg|cmd|internal`).
 - The 4-file rule has one home (`pass1.md:129-133`); audit Check 1 and Check 2 already handle the new files.
 
+### Pass 3: Quality gates — 2026-11-12
+Run with the current `skills/phase-plan/pass3.md` plus D6 and D5, starting from Pass 2's additions (the Phase 1
+rewrite and the severity assertions). Spot-checks: `origin/main` still `8e6fc33` (`git ls-remote`); tree clean;
+hook tests PASS 34/34 and ALL PASS (VA-9 holds); every live § reference and severity sentence listed by grep and
+compared against the plan.
+**TDD ordering:**
+- Phase 2's severity assertion could not work: the verification loop must pass before each commit, so a
+  deliberately red assertion blocks Phases 2–6, and its patterns matched only `pass1.md:192` (`pass3.md:76`
+  says "confirmed the severity", template line 498 "confirms or overrides the severity"). Replaced by per-file
+  absence assertions in Phases 3, 5, 6 and 7 (each red at its phase start, using the strings found today) and a
+  live-scope sweep in Phase 7. Phase 6's pattern missed two of three `ask-questions` hits; now scoped to that
+  file (`py-enforcer.md` uses "severity-based" for something else).
+- New loop rules: literals named before text is edited, a refusal fixture for every assertion (generated for
+  anchors and absences), no expected-red.
+- Phase 7's "Read-set not listed as required" given literal field labels.
+**Phase 1 fixtures (refused by their own id?):**
+- `CHK-SECTION` was never defined and the path check had no id; ids now map one to one to assertions, with a
+  fixed output line and exact-id matching.
+- The § check as written would have refused today's tree twice over: references run on into prose (`§ Step 4 for
+  the …` vs `### Step 4 — Consolidate locally`), and `external-learn.md` cites a heading that does not exist
+  (§ Mock misuse, an illustrative example). Word-wise matching rule and a both-ways allowlist added.
+- The renamed-`## Output` fixture would stop being refused after Phase 5 removes the only references to it, and a
+  rename that kept the prefix would still pass; replaced by an injected broken reference.
+- No fixture exercised the comment-stripping or section-scoping claims; two added. Brace-form path fixture
+  added. Glob and directory path forms skipped; bare table cells resolved under `skills/phase-plan/`.
+- Default ROOT from the script's directory (fixture copies have no `.git`); bash 3.2 and BSD tools.
+- Phase 1 now ends with a hand-run mutation round on the check (D6), with the commit-first restore rule.
+**Observability:**
+- The check's output format is its observability: `FAIL <id>: <file>:<line> <detail>` plus a summary line; the
+  test prints expected and actual ids per fixture. No runtime logging applies (skill text and shell checks).
+**Debugging readiness:**
+- Each failure names its assertion id and location; one commit per phase with the RED ids in the message.
+- User checkpoints made explicit: Phase 10a (`/audit` in a session opened in the worktree, refusal shown, restore
+  after `git status --porcelain`) and Phase 11 (observed check in a session the user opens elsewhere).
+**Validation calibration:**
+- Phase 1 raised to moderate (every later phase relies on it). Phase 2 dogfood made concrete (cold read against
+  the recorded Pass2-W1 walk-through). Phase 4 dogfood reads the worktree's `pass2.md` by absolute path and
+  records the result in Phase 4, not Phase 11; its findings follow D5. Size and `CLAUDE.md` line assertions get
+  boundary fixtures (500 lines refused; one appended line refused).
+**Concurrency honesty:**
+- Map confirmed; sequential plan. Phase 10b now also writes the check (anchors), so every phase but 10a and 11
+  writes `scripts/check-phase-plan.sh`.
+**Discovery:**
+- No Phase 0; every assumption has firsthand evidence in Verified Assumptions.
+**Coherence:**
+- The plan still solves the stated problem; no scope added beyond test rigour. D1–D20 unchanged. Pass 3's own
+  engineering choices are listed under Open Questions as decided by agent.
+**Documentation impact:**
+- `plan-doc-reasoning.md` pointed at Phase 10a (was "Phase 10"). README's `scripts/` row stays in Phase 10b by
+  choice and is now asserted, as is `agents.md`'s Phase 1 row. Every other entry has its phase.
+**Confirmed ready:** yes. No open questions; five decided-by-agent items listed for override.
+
 ## Next pass
 
 Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in
 `~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (branch `phase-plan-v2`, base `origin/main` `8e6fc33`;
-re-check with `git ls-remote`). Run **Pass 3, quality gates**, with the current `skills/phase-plan/pass3.md`
-plus D6 (tests that can fail) and D5 (start by reviewing Pass 2's additions, which are large). Locked: D1–D20. Attack first: whether each Phase 1 fixture would really be refused by its id, and
-whether the Phase 2 severity assertion staying RED until Phase 7 is workable or needs moving. Deliverable: a
-"Pass 3: Quality gates" Review Log entry and in-place edits. Done when the entry is written and this section
-points at execution.
+re-check with `git ls-remote`). **Execute**, loading the current `skills/phase-plan/execute.md`, starting at
+Phase 1. Locked: D1–D20 and the Pass 3 decisions by agent. Follow § Phases' verification loop and its Pass 3
+rules (literals first, a fixture per assertion, no expected-red). Commit each phase locally (D20); push, PRs,
+merge and pull need the user's say-so. Risk targets: the § matching rule against today's 22 references, the
+Mock misuse allowlist entry, and the Phase 1 mutation round. Stop for the user at the Phase 10a and Phase 11
+checkpoints. Done when Phase 11 is closed.
