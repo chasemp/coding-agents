@@ -1,7 +1,7 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9b shipped; Phases 1–10a-ii shipped (user `/audit` checkpoint passed 2026-11-12); next Phase 10b. Passes 1–3 done (D1–D20, no open questions; Pass 3
-decisions by agent listed under Open Questions).
+**Status:** Phases 1–10c shipped on `phase-plan-v2` (PR 1). Awaiting merge, the observed check and PR 2
+(Phase 11). Passes 1–3 done; D1–D21 decided, no open questions (agent decisions listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
 
@@ -24,6 +24,8 @@ decisions by agent listed under Open Questions).
 | — | ✅ | `eb0d4f8` | Check speed-up (decision before 10a): about 1 s a run, test about 165 s |
 | 10a | ✅ | `283a014` | `/audit` Check 6 OK/MISSING, Check 8 structure check; `.claude/commands/audit.md`; waiting on the user's `/audit` run |
 | 10a-ii | ✅ | `33a705c`, `75533c0` | `scripts/audit-checks.sh` (12 checks moved verbatim), `scripts/test-audit-checks.sh` (14 pass); first `/audit` run had stopped at load |
+| 10b | ✅ | `2182598` | README `scripts/` row and gate line; `CHK-LINES` removed (`CLAUDE.md` 291) |
+| 10c | ✅ | `a21a0f8` | `EXTERNAL-LEARNINGS.md` parked question answered; `agents.md` row names `audit-checks.sh`; 208 assertions, 159 fixtures |
 
 ## Problem Statement
 
@@ -327,7 +329,7 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 ## Delivery shape
 
 - **PRs:** two. PR 1 carries all skill and repo changes (`phase-plan-v2` → `main`), opened at the end of
-  Phase 10b. PR 2 is records only (this plan, `REFINEMENTS.md`), opened after the observed check (D16).
+  Phase 10c. PR 2 is records only (this plan, `REFINEMENTS.md`), opened after the observed check (D16).
 - **Gates:** `/audit` (D18), which runs the structural check and its test, with no flags beyond VA-9; hook tests; user review and merge
   (no review bot in this repo).
 - **Going live:** after merge, update the main checkout, which the `~/.claude` symlinks read. Before the pull,
@@ -857,21 +859,35 @@ pass fixtures and reported the marker fixture as a setup error (its target alrea
 re-inserting the line (the destructive-git guard refused `git checkout HEAD --` on the dirty path, as designed);
 diff empty, 204 assertions, 0 failed.
 
-### Phase 10b: Repo docs
+### Phase 10b: Repo docs — ✅ SHIPPED (`2182598`)
 
 **Goal:** README and the external-learn ledger are current.
 **Changes:**
 - [ ] `README.md` § What's here: a `scripts/` row and one line declaring the gate (D18). The row lands here, not
   in Phase 1 (which would be a fourth file there); one PR means `main` never sees the gap. Asserted as anchors
   (`README.md` names `scripts/` and `/audit` in § What's here); `agents.md`'s Phase 1 row is asserted the same way.
-- [ ] `EXTERNAL-LEARNINGS.md` line 117: close the parked walk-through question with a pointer to D8.
 **Depends on:** Phase 10a.
-**Write-set:** `README.md`, `EXTERNAL-LEARNINGS.md`, `scripts/check-phase-plan.sh`.
+**Write-set:** `README.md`, `scripts/check-phase-plan.sh`.
 - [ ] `scripts/check-phase-plan.sh`: remove the `CHK-LINES` table line (its fixture is generated, so it goes
   too; `CLAUDE.md` still at 291 is confirmed first).
 - [ ] The README gate line says when to run `/audit`: before each PR, and after merge (agents.md Post-Merge).
 **Done when:** structural check passes; README § What's here has the `scripts/` row and the gate line.
 **Validation:** narrow.
+
+**Delivered (2026-11-12):** the gate line names all three scripts and the hook loop, and points at the
+Post-Merge sequence under `agents.md` § Recommended Sequences (the check caught a first draft citing a heading
+that does not exist). `EXTERNAL-LEARNINGS.md` and the `agents.md` row moved to Phase 10c, since the row needed
+updating for `audit-checks.sh` and would have been a fourth file here.
+
+### Phase 10c: Ledger and agents.md row — ✅ SHIPPED (`a21a0f8`)
+
+**Goal:** the external-learn ledger and the agents.md file reference are current. (Split from 10b, 2026-11-12.)
+**Changes:**
+- [x] `EXTERNAL-LEARNINGS.md` line 117: the parked walk-through question answered with a pointer to D8.
+- [x] `agents.md` § File reference: the `scripts/` row names `audit-checks.sh`.
+- [x] Anchors `el-walkthrough-answered`, `agents-audit-scripts` (RED first).
+**Write-set:** `EXTERNAL-LEARNINGS.md`, `agents.md`, `scripts/check-phase-plan.sh`.
+**Done when:** check and tests pass (208 assertions; 159 and 16 fixtures; hook tests).
 
 ### Phase 11: Close-out
 
@@ -1128,12 +1144,10 @@ the added text.
 ## Next pass
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
-(branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 10b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
-Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
-Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
-`scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
-text, then `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` plus the hook tests,
-commit (D20), record the phase. A test run takes about 2.5 minutes; run it in the background. Commit locally;
-push, PRs, merge and pull need the user's say-so. Stop for the user at the Phase 10a and Phase 11 checkpoints.
-Done when Phase 11 is closed.
+(branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Phase 11, close-out.**
+Phases 1-10c shipped (Outcome Summary). Each step needs the user's say-so: push and open PR 1; merge; the
+main-checkout pull with its checks (Delivery shape, Going live); the observed check in a session the user opens
+outside this repo; PR 2 (records only: this plan, `REFINEMENTS.md`); worktree removal after both land. Before
+the push, run the declared gate and name it (README: `/audit`; its Check 8 scripts plus the hook tests).
+Follow-ups to record at close: `CLAUDE.md` overage (291 vs 200); `/audit` Check 2's agent-name list omits
+`rust-enforcer` and its path filter lets `.claude/skills/...` through; the third agent on orange (Check 4).
