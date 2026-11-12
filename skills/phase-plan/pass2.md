@@ -73,7 +73,7 @@ Output: findings as a numbered list, most severe first, each with grade, evidenc
 
 ## Vetting
 
-The main session re-checks every BLOCKER and every new fact against the files before folding it in. A
+The main session re-checks every claim against the files before folding it in, starting with BLOCKERs. A
 reviewer's finding arrives in the same confident register whether or not it is right.
 
 - Merge duplicates across lenses; keep the strongest evidence.

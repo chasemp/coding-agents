@@ -221,7 +221,7 @@ A complete plan doc with the gap-analysis entry in its Review Log. If any questi
 gap-analysis step on any part an answer changed. Then write § Next pass handoff and close:
 
 > "Pass 1 complete. [Decisions recorded; decided-by-agent items for override.] Next: Pass 2 (independent
-> review) in a fresh session; the paste is in the plan's Next pass section.
+> review) in a fresh session, or Pass 3 for a quick plan; the paste is in the plan's Next pass section.
 >
 > **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
 
@@ -230,17 +230,20 @@ have to scroll back through session history to find where the plan lives.
 
 **If there are no open questions**, say so in the same close-out:
 
-> "Pass 1 complete. No open questions. Next: Pass 2 (independent review) in a fresh session.
+> "Pass 1 complete. No open questions. Next: Pass 2 (independent review) in a fresh session, or Pass 3 for a
+> quick plan.
 >
 > **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
 
 ## Next pass handoff
 
-Every pass, and an execution stopping before the end, ends by replacing the plan's last section, `## Next
-pass`, so the user's paste to resume is one line. It names: the plan path; the base commit and how to re-check
-it; branch and worktree; the pass file to load; locked decisions; open items; named risk targets for the next
-pass to attack first; and the next pass's deliverable and done-when. Pass 2 builds its reviewer briefs from
-the same facts.
+Every pass, and an execution stopping before the end, ends by replacing the plan's last section,
+`## Next pass`, so the user's paste to resume is one line. The paste
+starts with `/phase-plan <pass> <absolute plan path>`, so the fresh session loads the main file (base
+directory, compatibility rule, template) before the pass file. The section names: the plan path; the base
+commit and how to re-check it; branch and worktree; the pass file to load; locked decisions; open items; named
+risk targets for the next pass to attack first; and the next pass's deliverable and done-when. Pass 2 builds
+its reviewer briefs from the same facts.
 
 A compacted context is not fresh: if this session has been compacted, say so and hand off rather than running
 the next pass here.

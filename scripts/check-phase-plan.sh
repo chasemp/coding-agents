@@ -89,7 +89,9 @@ p2-model|skills/phase-plan/pass2.md|Running the reviewers|pass `model` explicitl
 p2-vetting|skills/phase-plan/pass2.md|Vetting|## Vetting
 p2-rerun|skills/phase-plan/pass2.md|When to re-run|## When to re-run
 p2-next-pass|skills/phase-plan/pass2.md|Output|`pass1.md` § Next pass handoff
-main-base-dir|skills/phase-plan.md|Loading the Per-Pass Files|`~/.claude/coding-agents/skills/phase-plan/`'
+main-base-dir|skills/phase-plan.md|Loading the Per-Pass Files|`~/.claude/coding-agents/skills/phase-plan/`
+p1-quick-close|skills/phase-plan/pass1.md|Output|Pass 3 for a quick plan
+p1-paste-loads-main|skills/phase-plan/pass1.md|Next pass handoff|starts with `/phase-plan <pass> <absolute plan path>`'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -97,7 +99,8 @@ ABSENT='p1-confirm-as|skills/phase-plan/pass1.md|Confirm as [SEVERITY]
 p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity
 p2-old-title|skills/phase-plan/pass2.md|Pass 2: Gap Analysis
 route-pass12-gone|skills/phase-plan.md|"pass 1+2" / "plan and review together"
-quick-skips-pass2|skills/phase-plan.md|`pass1.md`, `pass2.md`, and `pass3.md` together'
+quick-skips-pass2|skills/phase-plan.md|`pass1.md`, `pass2.md`, and `pass3.md` together
+p2-blocker-only|skills/phase-plan/pass2.md|every BLOCKER and every new fact'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
