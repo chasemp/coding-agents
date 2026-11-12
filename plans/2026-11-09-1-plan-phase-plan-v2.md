@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–4 shipped (Phase 4 dogfood review folded in); next Phase 5. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–5 shipped (Phase 4 dogfood review folded in); next Phase 6a. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -13,6 +13,7 @@ decisions by agent listed under Open Questions).
 | 2 | ✅ | `c3660fd` | `walk-through.md` (67 lines) and its Guardrails reference; 3 anchors |
 | 3 | ✅ | `23d0bc7` | `pass1.md` rewritten (257 lines) with the gap-analysis step; check gains CHK-ABSENT and CHK-TABLE-MAP (87 assertions, 57 fixtures) |
 | 4 | ✅ | `d06e0f8`, `9a576b8` | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
+| 5 | ✅ | `1c52532` | `pass3.md` rewritten (232 lines): tests that can fail, hedges, ready gate, walk-through; 133 assertions, 98 fixtures |
 
 ## Problem Statement
 
@@ -547,7 +548,7 @@ walk-through, then a scoped re-check before Phase 5.
   new fact (rollback text, `REFINEMENTS.md` lines, `pass1.md`/`pass2.md` lines, one check run 1.64 s, 0 hits
   for `confirm the severity`); all held. See the Review Log entry for what changed.
 
-### Phase 5: Pass 3 = quality gates
+### Phase 5: Pass 3 = quality gates — ✅ SHIPPED (`1c52532`)
 
 **Goal:** `pass3.md` keeps today's gates and adds test validity (D6), hedge resolution and the "ready" gate (D5),
 the bounded spot-check and deliverable anchor (from the review's Pass 3 drift finding), and slimmed concurrency
@@ -570,6 +571,12 @@ already true at base, so it cannot serve as the RED step).
 **Write-set:** `skills/phase-plan/pass3.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
+
+**Delivered (2026-11-12):** RED: 8 `p3-*` anchors and 6 absences (the severity flow, `**Apply fixes
+additively.**`, "take Pass 2's word", and `` `pass1.md` § Output `` across every live file), each watched failing.
+Main file unchanged at 675. Check 1b holds D6; the ready gate's sentence sits on its own line. Literals with an
+apostrophe need the shell's `'"'"'` escape in the check's tables (first attempt broke the table). The fixture test
+now takes 195 s (98 fixtures); Phase 10a's speed-up stays where it is.
 
 ### Phase 6a: `CLAUDE.md` walk-through default and the line-limit table
 
@@ -1014,7 +1021,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 5**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 6a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
