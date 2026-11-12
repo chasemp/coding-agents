@@ -2,7 +2,7 @@
 # Structural check for the phase-plan skill text.
 #
 # Usage: bash scripts/check-phase-plan.sh [ROOT]
-#        bash scripts/check-phase-plan.sh --list-anchors | --list-absent | --list-table-map
+#        bash scripts/check-phase-plan.sh --list-anchors | --list-absent | --list-table-map | --list-line-limits
 #
 # ROOT defaults to this script's parent directory (not git: the fixture
 # copies made by scripts/test-check-phase-plan.sh have no .git).
@@ -20,6 +20,7 @@
 #   CHK-ANCHOR:<name>  an applied change's literal is still in its own section
 #   CHK-ABSENT:<name>  a retired phrase is gone from its file (or every live file)
 #   CHK-TABLE-MAP:<name> some loading-table row holds both a trigger phrase and its file
+#   CHK-LINES          CLAUDE.md held at its line count at base 8e6fc33 (plan-scoped; removed at close)
 #
 # "Live" files: skills/ (except skills/phase-plan/CHANGELOG.md), commands/,
 # and the root .md files except the two ledgers. plans/ and .claude/ are
@@ -99,7 +100,8 @@ p3-previous-additions|skills/phase-plan/pass3.md|Steps|start from the previous p
 p3-deliverable|skills/phase-plan/pass3.md|Steps|**Deliverable anchor.**
 p3-ready|skills/phase-plan/pass3.md|Output|every walk-through answer is written into the plan and re-checked
 p3-walkthrough|skills/phase-plan/pass3.md|Output|`walk-through.md`
-p3-next-pass|skills/phase-plan/pass3.md|Output|`pass1.md` § Next pass handoff'
+p3-next-pass|skills/phase-plan/pass3.md|Output|`pass1.md` § Next pass handoff
+claude-md-walkthrough|CLAUDE.md|Explaining Design and Protocol Work|one per message for any list of decisions'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -131,6 +133,10 @@ route-final|"final review"|pass3.md
 route-execute|"let'"'"'s execute"|execute.md
 route-decisions|any list of decisions|walk-through.md'
 
+# Line limits, as id|file|max lines. CHK-LINES holds CLAUDE.md at net zero for
+# this plan only (D13); it is removed when no later phase edits CLAUDE.md.
+LINE_LIMITS='CHK-LINES|CLAUDE.md|291'
+
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.
 # A listed reference that starts to resolve, or disappears, fails: the list
@@ -141,6 +147,7 @@ case "${1:-}" in
   --list-anchors) printf '%s\n' "$ANCHORS"; exit 0 ;;
   --list-absent) printf '%s\n' "$ABSENT"; exit 0 ;;
   --list-table-map) printf '%s\n' "$TABLE_MAP"; exit 0 ;;
+  --list-line-limits) printf '%s\n' "$LINE_LIMITS"; exit 0 ;;
 esac
 
 ROOT="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
@@ -344,6 +351,16 @@ while IFS='|' read -r x_name x_file x_literal; do
   if [ -z "$x_hits" ]; then pass_; else fail_ "CHK-ABSENT:$x_name" "\"$x_literal\" still present at $x_hits"; fi
 done <<EOF
 $ABSENT
+EOF
+
+# --- line limits -------------------------------------------------------------
+
+while IFS='|' read -r l_id l_file l_max; do
+  [ -n "$l_id" ] || continue
+  n="$(wc -l < "$ROOT/$l_file" | tr -d ' ')"
+  if [ "$n" -le "$l_max" ]; then pass_; else fail_ "$l_id" "$l_file: $n lines, limit $l_max"; fi
+done <<EOF
+$LINE_LIMITS
 EOF
 
 # --- sizes (reported; made a failing assertion in a later phase) -------------

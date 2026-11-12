@@ -138,6 +138,11 @@ fx_marker()             { replace_all "$1/$MAIN" "TRACKING: File split (2026-04-
 fx_anchor_removed()     { delete_lines_with "$2/$1" "$ANCHOR_LITERAL"; }
 fx_absent_added()       { append_line "$2/$1" "$ABSENT_LITERAL"; }
 fx_route_removed()      { replace_on_table_rows "$1/$MAIN" "$ROUTE_PHRASE" '"no such trigger"'; }
+fx_pad_past_limit()     { # file max root
+  local f="$3/$1" n
+  n="$(wc -l < "$f" | tr -d ' ')"
+  while [ "$n" -le "$2" ]; do printf 'padding\n' >> "$f"; n=$((n + 1)); done
+}
 fx_anchor_in_comment()  { comment_out_lines_with "$1/$MAIN" "**reachability gate**"; }
 fx_anchor_moved()       {
   delete_lines_with "$1/skills/phase-plan/pass3.md" "**Plan file:**" &&
@@ -207,6 +212,14 @@ while IFS='|' read -r m_name m_phrase m_file; do
   expect_refused "table route removed: $m_name" "CHK-TABLE-MAP:$m_name" fx_route_removed
 done <<EOF
 $routes
+EOF
+
+limits="$("$BASH" "$CHECK" --list-line-limits)" || { echo "FAIL setup: --list-line-limits failed"; exit 1; }
+while IFS='|' read -r l_id l_file l_max; do
+  [ -n "$l_id" ] || continue
+  expect_refused "file padded past its limit: $l_file" "$l_id" fx_pad_past_limit "$l_file" "$l_max"
+done <<EOF
+$limits
 EOF
 
 echo "test-check-phase-plan: $passed passed, $failed failed ($n_anchors anchor fixtures)"
