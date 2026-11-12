@@ -893,7 +893,8 @@ updating for `audit-checks.sh` and would have been a fourth file here.
 
 **Goal:** the plan closes in the v2 shape it introduces.
 **Changes:**
-- [ ] Open PR 1; after merge, update the main checkout.
+- [x] Open PR 1: https://github.com/chasemp/coding-agents/pull/3 (2026-11-12, 46 commits, no reviewers requested).
+- [ ] After merge, update the main checkout (Delivery shape, Going live).
 - [ ] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
   directory is a repo outside coding-agents, run the
   skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
