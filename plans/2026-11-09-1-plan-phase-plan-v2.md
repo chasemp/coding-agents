@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9a shipped (Phase 4 dogfood review folded in); next Phase 9b. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9b shipped (Phase 4 dogfood review folded in); next Phase 10a (user checkpoint). Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -20,6 +20,7 @@ decisions by agent listed under Open Questions).
 | 8a | ✅ | `e1dd358` | Frame, triggers, § Compatibility rule, D5 guardrail; 6 TRACKING blocks → `CHANGELOG.md`; main file 524; 174 assertions, 134 fixtures |
 | 8b | ✅ | `bf6760d` | Phase 0 template → `pass1.md` § Phase 0 template; main file **478** (D13 met); `CHK-SIZE`; 183 assertions, 141 fixtures |
 | 9a | ✅ | `5020a8f` | `execute.md` § Before starting (Pass 3 gate, re-measure), phase states, external-write tier, mutation exit; 195 assertions |
+| 9b | ✅ | `a1a3e29` | `execute.md` late-change re-check, walk-through, append-only records, close-out as last phase with "which pass"; 203 assertions, about 155 fixtures |
 
 ## Problem Statement
 
@@ -744,7 +745,7 @@ external-write tier (D7), parallel protocol reached only when declared (D10).
 reminder, rather than inside it, so the reminder stays the short printable block. `execute.md` 731 lines. Literals
 that must sit on one line are broken onto their own lines in the bullets.
 
-### Phase 9b: Execution rules, change handling and close-out
+### Phase 9b: Execution rules, change handling and close-out — ✅ SHIPPED (`a1a3e29`)
 
 **Goal:** `execute.md` handling of change during execution and the close: late-change re-check (D5), walk-through
 for execution decisions (D8), close-out as a numbered final phase with "which pass should have caught this?" and
@@ -760,6 +761,13 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
 **Write-set:** `skills/phase-plan/execute.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
+
+**Delivered (2026-11-12):** D19 repo names checked by local grep (0 hits, 2026-11-12), not by a committed
+absence, which would publish them. The "compacted context is not fresh" rule landed in 9a's § Before starting.
+The close-out paragraph points at `` `phase-plan.md` § The Plan Doc `` as a checked reference.
+
+**Decision 2026-11-12 (before Phase 10a):** the check speed-up named in Phase 10a's risk lands as its own commit,
+touching only `scripts/check-phase-plan.sh`, because inside 10a it would be a fourth file.
 
 ### Phase 10a: Audit and plan-doc references
 
@@ -1057,7 +1065,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 9b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 10a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
