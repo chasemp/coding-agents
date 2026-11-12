@@ -402,7 +402,10 @@ After the phase completion checklist passes and you commit:
 2. **If the phase delivered something different from the Pass 3 spec**,
    append a short "Delivered:" note describing the difference and why
    it was chosen. Don't rewrite the original spec — append. The spec
-   is the contract; the delivered note is the reconciliation.
+   is the contract; the delivered note is the reconciliation. This is the
+   one exception to replacing superseded text (D5 scope):
+   planning text is replaced, execution records are appended
+   ("Delivered:" notes, skip records).
 3. **Add a one-line entry to the Outcome Summary** (at the top of the
    plan — create it if it doesn't exist) with the commit SHA and a
    one-sentence outcome. This is the at-a-glance view for future readers.
@@ -449,6 +452,12 @@ need to know this to understand the plan's outcomes? If yes, update.
 If it's purely operational (transient error, environment quirk, known
 flake), keep it in chat.
 
+**A late change gets a scoped re-check.** A change that adds design, a phase, scope or a pass's own fixes
+gets the gap-analysis step (`pass1.md` § Gap-analysis step) and Pass 3 on the changed part before the work it
+affects starts; Pass 2 as well when it adds a phase, an external-system interaction or a write path. A decision
+the user owns goes through `walk-through.md`: one item per message, the answer written into the plan before
+continuing.
+
 Typical mid-execution updates:
 - A follow-up the plan surfaced but won't address → add a bullet under
   the phase that surfaced it, point at `TODO.md` for tracking.
@@ -466,14 +475,15 @@ Typical mid-execution updates:
      across repos. Before each removal: porcelain --ignored shows nothing
      unexpected; the branch is landed, or for a squash merge its content
      is on the base; no --force. Never remove a worktree this plan did
-     not create. Triggered by a three-repo plan (cyclops, infosec-actions,
-     samp) that closed with four worktrees and five local branches still
+     not create. Triggered by a plan spanning three
+     repos that closed with four worktrees and five local branches still
      in place. Monitor whether agents remove worktrees before the
      close-out PR merges (the ordering trap), and whether the scope rule
      holds when other sessions' worktrees share the list. -->
 
 Closing a plan is not just "I wrote the last commit." It's a specific
-act:
+act, planned as the plan's last numbered phase (`phase-plan.md` § The Plan Doc) so it is scheduled rather
+than remembered:
 
 1. **Outcome Summary exists at the top** with one row per phase showing
    outcome (✅/⏭️/❌) + commit SHA + one-sentence note.
@@ -511,8 +521,12 @@ act:
                      smoke tests; assumptions that turned out wrong
                      mid-phase. Write "none noteworthy" if execution
                      went exactly as planned (rare — interrogate
-                     this before writing it).>
+                     this before writing it). For each, answer:
+                     which pass should have caught this?>
    ```
+
+   Probe results kept as fixtures go into the repo when captured (with the
+   path recorded in the plan), never only in a session scratchpad.
 
    Per-phase `✅ SHIPPED (sha)` markers are necessary but not
    sufficient. The close-out is the paragraph the next reader will

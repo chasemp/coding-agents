@@ -140,7 +140,13 @@ x-remeasure|skills/phase-plan/execute.md|Before starting|Re-measure gating figur
 x-phase-states|skills/phase-plan/execute.md|Phase completion checklist|built → merged → deployed → observed
 x-external-write|skills/phase-plan/execute.md|Phase completion checklist|external-write tier
 x-mutation-exit|skills/phase-plan/execute.md|Phase completion checklist|**Mutation testing**
-x-parallel-entry|skills/phase-plan/execute.md|Executing Parallel Phases|Only when the Concurrency Map declares a parallel set'
+x-parallel-entry|skills/phase-plan/execute.md|Executing Parallel Phases|Only when the Concurrency Map declares a parallel set
+x-late-change|skills/phase-plan/execute.md|When new findings surface mid-execution|**A late change gets a scoped re-check.**
+x-walkthrough-exec|skills/phase-plan/execute.md|When new findings surface mid-execution|`walk-through.md`
+x-append-only|skills/phase-plan/execute.md|When a phase ships|planning text is replaced, execution records are appended
+x-closeout-phase|skills/phase-plan/execute.md|When the plan closes|the plan'"'"'s last numbered phase
+x-which-pass|skills/phase-plan/execute.md|When the plan closes|which pass should have caught this?
+x-fixtures-repo|skills/phase-plan/execute.md|When the plan closes|Probe results kept as fixtures go into the repo'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
