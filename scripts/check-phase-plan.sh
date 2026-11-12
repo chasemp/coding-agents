@@ -2,7 +2,7 @@
 # Structural check for the phase-plan skill text.
 #
 # Usage: bash scripts/check-phase-plan.sh [ROOT]
-#        bash scripts/check-phase-plan.sh --list-anchors
+#        bash scripts/check-phase-plan.sh --list-anchors | --list-absent | --list-table-map
 #
 # ROOT defaults to this script's parent directory (not git: the fixture
 # copies made by scripts/test-check-phase-plan.sh have no .git).
@@ -18,6 +18,8 @@
 #   CHK-SECTION-ALLOW  allowlisted illustrative references still exist and still do not resolve
 #   CHK-MARKER         skills/phase-plan.md holds the split marker
 #   CHK-ANCHOR:<name>  an applied change's literal is still in its own section
+#   CHK-ABSENT:<name>  a retired phrase is gone from its file (or every live file)
+#   CHK-TABLE-MAP:<name> some loading-table row holds both a trigger phrase and its file
 #
 # "Live" files: skills/ (except skills/phase-plan/CHANGELOG.md), commands/,
 # and the root .md files except the two ledgers. plans/ and .claude/ are
@@ -64,7 +66,29 @@ worktree-removal|skills/phase-plan/execute.md|When the plan closes|**The plan'"'
 agents-scripts-row|agents.md|File reference|`scripts/`
 walkthrough-procedure|skills/phase-plan/walk-through.md|Procedure|## Procedure
 walkthrough-mapping|skills/phase-plan/walk-through.md|Review grades and question tags|a BLOCKER finding that needs a user decision becomes a BLOCKING question
-walkthrough-wired|skills/phase-plan.md|Guardrails|`skills/phase-plan/walk-through.md`'
+walkthrough-wired|skills/phase-plan.md|Guardrails|`skills/phase-plan/walk-through.md`
+p1-gap-heading|skills/phase-plan/pass1.md|Gap-analysis step|## Gap-analysis step
+p1-reverse-search|skills/phase-plan/pass1.md|Gap-analysis step|**Reverse search.**
+p1-value-domains|skills/phase-plan/pass1.md|Gap-analysis step|**Value domains, not existence.**
+p1-sibling-table|skills/phase-plan/pass1.md|Gap-analysis step|**Sibling comparison table**
+p1-neighbour-check|skills/phase-plan/pass1.md|Gap-analysis step|**Neighbour check.**
+p1-probe-heading|skills/phase-plan/pass1.md|Probe rules|## Probe rules
+p1-probe-readonly|skills/phase-plan/pass1.md|Probe rules|**Read-only by definition.**
+p1-not-observed-live|skills/phase-plan/pass1.md|Probe rules|not observed live
+p1-delivery-shape|skills/phase-plan/pass1.md|Steps|**Fill the Delivery shape section.**
+p1-size-rule|skills/phase-plan/pass1.md|Steps|3 files maximum; 4 or more must split
+p1-next-pass|skills/phase-plan/pass1.md|Next pass handoff|## Next pass handoff
+p1-compacted|skills/phase-plan/pass1.md|Next pass handoff|A compacted context is not fresh
+p1-walkthrough-ref|skills/phase-plan/pass1.md|Output|`walk-through.md`'
+
+# Retired phrases, as name|file|literal. File "*" means every live file.
+# Checked outside comments, so history in TRACKING blocks may still quote them.
+ABSENT='p1-confirm-as|skills/phase-plan/pass1.md|Confirm as [SEVERITY]
+p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity'
+
+# Loading-table routes, as name|trigger phrase|file basename: some row of the
+# main file's loading table holds both.
+TABLE_MAP='route-pass1|"pass 1"|pass1.md'
 
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.
@@ -72,10 +96,11 @@ walkthrough-wired|skills/phase-plan.md|Guardrails|`skills/phase-plan/walk-throug
 # can only shrink.
 SECTION_ALLOW='external-learn.md|testing-anti-patterns.md|mock misuse|example of a specific overlap claim, not a link'
 
-if [ "${1:-}" = "--list-anchors" ]; then
-  printf '%s\n' "$ANCHORS"
-  exit 0
-fi
+case "${1:-}" in
+  --list-anchors) printf '%s\n' "$ANCHORS"; exit 0 ;;
+  --list-absent) printf '%s\n' "$ABSENT"; exit 0 ;;
+  --list-table-map) printf '%s\n' "$TABLE_MAP"; exit 0 ;;
+esac
 
 ROOT="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 if [ ! -f "$ROOT/$MAIN" ]; then
@@ -134,6 +159,20 @@ while IFS='|' read -r ln cell; do
   if [ -f "$ROOT/skills/phase-plan/$base" ]; then pass_; else fail_ CHK-TABLE "$MAIN:$ln loading table names $cell, not found under skills/phase-plan/"; fi
 done <<EOF
 $table_cells
+EOF
+
+table_rows="$(strip_comments "$ROOT/$MAIN" | awk '
+  /^#+ / { insec = (index($0, "Loading the Per-Pass Files") > 0); next }
+  insec && /^\|/ { print }')"
+while IFS='|' read -r m_name m_phrase m_file; do
+  [ -n "$m_name" ] || continue
+  if printf '%s\n' "$table_rows" | awk -v a="$m_phrase" -v b="$m_file\`" 'index($0, a) && index($0, b) { found = 1 } END { exit found ? 0 : 1 }'; then
+    pass_
+  else
+    fail_ "CHK-TABLE-MAP:$m_name" "$MAIN: no loading-table row holds both $m_phrase and \`$m_file\`"
+  fi
+done <<EOF
+$TABLE_MAP
 EOF
 
 # --- CHK-PATH ----------------------------------------------------------------
@@ -248,6 +287,22 @@ while IFS='|' read -r a_name a_file a_section a_literal; do
   fi
 done <<EOF
 $ANCHORS
+EOF
+
+# --- CHK-ABSENT --------------------------------------------------------------
+
+while IFS='|' read -r x_name x_file x_literal; do
+  [ -n "$x_name" ] || continue
+  if [ "$x_file" = "*" ]; then x_files="$LIVE"; else x_files="$x_file"; fi
+  x_hits=""
+  for f in $x_files; do
+    [ -f "$ROOT/$f" ] || continue
+    h="$(strip_comments "$ROOT/$f" | awk -v lit="$x_literal" -v f="$f" 'index($0, lit) { printf "%s:%d ", f, NR }')"
+    x_hits="$x_hits$h"
+  done
+  if [ -z "$x_hits" ]; then pass_; else fail_ "CHK-ABSENT:$x_name" "\"$x_literal\" still present at $x_hits"; fi
+done <<EOF
+$ABSENT
 EOF
 
 # --- sizes (reported; made a failing assertion in a later phase) -------------

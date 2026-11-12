@@ -136,6 +136,8 @@ fx_section_allow_gone() { delete_lines_with "$1/external-learn.md" "§ Mock misu
 fx_section_allow()      { append_line "$1/skills/testing-anti-patterns.md" "## Mock misuse"; }
 fx_marker()             { replace_all "$1/$MAIN" "TRACKING: File split (2026-04-16)" "TRACKING: File gone"; }
 fx_anchor_removed()     { delete_lines_with "$2/$1" "$ANCHOR_LITERAL"; }
+fx_absent_added()       { append_line "$2/$1" "$ABSENT_LITERAL"; }
+fx_route_removed()      { replace_on_table_rows "$1/$MAIN" "$ROUTE_PHRASE" '"no such trigger"'; }
 fx_anchor_in_comment()  { comment_out_lines_with "$1/$MAIN" "**reachability gate**"; }
 fx_anchor_moved()       {
   delete_lines_with "$1/skills/phase-plan/pass3.md" "**Plan file:**" &&
@@ -186,6 +188,25 @@ while IFS='|' read -r a_name a_file a_section a_literal; do
   expect_refused "anchor removed: $a_name" "CHK-ANCHOR:$a_name" fx_anchor_removed "$a_file"
 done <<EOF
 $anchors
+EOF
+
+absent="$("$BASH" "$CHECK" --list-absent)" || { echo "FAIL setup: --list-absent failed"; exit 1; }
+while IFS='|' read -r x_name x_file x_literal; do
+  [ -n "$x_name" ] || continue
+  [ "$x_file" = "*" ] && x_file="skills/phase-plan/pass3.md"
+  ABSENT_LITERAL="$x_literal"
+  expect_refused "retired phrase added back: $x_name" "CHK-ABSENT:$x_name" fx_absent_added "$x_file"
+done <<EOF
+$absent
+EOF
+
+routes="$("$BASH" "$CHECK" --list-table-map)" || { echo "FAIL setup: --list-table-map failed"; exit 1; }
+while IFS='|' read -r m_name m_phrase m_file; do
+  [ -n "$m_name" ] || continue
+  ROUTE_PHRASE="$m_phrase"
+  expect_refused "table route removed: $m_name" "CHK-TABLE-MAP:$m_name" fx_route_removed
+done <<EOF
+$routes
 EOF
 
 echo "test-check-phase-plan: $passed passed, $failed failed ($n_anchors anchor fixtures)"
