@@ -131,6 +131,8 @@ fx_table_no_rows()      { delete_table_rows "$1/$MAIN"; }
 fx_path_brace()         { replace_all "$1/$MAIN" "pass{1,2,3}.md" "pass{1,2,4}.md"; }
 fx_section_injected()   { append_line "$1/skills/phase-plan/pass3.md" 'See `execute.md` § No such heading here.'; }
 fx_section_none()       { strip_all_section_signs "$1"; }
+fx_section_one_word()   { append_line "$1/skills/phase-plan/pass3.md" 'See `execute.md` § Step 9 does not exist.'; }
+fx_section_allow_gone() { delete_lines_with "$1/external-learn.md" "§ Mock misuse"; }
 fx_section_allow()      { append_line "$1/skills/testing-anti-patterns.md" "## Mock misuse"; }
 fx_marker()             { replace_all "$1/$MAIN" "TRACKING: File split (2026-04-16)" "TRACKING: File gone"; }
 fx_anchor_removed()     { delete_lines_with "$2/$1" "$ANCHOR_LITERAL"; }
@@ -165,7 +167,9 @@ expect_refused "table names a missing file" CHK-TABLE fx_table_missing_file
 expect_refused "table has no rows" CHK-TABLE fx_table_no_rows
 expect_refused "brace path names a missing file" CHK-PATH fx_path_brace
 expect_refused "section reference does not resolve" CHK-SECTION fx_section_injected
+expect_refused "reference matches only a heading's first word" CHK-SECTION fx_section_one_word
 expect_refused "no section references extracted" CHK-SECTION fx_section_none
+expect_refused "allowlisted reference no longer appears" CHK-SECTION-ALLOW fx_section_allow_gone
 expect_refused "allowlisted reference now resolves" CHK-SECTION-ALLOW fx_section_allow
 expect_refused "split marker gone from main file" CHK-MARKER fx_marker
 expect_refused "anchor only inside a comment" CHK-ANCHOR:reachability-gate fx_anchor_in_comment
