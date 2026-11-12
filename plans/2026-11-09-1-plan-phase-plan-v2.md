@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Phases 1–10c shipped on `phase-plan-v2` (PR 1). Awaiting merge, the observed check and PR 2
+**Status:** Phases 1–10c merged (#3, `91f384b`) and installed. Awaiting the observed check and PR 2
 (Phase 11). Passes 1–3 done; D1–D21 decided, no open questions (agent decisions listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -894,7 +894,10 @@ updating for `audit-checks.sh` and would have been a fourth file here.
 **Goal:** the plan closes in the v2 shape it introduces.
 **Changes:**
 - [x] Open PR 1: https://github.com/chasemp/coding-agents/pull/3 (2026-11-12, 46 commits, no reviewers requested).
-- [ ] After merge, update the main checkout (Delivery shape, Going live).
+- [x] Merged 2026-11-12 as `91f384b` (`land:` merge commit; `main` identical to the branch head `3b37894`).
+- [x] Main checkout pulled 2026-11-12 after the Going-live checks (clean, nothing unpushed, `pull.rebase=true`):
+  fast-forward `8e6fc33` → `91f384b`; installed `skills/phase-plan.md` 478 lines; check 208/0 and audit test 16/16
+  there.
 - [ ] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
   directory is a repo outside coding-agents, run the
   skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
