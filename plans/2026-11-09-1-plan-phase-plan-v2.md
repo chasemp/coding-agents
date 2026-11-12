@@ -890,9 +890,11 @@ compared against the plan.
 
 Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in
 `~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (branch `phase-plan-v2`, base `origin/main` `8e6fc33`;
-re-check with `git ls-remote`). **Execute**, loading the current `skills/phase-plan/execute.md`, starting at
-Phase 1. Locked: D1–D20 and the Pass 3 decisions by agent. Follow § Phases' verification loop and its Pass 3
-rules (literals first, a fixture per assertion, no expected-red). Commit each phase locally (D20); push, PRs,
-merge and pull need the user's say-so. Risk targets: the § matching rule against today's 22 references, the
-Mock misuse allowlist entry, and the Phase 1 mutation round. Stop for the user at the Phase 10a and Phase 11
-checkpoints. Done when Phase 11 is closed.
+re-check with `git ls-remote`). **Continue execution at Phase 3**, loading the current
+`skills/phase-plan/execute.md` (the worktree's own copy). Phases 1–2 shipped (Outcome Summary). Locked: D1–D20
+and the Pass 3 decisions by agent. Per phase: literals into the check's tables first (`ANCHORS` in
+`scripts/check-phase-plan.sh`; Phase 3 adds the absence table and `--list-absent`, with generated fixtures in
+`scripts/test-check-phase-plan.sh`), watch RED, edit text, then `bash scripts/test-check-phase-plan.sh &&
+bash scripts/check-phase-plan.sh` plus the hook tests, commit (D20), record the phase. A test run takes about 40
+seconds. Anchor literals must sit on one line. Commit locally; push, PRs, merge and pull need the user's say-so.
+Stop for the user at the Phase 10a and Phase 11 checkpoints. Done when Phase 11 is closed.
