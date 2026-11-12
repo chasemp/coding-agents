@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9b shipped; Phases 10a (`283a014`) and 10a-ii (`33a705c`) built; waiting on the user's `/audit` run in a new session. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9b shipped; Phases 1–10a-ii shipped (user `/audit` checkpoint passed 2026-11-12); next Phase 10b. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -22,8 +22,8 @@ decisions by agent listed under Open Questions).
 | 9a | ✅ | `5020a8f` | `execute.md` § Before starting (Pass 3 gate, re-measure), phase states, external-write tier, mutation exit; 195 assertions |
 | 9b | ✅ | `a1a3e29` | `execute.md` late-change re-check, walk-through, append-only records, close-out as last phase with "which pass"; 203 assertions, about 155 fixtures |
 | — | ✅ | `eb0d4f8` | Check speed-up (decision before 10a): about 1 s a run, test about 165 s |
-| 10a | built `283a014`, validation pending | | `/audit` Check 6 OK/MISSING, Check 8 structure check; `.claude/commands/audit.md`; waiting on the user's `/audit` run |
-| 10a-ii | built `33a705c`, validation pending | | `scripts/audit-checks.sh` (12 checks moved verbatim), `scripts/test-audit-checks.sh` (14 pass); first `/audit` run had stopped at load |
+| 10a | ✅ | `283a014` | `/audit` Check 6 OK/MISSING, Check 8 structure check; `.claude/commands/audit.md`; waiting on the user's `/audit` run |
+| 10a-ii | ✅ | `33a705c`, `75533c0` | `scripts/audit-checks.sh` (12 checks moved verbatim), `scripts/test-audit-checks.sh` (14 pass); first `/audit` run had stopped at load |
 
 ## Problem Statement
 
@@ -784,7 +784,7 @@ bash versions. M1 (no comment strip), M2 (no section scope) and M3 (one-word rul
 each killed. Phase 10a runs the test as an instructed Bash step with an explicit timeout (Lens A's fix), since
 165 s is over the Bash tool's 120 s default.
 
-### Phase 10a: Audit and plan-doc references
+### Phase 10a: Audit and plan-doc references — ✅ SHIPPED (`283a014`)
 
 **Goal:** `/audit` and `plan-doc-reasoning` match the new shape; `/audit` is runnable and is the gate (D18).
 **Changes:**
@@ -814,7 +814,7 @@ instructed Bash step with `timeout: 600000`. Not in the spec: `allowed-tools` ga
 and the two script commands, since the checks call them. The check caught an illustrative reference in the new
 Check 8 text, which was reworded. Fixture test 161 s, 156 passed.
 
-### Phase 10a-ii: `/audit` checks through a script (D21) — built (`33a705c`), validation pending
+### Phase 10a-ii: `/audit` checks through a script (D21) — ✅ SHIPPED (`33a705c`, `75533c0`)
 
 **Goal:** `/audit` loads and runs every check without a permission refusal, so Phase 10a's checkpoint can pass.
 **Changes:**
@@ -847,6 +847,15 @@ Checks 2, 3, 5, 6, 7 pass; Check 8: 204 assertions, 156 and 14 fixtures, all 0 f
 error in Check 2's agent-name line (escaped backticks in a backtick-delimited `!` line, also pre-existing);
 fixed in `75533c0` (`agent-names` subcommand; test refuses escaped backticks; 16 pass). Follow-up, not this plan:
 that grep's name list omits `rust-enforcer`.
+
+**Run 3 (after `75533c0`, new session):** all eight checks ran; Check 2 without a shell error; flags equal the
+VA-9 baseline minus `skills/phase-plan.md`. Check 2 also surfaced a consumer-project path
+(`.claude/skills/pr-review/SKILL.md` at `commands/generate-pr-review.md:273`) its filter should drop: pre-existing,
+follow-up. **Refusal through `/audit` (D18):** with the split-marker line deleted (uncommitted), Check 6 printed
+`MISSING: split marker in skills/phase-plan.md` and Check 8 `FAIL CHK-MARKER`; the fixture test failed the two
+pass fixtures and reported the marker fixture as a setup error (its target already gone). Restored by
+re-inserting the line (the destructive-git guard refused `git checkout HEAD --` on the dirty path, as designed);
+diff empty, 204 assertions, 0 failed.
 
 ### Phase 10b: Repo docs
 
@@ -1120,7 +1129,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 10a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 10b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
