@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–7 shipped (Phase 4 dogfood review folded in); next Phase 8a. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–8a shipped (Phase 4 dogfood review folded in); next Phase 8b. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -17,6 +17,7 @@ decisions by agent listed under Open Questions).
 | 6a | ✅ | `96781c5` | `CLAUDE.md` bullet folded (291 lines, net zero); `LINE_LIMITS` table with `CHK-LINES` |
 | 6b | ✅ | `0be79c4` | `ask-questions-if-underspecified.md` names the decision-first walk-through; 138 assertions, 102 fixtures |
 | 7 | ✅ | `fb3c764` | Template: Status, Delivery shape, one-line Concurrency Map, optional fields, close-out phase, Next pass; main file 628 lines; 153 assertions, 116 fixtures |
+| 8a | ✅ | `e1dd358` | Frame, triggers, § Compatibility rule, D5 guardrail; 6 TRACKING blocks → `CHANGELOG.md`; main file 524; 174 assertions, 134 fixtures |
 
 ## Problem Statement
 
@@ -651,7 +652,7 @@ the template (D10's "execution log in its own section"). The close-out line and 
 on their own line. Revised size estimate for Phase 8b: 628 − TRACKING 106 − Combined Pass 1+2 18 − Phase 0
 template 48 ≈ 456, so the fallback is unlikely to be needed.
 
-### Phase 8a: Main file, frame, triggers and history
+### Phase 8a: Main file, frame, triggers and history — ✅ SHIPPED (`e1dd358`)
 
 **Goal:** description and triggers (D11), "one plan, three passes" text (D2; loading table done in Phase 4), the
 in-flight compatibility rule (D15), usage patterns (quick plan skips Pass 2; Combined Pass 1+2 pattern removed),
@@ -684,6 +685,13 @@ moved to `skills/phase-plan/CHANGELOG.md`.
 "three-pass plan", "plan review") and the batch-approved trigger (VA-11).
 **Done when:** check passes.
 **Validation:** moderate; confirm the skill still lists and triggers after merge (Phase 11).
+
+**Delivered (2026-11-12):** main file 628 → 524. D19 name check (local list, not committed): 0 hits in
+`skills/phase-plan.md` and `skills/phase-plan/CHANGELOG.md`, 2026-11-12; the one project name in the moved
+2026-04-16 block was made generic. `CHANGELOG.md` holds the six moved blocks as headed sections (oldest first);
+the split block keeps a pointer line, and the frame names the file outside any comment, so `CHK-PATH` checks it.
+The changelog anchor's section is § Per-pass skill files (the subsection that lists the files). The commit
+message says 525; the count is 524.
 
 ### Phase 8b: Main file under 500 lines
 
@@ -1039,7 +1047,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 8a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 8b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
