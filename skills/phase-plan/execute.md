@@ -62,6 +62,21 @@ resume in the named follow-up phase.
 
 ---
 
+## Before starting
+
+- **Pass 3 gate.** Read the plan's Review Log and
+  refuse to start without a Pass 3 Review Log entry
+  (an old `Pass 3: Quality Gates` entry counts; see `phase-plan.md` § Compatibility rule). Say what is missing
+  and offer to run Pass 3.
+  A batch-approved plan
+  (`phase-plan.md` § A batch approved in conversation) is exempt: its short plan doc is the record.
+- **Re-measure gating figures** the phases depend on (counts, sizes, record states) and record them with the
+  date; a figure from planning day is a forecast. If one moved enough to change a phase, stop and walk it per
+  `walk-through.md`.
+- **Fresh context.** A compacted context is not fresh: say so and hand off (`pass1.md` § Next pass handoff).
+
+---
+
 ## The execution reminder (print in full at execution start)
 
 Print this once at the start of execution. At the start of each subsequent
@@ -132,6 +147,7 @@ execution guidance:
 
 ## Executing Parallel Phases
 
+Only when the Concurrency Map declares a parallel set; a sequential plan skips this section.
 If the Concurrency Map declares a parallel set (e.g., `{Phase 2A, Phase 2B}`),
 execution follows a different rhythm than sequential phases. **Read this
 whole section before dispatching** — skipping any step is how isolation
@@ -249,8 +265,8 @@ underneath it.
    Review Log and resolve before continuing. Run the full suite as well
    to catch any regression the merge introduced.
 
-**If the merges conflict:** That's a sign the Pass 2 disjointness check
-missed something. Resolve the conflict, record what overlapped in the
+**If the merges conflict:** That's a sign the gap-analysis step's write-set
+check missed something. Resolve the conflict, record what overlapped in the
 Review Log, and tighten the next plan's write-set declarations. A
 clean parallel set produces clean merges; conflicts mean the write-sets
 weren't actually disjoint.
@@ -305,6 +321,16 @@ Before moving from Phase N to Phase N+1, confirm:
       says "tests are sufficient," tests are sufficient. The validation
       strategy was calibrated during planning for a reason. Report what you
       validated and what you observed.
+- [ ] **Phase state recorded.** A scheduled job, deploy or live-data change moves
+      built → merged → deployed → observed
+      and gets ✅ only at observed, with the run id. Merged is not done.
+- [ ] **External writes followed the external-write tier:** a dry run showing exactly
+      what would be written, then a small supervised run with every write read
+      back, then the full run. Reruns are safe; rollback covers data already written.
+- [ ] **Mutation testing** (logic-heavy phases: rules, parsers, encoders, state
+      machines, search) is the exit step: commit the green state, mutate, triage
+      each survivor as equivalent or a real gap, and close real gaps. Run
+      `git status --porcelain <path>` before every restore.
 - [ ] Tests for Phase N's changes were written first and are passing
 - [ ] Existing tests still pass (regression check)
 - [ ] **Documentation updates scheduled for this phase are done.**

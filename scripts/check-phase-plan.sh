@@ -132,7 +132,15 @@ p1-phase0-heading|skills/phase-plan/pass1.md|Phase 0 template|## Phase 0 templat
 p1-phase0-disposition|skills/phase-plan/pass1.md|Phase 0 template|**Disposition:**
 p1-compat-ref|skills/phase-plan/pass1.md|Gap-analysis step|`phase-plan.md` § Compatibility rule
 main-phase0-pointer|skills/phase-plan.md|Phase 0: Discovery|`pass1.md` § Phase 0 template
-m-discovery-summary|skills/phase-plan.md|Discovery Exemption (summary)|## Discovery Exemption (summary)'
+m-discovery-summary|skills/phase-plan.md|Discovery Exemption (summary)|## Discovery Exemption (summary)
+x-start-heading|skills/phase-plan/execute.md|Before starting|## Before starting
+x-pass3-gate|skills/phase-plan/execute.md|Before starting|refuse to start without a Pass 3 Review Log entry
+x-batch-exempt|skills/phase-plan/execute.md|Before starting|A batch-approved plan
+x-remeasure|skills/phase-plan/execute.md|Before starting|Re-measure gating figures
+x-phase-states|skills/phase-plan/execute.md|Phase completion checklist|built → merged → deployed → observed
+x-external-write|skills/phase-plan/execute.md|Phase completion checklist|external-write tier
+x-mutation-exit|skills/phase-plan/execute.md|Phase completion checklist|**Mutation testing**
+x-parallel-entry|skills/phase-plan/execute.md|Executing Parallel Phases|Only when the Concurrency Map declares a parallel set'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -157,6 +165,7 @@ m-combined|skills/phase-plan.md|### Combined Pass 1+2
 m-load12|skills/phase-plan.md|Load pass1.md + pass2.md
 m-additive|skills/phase-plan.md|**Passes are additive, not destructive.**
 p1-compat-unchecked|skills/phase-plan/pass1.md|main file § compatibility rule
+x-pass2-disjoint|skills/phase-plan/execute.md|Pass 2 disjointness check
 m-build-on-base|skills/phase-plan.md|**Build on the base, don'"'"'t rebuild it.**'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
