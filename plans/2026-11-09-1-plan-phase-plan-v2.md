@@ -1,9 +1,15 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Passes 1–3 done (D1–D20, no open questions; Pass 3 decisions by agent listed under Open Questions).
-Ready for execution at Phase 1. No skill files changed yet.
+**Status:** Executing. Phase 1 shipped; next Phase 2. Passes 1–3 done (D1–D20, no open questions; Pass 3
+decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
+
+## Outcome Summary
+
+| Phase | Outcome | Commit | Note |
+|---|---|---|---|
+| 1 | ✅ | `3d39dd1`, `07bd294` | Structural check (68 assertions) and its test (38 fixtures); 9 hand mutations all killed after 2 fixtures added |
 
 ## Problem Statement
 
@@ -338,7 +344,7 @@ Rules for every assertion a phase adds (Pass 3):
 - The real tree is the independent oracle: a typo in a table literal fails the pass fixture, so generating
   refusal fixtures from the same table does not make them circular.
 
-### Phase 1: Structural check for the skill
+### Phase 1: Structural check for the skill — ✅ SHIPPED (`3d39dd1`, `07bd294`)
 
 **Goal:** a test-first harness for skill text, so each later phase has a RED → GREEN check.
 **Changes:**
@@ -410,6 +416,24 @@ without the allowlist the pass fixture fails on day one.
   restore, `git status --porcelain scripts/check-phase-plan.sh` must show only that mutation; restore with
   `git checkout HEAD -- scripts/check-phase-plan.sh`, then re-run the full test. Record each survivor as
   equivalent or a real gap (and close real gaps with a fixture) in the phase's execution note.
+
+**Delivered (2026-11-12):**
+- RED: an always-pass stub failed all 10 hand-written refusal fixtures; the real check then failed only
+  `CHK-ANCHOR:agents-scripts-row` until the `agents.md` row landed. Green under bash 5.3 and `/bin/bash` 3.2 (the
+  test runs the check with `"$BASH"`, so the check runs under the same shell as the test).
+- Differences from the spec: (a) references are read from live files only, but may *point at* the ledgers too.
+  The first run found two in `external-learn.md` (`REFINEMENTS.md` § Entry format, `EXTERNAL-LEARNINGS.md` §
+  Entry format) that the Pass 3 grep missed because of a double space; 24 references extracted, not 22. (b) An
+  anchor's section runs to the next heading of *any* level, not "same or higher" (stricter; every anchor fits).
+  Headings are lines starting `#` at column 0 outside comments, so the template's headings count as headings.
+  (c) 25 anchors: the 24 VA-11 literals plus the new `agents.md` `scripts/` row. (d) The `--list-absent` table
+  comes with the first absence assertion (Phase 3), not as an empty mechanism now.
+- Mutation round: M1 no comment stripping, M2 no section scoping, M4a/M4b minimum counts 0, M5 exit 0, M6 id
+  typo, M7 table file check always passes: each killed. Two real gaps survived and were closed with fixtures
+  (`07bd294`): M3 one-word match rule (fixture: a reference matching only a heading's first word) and M8 stale
+  allowlist entry ignored (fixture: the allowlisted reference removed). Re-run: both killed. No equivalent
+  mutants.
+- A full test run takes about 40 seconds (38 fixtures, each a fresh copy).
 
 ### Phase 2: Canonical walk-through file
 
