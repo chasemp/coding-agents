@@ -3,13 +3,15 @@ name: phase-plan
 description: >
   Three-pass planning workflow for complex changes. Pass 1 develops the plan
   with full reasoning persisted to the plan doc — including Phase 0 discovery
-  when unknowns exist. Pass 2 reviews for gaps, missing changes, and downstream
-  effects. Pass 3 applies quality gates (TDD ordering, diagnostic logging,
-  debugging readiness, validation calibration). Each pass uses a fresh context
-  with the plan doc as the sole handoff artifact. Per-pass details live in
-  skills/phase-plan/pass{1,2,3}.md and skills/phase-plan/execute.md — this
-  main file is the entry point and canonical source for the plan doc
-  template and cross-cutting guardrails. Trigger when the user says
+  when unknowns exist — then runs an explicit, outward-looking gap analysis.
+  Pass 2 is an independent review: three subagents, one per lens, try to
+  refute the plan. Pass 3 applies quality gates (TDD ordering, tests that can
+  fail, debugging readiness, validation calibration). Each pass uses a fresh
+  context with the plan doc as the sole handoff artifact. Per-pass details live
+  in skills/phase-plan/pass{1,2,3}.md, skills/phase-plan/execute.md and
+  skills/phase-plan/walk-through.md — this main file is the entry point and
+  canonical source for the plan doc template and cross-cutting guardrails.
+  Trigger when the user says
   "phase plan", "three-pass plan", "plan review", or when starting
   non-trivial changes that benefit from structured reasoning before execution.
   ALSO trigger when a batch of work approved in CONVERSATION — a "yes, do all
@@ -17,91 +19,12 @@ description: >
   published lexicon, stored format, public API), or span several files: persist
   the proposal to plans/ BEFORE executing, even if the plan is short. The
   session-level accumulation is what crosses the threshold, not any single turn,
-  so this fires on the batch even when each increment felt small.
+  so this fires on the batch even when each increment felt small. ALSO
+  trigger before bulk writes to an external system (many records created,
+  updated or closed), even when no code changes.
 ---
 
 # Phase Plan
-
-<!-- TRACKING: Wiring gap issue (2026-04-07)
-     Recurring problem: phases build isolated components with passing unit tests
-     but fail to wire them into the entry point. All tests green, feature doesn't
-     work. Added: Wiring test field, entry-point verification requirements,
-     Isolation Trap anti-pattern section (now in phase-plan/execute.md). Monitor
-     whether these changes actually prevent the failure mode in practice. If it
-     recurs, the next step is a programmatic hook that checks for entry-point
-     test coverage at phase boundary. -->
-
-<!-- TRACKING: Discovery + Validation additions (2026-04-10)
-     Two additions: (1) Phase 0 Discovery for validating assumptions before
-     committing to implementation — triggered when unknowns exist. (2) Per-phase
-     Validation field calibrated to scope — tests are the floor, not the ceiling.
-     Also added: Combined Pass 1+2 usage pattern, Phase 0 execution rules,
-     validation calibration as Pass 3 quality gate. Monitor whether Phase 0
-     catches assumption errors that would have caused mid-execution rework,
-     and whether validation strategies are actually calibrated vs defaulting
-     to "tests are sufficient" for everything. -->
-
-<!-- TRACKING: Discovery exemption + plans dir + walk-through (2026-04-16)
-     Three additions: (1) Promoted the Phase 0 "no TDD" rule to a named
-     Discovery Exemption with explicit scope, bounded to discovery work only.
-     Added per-task Disposition field (throwaway / keep-as-fixture / promote)
-     to resolve the hybrid case where spike code becomes production code.
-     Context: observed in clauditor golden-dataset-eval plan where the D1
-     spike produced disposable code alongside reflexive TDD tests — the
-     skill's "no TDD in Phase 0" signal was too weak to override the TDD
-     instinct. (2) Prescribed plans/ as the default location for plan docs,
-     with directory auto-creation; fall back to existing project convention
-     (e.g., docs/) if one is established. (3) Made one-at-a-time walk-through
-     the default for confirming open-question severities at the end of each
-     pass (previously a bulk listing). Brief listing first, then each
-     question presented individually with a confirm/override prompt. User
-     can opt out with "accept all as recommended" — default changed because
-     bulk listings let the user skim past questions that deserve a real
-     decision. Monitor: (a) whether the Discovery Exemption neutralizes the
-     TDD-instinct override during Phase 0 execution, or whether spikes
-     continue to accumulate tests by reflex; (b) whether the walk-through
-     surfaces severity overrides that would have been missed by the bulk
-     listing, or whether users reflexively opt out. If the exemption isn't
-     holding, escalate to a programmatic check. -->
-
-<!-- TRACKING: Plan filename convention (2026-04-16)
-     Changed the default plan doc filename from `plans/<kebab-name>.md` to
-     `plans/YYYY-MM-DD-N-plan-<slug>.md`. Rationale: chronological sort by
-     name (dates ascending, ordinals ascending within a day), an
-     unambiguous "plan" marker so files read as plans out of context, and
-     collision-free naming when multiple plans land on the same day. The
-     ordinal is always present (not just on collisions) so sort order
-     stays stable retroactively when a second plan lands that day.
-     Triggered by a rename pass over an existing `plans/` tree where
-     ~50 files had mixed conventions (`plan-X.md`, `X-plan.md`, no
-     marker) and no temporal ordering — the new convention solves both.
-     Monitor: (a) whether agents remember the ordinal on day-1 plans
-     (likely failure mode: they drop it when there's no collision yet),
-     (b) whether the convention survives contact with projects that
-     already have a plan directory with a different scheme, (c) whether
-     days ever exceed 9 plans and force the zero-padding fallback. If
-     the ordinal rule is forgotten, escalate to a Write-tool guard that
-     validates the filename pattern before creating the file. -->
-
-<!-- TRACKING: Documentation Impact + One-plan clarification (2026-04-17)
-     Two related additions. (1) Added a Documentation Impact required
-     section to the plan doc template plus a Pass 1 inventory step and
-     Pass 3 coverage check. Context: recent multi-session work on this
-     repo (new skills, new agent, two ledgers) required doc updates to
-     README.md, agents.md, and cross-references in multiple files — and
-     those updates happened reactively when audit or the user caught
-     drift, not proactively in phase items. User flagged: "docs are
-     getting crusty." Mirrors the wiring-test fix — work belongs in the
-     phase that triggers its need, not a later cleanup phase that gets
-     skipped. (2) Added "One plan, three passes" clarification section
-     plus banners on each per-pass skill file. Context: an agent using
-     the skill tried to create per-pass plan files (plans/foo-pass1.md
-     style) because the skill dir has pass1.md/pass2.md/pass3.md and
-     the relationship wasn't explicit. Monitor: (a) whether plans
-     actually populate Documentation Impact with real content vs
-     rubber-stamping "no impact," and (b) whether the clarification
-     holds up — if agents still try to create per-pass plan files,
-     escalate to a Write-tool guard that rejects them. -->
 
 <!-- TRACKING: File split (2026-04-16)
      Split the skill into a slim main file (this) plus per-pass files in
@@ -116,33 +39,8 @@ description: >
      summary) are intentionally repeated across files; redundancy is
      load-bearing here because forgetting these is the primary failure mode.
      Monitor whether the split actually reduces cognitive load or creates
-     navigation friction. -->
-
-<!-- TRACKING: Concurrency planning + isolation invariants (2026-05-04)
-     Added: per-phase Read-set / Write-set / Shared-state contract /
-     Re-entry verification fields, top-level Concurrency Map section,
-     Pass 1 derivation step, Pass 2 disjointness check, Pass 3 isolation-
-     honesty check, execute.md parallel dispatch protocol with pre/post
-     snapshot of shared state and an Isolation Trampling anti-pattern.
-     Triggered by two failure modes observed in practice: (a) plans
-     default to sequential phases even when work is embarrassingly
-     parallel — no mechanism currently surfaces parallelizable subgraphs,
-     so concurrency is left on the table; (b) "trampling" incidents where
-     a supposedly worktree-isolated agent leaked state into the main repo
-     (e.g., a `git checkout` in the wrong worktree moved HEAD on the
-     parent), because the only declared isolation surface was the file
-     system. Files-only write-sets miss this — git HEAD, env vars,
-     working directory, ports, daemons, and other ambient state must be
-     declared explicitly, and re-entry verification must check them.
-     Monitor: (a) whether plans actually populate write-sets and shared-
-     state contracts vs leaving them empty or hand-waving "no shared
-     state"; (b) whether re-entry verification catches isolation leaks
-     proactively, or only after they cause confusion downstream; (c)
-     whether parallel dispatch shows up in execute.md runs at all, or
-     whether the sequential default holds even when the Concurrency Map
-     declares parallelism is safe. If write-sets are reflexively left
-     empty, escalate to a programmatic check that refuses to advance
-     past Pass 2 without them. -->
+     navigation friction. The other TRACKING history moved to
+     skills/phase-plan/CHANGELOG.md (2026-11-12). -->
 
 Three-pass planning for complex changes. Each pass uses a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
@@ -151,15 +49,14 @@ all reasoning, not just the steps.
 **Why three passes instead of one:** Complex changes have emergent properties.
 Missing dependencies, ordering issues, and downstream effects are hard to see
 while you're still building the plan. Fresh eyes on a complete plan catch what
-the planning mind missed.
+the planning mind missed, and a reviewer who did not write the plan catches
+more than a re-run of the author's own checklist.
 
-**Passes are additive, not destructive.** Pass 1 builds the base. Passes 2 and
-3 *extend* it — adding missing items, inserting steps into existing phases,
-strengthening reasoning. They do not reorganize, rewrite, or shuffle what Pass 1
-produced unless something is concretely wrong. The goal is to build on a stable
-foundation, not re-deal the cards each pass. If a phase needs a new step, add
-it. If reasoning has a gap, fill the gap — don't rewrite the surrounding
-paragraphs. Wholesale restructuring requires explicit user approval.
+**Later passes extend the structure and replace superseded text.** Pass 1
+builds the base; later passes add missing items, insert steps into existing
+phases and strengthen reasoning. Where a later decision makes earlier planning
+text wrong, replace that text in place so the plan reads as current; the
+history lives in the Review Log. Restructuring phases needs the user's approval.
 
 ---
 
@@ -169,11 +66,12 @@ paragraphs. Wholesale restructuring requires explicit user approval.
 `plans/2026-04-17-1-plan-foo.md`. All three passes refine that same file
 at different depths and along different dimensions:
 
-- **Pass 1** builds the base: problem, reasoning, phases, open questions.
-- **Pass 2** extends the base with gap analysis: missing dependencies,
-  cross-phase issues, factual checks against the codebase.
-- **Pass 3** layers quality gates on top: TDD ordering, observability,
-  validation calibration, documentation impact coverage.
+- **Pass 1** builds the base (problem, reasoning, phases, open questions),
+  then runs the gap-analysis step: an outward sweep for what the plan missed.
+- **Pass 2** is an independent review: three subagents, one per lens, try to
+  refute the plan, and the main session re-checks every claim.
+- **Pass 3** layers quality gates on top: TDD ordering, tests that can fail,
+  observability, validation calibration, documentation impact coverage.
 
 Each pass is a pass *over* the same document, not the production of a
 separate document. The passes differ in **what they look for**, not
@@ -182,13 +80,26 @@ separate document. The passes differ in **what they look for**, not
 ### Per-pass skill files are instructions, not plan templates
 
 The files in `skills/phase-plan/` (`pass1.md`, `pass2.md`, `pass3.md`,
-`execute.md`) are this skill's own instruction content — they tell
+`execute.md`, `walk-through.md`) are this skill's own instruction content — they tell
 Claude what to do in each pass. They are **not** templates for plan
-output and they do **not** correspond to per-pass plan artifacts.
+output and they do **not** correspond to per-pass plan artifacts. The
+skill's change history is in
+`skills/phase-plan/CHANGELOG.md`.
 
 If you find yourself creating `plans/foo-pass1.md`, `plans/foo-pass2.md`,
 `plans/foo-pass3.md`, or any other per-pass plan files, stop. You
 should be editing the single plan file.
+
+## Compatibility rule
+
+Before any pass, read the plan's Review Log. If it has no gap-analysis entry,
+run `pass1.md` § Gap-analysis step first. A `Pass 1: Gap-analysis step` entry,
+or any entry labelled `Pass 2…`, `Pass 1+2…` or `Pass 1 + Pass 2…`
+other than `Pass 2: Independent review`, counts as gap analysis (plans begun
+under the older pass order). An old `Pass 3: Quality Gates` entry satisfies
+execution's start gate; an execution already started continues under its
+existing structure. A session that was open when the skill changed is ended
+and a new one started; re-invoking would leave both loading tables in context.
 
 ---
 
@@ -197,18 +108,19 @@ should be editing the single plan file.
 This main file is the entry point. Detailed procedures for each pass live
 in sibling files. Load the relevant file(s) when the user invokes a pass:
 
+Read them from the installed checkout, `~/.claude/coding-agents/skills/phase-plan/`, not from a path
+relative to the current repo.
+
 | User says | Read |
 |-----------|------|
 | "pass 1" / "let's plan" | `skills/phase-plan/pass1.md` |
-| "pass 2" / "gap analysis" / "review the plan" | `skills/phase-plan/pass2.md` |
-| "pass 1+2" / "plan and review together" | `pass1.md` + `pass2.md` |
+| "gap analysis" (plan exists: start at its § Gap-analysis step) | `skills/phase-plan/pass1.md` |
+| "pass 2" / "independent review" / "review the plan" / "plan review" | `skills/phase-plan/pass2.md` |
 | "pass 3" / "quality gates" / "final review" | `skills/phase-plan/pass3.md` |
 | "let's execute" / "start execution" | `skills/phase-plan/execute.md` |
+| any list of decisions, in any pass | `skills/phase-plan/walk-through.md` |
 
-When the user is running the Combined Pass 1+2 pattern, both files can be
-loaded in the same context — the gap analysis benefits from the Pass 1
-exploration still being fresh. Pass 3 always uses a fresh context for
-clean eyes on the final plan.
+Pass 1 drafts the plan and runs its gap-analysis step in one context. Pass 2 and Pass 3 each start fresh.
 
 ---
 
@@ -260,6 +172,7 @@ handoff artifact between context windows.
 
 ```markdown
 # [Title]
+**Status:** one line of current state (pass done, phase shipped, next step).
 
 ## Problem Statement
 What we're solving and why. Include issue references, symptoms, constraints.
@@ -271,9 +184,10 @@ future readers (including future-us) should be able to reconstruct the
 decision process from this section alone.
 
 ## Verified Assumptions
-What we confirmed about libraries, APIs, CLI tools, and existing code —
-and how we confirmed it (docs link, source file:line, probe output).
-Anything not listed here is unverified.
+What we confirmed about libraries, APIs, CLI tools, data and existing code —
+and how (docs link, source file:line, probe command + full count + date;
+samples flagged as samples). Failure behaviour not seen is marked
+"not observed live" and carried as a risk. Anything not listed is unverified.
 
 ## Documentation Impact
 Every doc file that will be added, renamed, moved, removed, or
@@ -300,111 +214,26 @@ If the plan adds, renames, or removes a file, this section cannot be
 empty. At minimum, record "grepped — no references found" with the
 search terms used.
 
+## Delivery shape
+PR count (default one per plan), merge order, the repo's gates, manual deploy
+steps, calendar dependencies, where unattended jobs run, rollback. Filled in
+Pass 1 from saved preferences. Production and ops state lives here.
+
 ## Concurrency Map
-Which phases run sequentially vs in parallel, and on what isolation guarantees.
-The section is **required** so the question is forced — not so every plan
-declares parallelism. Default to sequential; parallel is opt-in.
-
-**Scope of parallelism:** A parallel set is a *local execution* detail
-inside a single feature branch. Parallel agents work in worktrees and
-on per-agent branches, but their output is merged back into the feature
-branch **locally** via `git merge` — not via PRs. PRs are reserved for
-the feature-branch → main hand-off, on user request. Worktrees and
-subagents are not a sub-PR factory; they are how concurrent work happens
-underneath one branch of delivery. See `execute.md` § Step 4 for the
-consolidation procedure.
-
-For each set of phases that can run in parallel, declare three things:
-- **Disjoint write-sets:** The phases write to non-overlapping files/modules.
-  Compare the per-phase **Write-set** entries below — any overlap means the
-  phases cannot run in parallel.
-- **Disjoint shared-state contracts:** Neither phase mutates ambient state
-  the other observes. This goes beyond files: git HEAD/branch, working
-  directory, env vars, ports, daemons, lock files, databases, external
-  services. A files-only check is not enough; isolation leaks through
-  ambient state are the most common parallel-execution failure mode.
-- **Re-entry verification:** What the orchestrator checks when each parallel
-  phase returns to confirm isolation actually held. Examples: "main repo
-  HEAD = <pre-dispatch sha>", "`git status` clean in main worktree",
-  "no orphan `claude-*` processes", "lock file removed".
-
-**Format:**
-```
-Sequential spine: Phase 0 → Phase 1 → [Phase 2A || Phase 2B] → Phase 3
-
-Parallel set {2A, 2B}:
-- Disjoint write-sets: 2A writes src/foo.py + tests/test_foo.py;
-                       2B writes src/bar.py + tests/test_bar.py.
-- Shared-state contract: Both run in isolated git worktrees off
-  the parent branch. Neither invokes `git checkout` / `git stash` /
-  `git rebase` in the parent worktree. Both use disjoint tmp paths
-  and bind no ports.
-- Re-entry verification: Confirm parent-repo HEAD unchanged from
-  pre-dispatch SHA. Confirm `git worktree list` shows only the
-  expected worktrees. Confirm no spawned subprocess outlived the
-  agent.
-```
-
-If everything is sequential, write `All phases sequential.` and a one-line
-reason (e.g., "each phase reads what the prior wrote"). The empty Concurrency
-Map is what we're trying to prevent — silence here means parallelism was
-never considered.
-
-**Hard rule:** If two phases share *any* write-set entry or *any*
-shared-state mutation, they must be sequential. No exceptions inferred from
-"it'll probably be fine."
+One line by default: `All phases sequential: <reason>`. Ask once whether any
+phases could run in parallel. Only for a declared parallel set, write the
+block: disjoint write-sets, a shared-state contract written as invariants
+(git HEAD, working directory, env, ports, daemons, lock files, external
+services), and re-entry checks mapping one to one to it. Parallel work merges
+back into the feature branch locally (`execute.md` § Step 4), never as PRs.
+**Hard rule:** any shared write-set entry or shared-state mutation means
+sequential.
 
 ## Phases
 Ordered phases of work. Each phase should leave the system in a working state.
 
 ### Phase 0: Discovery (optional)
-Include this phase when the plan has significant unknowns — unverified API
-behavior, unfamiliar codebase areas, novel technology, BLOCKING open questions,
-or assumptions that could invalidate multiple later phases if wrong. Phase 0
-is cheap insurance: a few hours of probes can save days of rework.
-
-**When to include Phase 0:**
-- Any BLOCKING open question that can be resolved by running code, reading
-  docs, or making a probe request
-- Dependencies on libraries/APIs/tools whose behavior you haven't verified
-  firsthand
-- Unfamiliar areas of the codebase where you're planning based on inference
-  rather than reading
-- Novel integrations where the happy path isn't certain
-
-**When to skip Phase 0:**
-- All assumptions are verified in the Verified Assumptions section
-- The codebase and tools are well-known to the team
-- The change is a straightforward application of an established pattern
-
-**Goal:** Resolve unknowns. Validate assumptions. Eliminate dead ends before
-committing to a multi-phase implementation.
-**Discovery tasks:** Each task declares a question, a probe, success criteria,
-and a disposition for any code the probe produces. Format:
-- [ ] **D1: [Question being answered]**
-  - **Probe:** Specific investigation — "Run `tool --flag` and confirm output
-    contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
-    "POST to `/api/v2/foo` with payload Z and record the response shape"
-  - **Success criteria:** What answer resolves the question (a concrete
-    value, shape, or observed behavior — not "it seems to work")
-  - **Disposition:** What happens to code written during the probe. One of:
-    - `throwaway` — delete or archive the spike after findings are recorded
-    - `keep-as-fixture` — the spike's output becomes test data or reference
-      material; consumers get TDD, the fixture itself does not
-    - `promote` — the spike code will become production code in a named
-      follow-up phase; TDD applies to the promoted code in that phase,
-      not to the spike
-**Outputs fed back into the plan:**
-- Verified Assumptions updated with findings and evidence
-- Open Questions resolved (or escalated with what was learned)
-- Phases adjusted if discovery invalidates an assumption — document what
-  changed and why in the Review Log
-**Done when:** All BLOCKING open questions are resolved and the Verified
-Assumptions section reflects firsthand evidence, not inference.
-
-**Key property of Phase 0:** It is the only phase that is allowed to change
-the structure of later phases. If a probe reveals that an assumption was wrong,
-update the plan before proceeding — do not defer the adjustment to execution.
+Only when unknowns exist; template in `pass1.md` § Phase 0 template.
 
 ### Phase N: [Name]
 **Goal:** What this phase achieves.
@@ -424,39 +253,17 @@ If a phase only has unit tests for its components, the wiring is not
 tested and will be skipped. **This is the single most important field
 for preventing dead code.**
 **Depends on:** Prior phases or external factors.
-**Read-set:** Files/modules this phase reads. Name files, not directories.
-Used by Pass 2 to detect cross-phase coupling and by the Concurrency Map
-to confirm parallelism is safe.
-**Write-set:** Files/modules this phase writes (creates, edits, or deletes).
-Used to derive the Concurrency Map. **If two phases share any entry here,
-they cannot run in parallel.** Be explicit — "src/" is not a write-set;
-`src/engine.py` and `src/config.py` are.
-**Shared-state contract:** Mutable state outside the file write-set that
-this phase touches or depends on. The Concurrency Map cannot be honest
-without this. Examples to consider:
-- **Git:** branches read/written, whether the phase invokes `git checkout`,
-  `git stash`, `git rebase`, or `git worktree` operations that can leak
-  HEAD across worktrees
-- **Process:** long-running daemons started/stopped, ports bound, signals
-  sent
-- **Filesystem:** working-directory changes, tmp paths, lock files
-- **Environment:** env vars set or read, secrets accessed
-- **External:** databases, API quotas, message queues, shared caches
-If the phase asserts isolation (runs in a worktree, uses tmp_path, runs
-in a container), name the invariants that prove the isolation holds —
-not just the mechanism. "Runs in worktree" is a mechanism; "Does not
-invoke `git checkout` in the parent worktree, binds no ports, writes
-only under `$TMPDIR/<phase-id>/`" is an invariant. Mechanisms can be
-violated; invariants are checkable.
-For sequential phases on a small change, this can be brief — "no shared
-mutable state beyond the file write-set" is acceptable when true. The
-field is required so the question is asked, not so every entry is long.
-**Re-entry verification:** (Required for any phase listed in a parallel
-set in the Concurrency Map.) The orchestrator's checklist after this
-phase returns, mapping one-to-one to the shared-state contract. Each
-item is a concrete check: "main-repo HEAD == <pre-dispatch sha>",
-"`lsof -i :8080` shows nothing", "no row added to `audit_log` outside
-the phase's own tmp database". For sequential phases, omit this field.
+**Read-set (optional):** Files this phase reads, when coupling matters.
+**Write-set:** Every file this phase creates, edits or deletes, traced from
+the gap-analysis reverse search: tests, fixtures and docs count. Name files,
+not directories. Three files maximum; an atomic unit counts as one.
+**Shared-state contract (optional for sequential phases):**
+Mutable state outside the write-set (git HEAD and branches, processes and
+ports, working directory and tmp paths, env and secrets, external systems),
+written as invariants ("does not invoke `git checkout` in the parent
+worktree"), not mechanisms ("runs in a worktree").
+**Re-entry verification:** (Only for a phase in a parallel set.) One concrete
+check per contract item: "main-repo HEAD == <pre-dispatch sha>".
 **Risks:** What could go wrong, what to watch for.
 **Done when:** Two tiers, both required:
 1. **Behavioral:** What the user or system can observably do after this
@@ -484,21 +291,33 @@ reviewer agree on what "verified" means. Examples by scope:
   + verify integration with external systems. Check logs, confirm data
   flow, verify error paths. If the change touches a deployment or config,
   verify it in an environment that resembles production.
-The validation strategy should match the risk. A phase that changes a
-format string needs less validation than a phase that rewires the
-authentication flow.
+- **External write:** dry run showing exactly what would be written, then a
+  small supervised live run with every write read back, then the full run.
+  Phase states: built → merged → deployed → observed; ✅ only at observed.
+The validation strategy should match the risk.
+
+### Phase N+1: Close-out (always the last numbered phase)
+Outcome Summary, Status, deferred work, worktree removal, and Discoveries,
+each answering:
+"which pass should have caught this?"
 
 ## Open Questions
-Unresolved items that need input. Each must include the agent's recommended
-severity and a brief rationale, but the user makes the final call:
-- **BLOCKING** (recommended) — must be resolved before execution starts
-- **PHASE-GATED** (recommended) — must be resolved before a specific phase (name it)
-- **ADVISORY** (recommended) — nice to know, can be resolved during execution
-Format: `- [RECOMMENDED: severity] Question text. *Rationale for recommendation.*`
-The user confirms or overrides the severity before the plan advances.
+Each with a proposed tag and a one-line rationale: **BLOCKING** (before
+execution), **PHASE-GATED** (before a named phase), **ADVISORY**. The user
+decides, through `walk-through.md`; answers move into the plan as decisions.
+Agent-decided items are listed as `Decided by agent: X, because Y`.
 
 ## Review Log
-Record of each review pass — what was found, what was changed.
+One entry per pass, oldest first, with fixed names (`Pass 1: Gap-analysis
+step`, `Pass 2: Independent review`, `Pass 3: Quality Gates`).
+
+## Execution Log
+Phase records and decisions made during execution (kept apart from reviews).
+
+## Next pass
+Rewritten at the end of every pass: the one-line paste, plan path, base
+commit, branch/worktree, pass file, locked decisions, open items, risk
+targets, the next deliverable and done-when (`pass1.md` § Next pass handoff).
 ```
 
 The user may already have a plan doc in a different format. Adapt to their
@@ -513,37 +332,20 @@ reasoning and review history are persisted, not the exact heading names.
 
 ```
 User: "Let's plan [feature/fix]. Here's the issue: ..."
-→ Load pass1.md. Pass 1 produces plan doc (may include Phase 0)
+→ Load pass1.md. Pass 1 produces plan doc (may include Phase 0), then runs its gap-analysis step
 User: [clears context] "Here's our plan doc. Run pass 2."
-→ Load pass2.md. Pass 2 fills gaps
+→ Load pass2.md. Three reviewers try to refute it; findings re-checked and folded in
 User: [clears context] "Here's our plan doc. Run pass 3."
 → Load pass3.md. Pass 3 applies quality gates
 User: [clears context] "Here's our plan doc. Let's execute."
 → Load execute.md. Execute Phase 0 first (if present), then phases 1-N
 ```
 
-### Combined Pass 1+2, then Pass 3 (recommended for moderate changes)
-
-Run Pass 1 and Pass 2 in the same context window, then clear context before
-Pass 3. This works well when the plan is moderate in scope and the gap
-analysis benefits from still having the original exploration context fresh.
-The user can say "pass 1+2" or "plan and review together". Pass 3 still
-gets a fresh context — the quality gate review benefits from clean eyes.
-
-```
-User: "Let's plan [feature/fix]. Here's the issue: ..."
-→ Load pass1.md + pass2.md. Pass 1 produces plan doc, Pass 2 reviews in same context
-User: [clears context] "Here's our plan doc. Run pass 3."
-→ Load pass3.md. Pass 3 applies quality gates with fresh eyes
-User: [clears context] "Here's our plan doc. Let's execute."
-→ Load execute.md. Execution follows the plan phase by phase
-```
-
 ### Abbreviated (for simple changes)
 
 Combine all three passes into a single context if the change is small and
 well-understood. The user can say "plan and finalize" or "quick plan". Load
-`pass1.md`, `pass2.md`, and `pass3.md` together.
+`pass1.md` and `pass3.md` together; a quick plan skips the independent review.
 
 ### A batch approved in conversation
 
@@ -556,7 +358,7 @@ to be reconstructed from a dozen commit messages.
 **Write the plan doc first when an approved batch would create files, change a
 data contract, or span several files** — even a short one. A single paragraph of
 Problem Statement / Approach / Reasoning is enough; the point is that it exists
-and is one artifact.
+and is one artifact. Walk-through answers that add work count toward this trigger.
 
 *Why this trigger exists (two strikes, four months apart):* 2026-04-17, an
 18-commit session built a new agent, three skills, three commands and two
@@ -585,9 +387,10 @@ materially, the user should review before committing to implementation.
 
 ### Resuming after execution starts
 
-If execution reveals something the plan missed, return to the plan doc. Add
-a Review Log entry documenting what was found, update the remaining phases,
-and continue. The plan doc is a living document during execution.
+If execution reveals something the plan missed, return to the plan doc: run
+the gap-analysis step and Pass 3 on the changed part (and Pass 2 when the
+change adds a phase, an external-system interaction or a write path), log it,
+update the remaining phases, and continue.
 
 ---
 
@@ -614,12 +417,14 @@ each task must honor its declared Disposition.
 phases. Phase 0 discovery operates under the Discovery Exemption — read
 `execute.md` § Discovery Exemption before executing Phase 0.
 
+- **Every list of decisions uses `skills/phase-plan/walk-through.md`**: one item per message, decision first.
 - **Never skip reasoning.** A plan without reasoning is a todo list. The
   reasoning is what makes the plan re-entrant across context windows.
-- **Build on the base, don't rebuild it.** Passes 2 and 3 extend Pass 1.
-  If you find yourself rewriting more than you're adding, stop and ask
-  whether the base plan is fundamentally wrong — if it is, say so explicitly
-  and get user approval before restructuring. Otherwise, insert and augment.
+- **Extend the structure; replace superseded planning text.** Text a later
+  decision made wrong is replaced in place, with the change in the Review Log;
+  execution records stay append-only ("Delivered:" notes, skip records). If you
+  are rewriting more than adding, stop and ask whether the base plan is wrong;
+  restructuring needs the user's approval.
 - **Never add to the plan without adding to the Review Log.** Every change
   after Pass 1 must be traceable.
 - **Do not execute during planning passes.** Passes 1-3 are analysis only.

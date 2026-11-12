@@ -10,11 +10,12 @@
 > gates on top of that same file. Do not create `plans/foo-pass3.md`
 > or any other per-pass plan file.
 
-**Goal:** Ensure the plan is ready for execution — TDD-first, observable,
-debuggable, and coherent.
+**Goal:** Ensure the plan is ready for execution — TDD-first, observable, debuggable, coherent, and tested by
+tests that can fail. Pass 3 runs last among the planning passes so it also gates the independent review's
+fixes, which nothing else reviews.
 
-**Trigger:** User returns with the plan doc and asks for quality gate review,
-or says "pass 3" / "final review".
+**Trigger:** User returns with the plan doc and asks for quality gate review, or says "pass 3" / "quality
+gates" / "final review". Its Review Log entry is what execution checks for before starting.
 
 ## Checks
 
@@ -54,6 +55,20 @@ or says "pass 3" / "final review".
   on branching code, and ask the planner to name the boundary cases
   before the phase ships.
 
+**1b. Tests that can fail**
+- Each named test says what it shows if the feature is missing or wrong. A test that would pass against a stub
+  proves nothing.
+- Fakes refuse what the real service refuses (bad input, missing permission, rate limit), as probed or
+  documented. A fake that accepts everything hides the failure path.
+- Fixtures match real states that were probed, with timestamps relative to now rather than fixed dates that age
+  into a different branch.
+- The expected value comes from somewhere independent of the code being changed, not from running it.
+- Where identity matters, compare sets, not counts.
+- Tests target states the system can actually reach.
+- Read-only validation commands named in the plan are dry-run now, during the pass.
+- Logic-heavy phases (rules, parsers, encoders, state machines, search) end with a mutation-testing step
+  before the phase is called done.
+
 **2. Diagnostic logging and observability**
 - For changes that affect runtime behavior: is appropriate logging planned?
 - Can someone debugging a failure after deployment trace the issue using
@@ -71,11 +86,12 @@ or says "pass 3" / "final review".
   the reasoning section needs strengthening.
 - Does the plan still solve the original problem stated at the top?
 - Has scope crept beyond what was originally needed?
-- Are all open questions tagged with a recommended severity and rationale?
-  Untagged open questions are not acceptable.
-- Has the user confirmed the severity of every open question? If any
-  question's severity was set by the agent but never reviewed by the user,
-  flag it — the user must see and confirm before execution starts.
+- Every open question has a proposed tag and rationale, and every question the user owns has been walked per
+  `walk-through.md` with the answer written into the plan.
+- **Hedges.** Every "consider", "grep to confirm", "may need" or "TBD" is run now or becomes an open question.
+  A hedge left in a ready plan is a decision nobody made.
+- Is superseded text gone? Where a later decision replaced an earlier one, the plan reads as current, with the
+  history only in the Review Log.
 
 **5. Validation calibration**
 - Does every phase declare a validation strategy?
@@ -83,6 +99,12 @@ or says "pass 3" / "final review".
   external integration should not have "tests are sufficient" as its
   validation. A phase that renames an internal variable should not require
   manual end-to-end verification.
+- A phase that writes to an external system uses the external-write tier: a dry run showing exactly what would
+  be written, then a small supervised live run with every write read back, then the schedule or full run. Reruns
+  are safe; rollback covers data already written; bulk writes state batch size, rate, and the automation they
+  trigger.
+- Scheduled jobs, deploys and live-data changes are done only when observed (built → merged → deployed →
+  observed, with a run id), not when merged.
 - If Phase 0 exists: are the discovery tasks concrete and answerable? Does
   each task have a clear question and a clear way to answer it? Are the
   outputs wired to the Verified Assumptions and Open Questions sections?
@@ -95,30 +117,13 @@ or says "pass 3" / "final review".
   instead of deferred to execution? If so, resolve it now.
 
 **5b. Concurrency honesty**
-- Does the Concurrency Map exist and account for every phase, even if
-  the answer is "All phases sequential"? An empty or missing
-  Concurrency Map is a plan defect.
-- For every parallel set, are write-sets *actually* disjoint? Open the
-  per-phase Write-set entries and confirm — don't take Pass 2's word for
-  it after Pass 3's other adjustments may have moved files between phases.
-- For every parallel set, is the Shared-state contract written as
-  **invariants** (checkable statements about what the phase will and will
-  not do) rather than **mechanisms** (what wrapper or sandbox is used)?
-  "Runs in a worktree" is a mechanism; "does not invoke `git checkout`,
-  `git stash`, or `git rebase` in the parent worktree" is an invariant.
-  Replace mechanism-only contracts with invariants. This is the single
-  most important concurrency check — files-only isolation has a long
-  history of leaking through ambient state.
-- For every parallel set, is the Re-entry verification field populated
-  with concrete checks that map one-to-one to the Shared-state contract?
-  "Verify isolation held" is not concrete; "main-repo HEAD == <pre-
-  dispatch SHA>, `lsof -i :8080` empty, `git worktree list` shows only
-  expected worktrees" is. If the contract names five invariants, the
-  re-entry verification names five corresponding checks.
-- Could parallelism be added that the plan currently misses? Sequential
-  is the default but Pass 3 is the last chance to surface
-  embarrassingly-parallel work that's still bunched up. Flag candidates
-  to the user — don't unilaterally restructure.
+- The Concurrency Map line exists with its reason, even when it is "All phases sequential". A missing line is a
+  plan defect.
+- For a declared parallel set only: write-sets *actually* disjoint (open the per-phase entries; Pass 3's own
+  adjustments may have moved files); the Shared-state contract written as invariants ("does not invoke `git
+  checkout` in the parent worktree") rather than mechanisms ("runs in a worktree"); and Re-entry verification
+  mapping one to one to the contract with concrete checks (HEAD SHA, `git worktree list`, ports).
+- Could parallelism be added that the plan misses? Flag candidates to the user; don't restructure.
 
 **6. Project conventions**
 - Does the plan align with existing patterns in the codebase?
@@ -141,24 +146,30 @@ or says "pass 3" / "final review".
 
 ## Steps
 
-1. Read the plan doc end to end with fresh eyes.
-2. **Spot-check the codebase.** You don't need to re-read everything Pass 2
-   verified, but check the key touch points: do the files still exist? Has
-   anything changed since Pass 2? Are the "Done when" criteria actually
-   testable given the current test infrastructure?
-3. Run each check above. For each violation, note it and propose a specific fix.
-4. **Apply fixes additively.** Insert test-first steps into existing phases,
-   add logging steps where missing, add checkpoint notes. Do not restructure
-   phases or rewrite reasoning that already holds up. The plan's shape should
-   be recognizable from Pass 2 — Pass 3 layers quality on top.
-5. Add a Review Log entry for Pass 3.
+1. Use a fresh context; a compacted one is not fresh, so say so and hand off. The Review Log needs a gap-analysis
+   entry (else run `pass1.md` § Gap-analysis step first) and, unless this is a quick plan, a Pass 2 entry.
+2. Read the plan doc end to end and start from the previous pass's additions: the independent review's fixes are
+   the least reviewed text in the plan.
+3. **Deliverable anchor.** Write one line: what the plan delivers and how its done-when is observed. Judge every
+   check against it, and flag work that does not serve it.
+4. **Spot-check the codebase, bounded.** The key touch points and whatever changed since the previous pass
+   (`git log` since its commit): do the files still exist, do cited lines still say what the plan says, are the
+   "Done when" criteria testable with the current test infrastructure? Do not redo the independent review.
+5. Run each check above. For each violation, note it and propose a specific fix.
+6. **Apply fixes.** Insert test-first steps, logging steps and checkpoints into existing phases; keep the plan's
+   structure. Where a fix supersedes planning text, replace that text in place so the plan reads as current; the
+   history goes in the Review Log. Restructuring phases needs the user's approval.
+7. Add a Review Log entry for Pass 3.
 
 ## Review Log entry format
 
 ```markdown
 ### Pass 3: Quality Gates — [date]
+Deliverable: [one line]. Spot-check: [what was checked, base SHA].
 **TDD ordering:**
 - [adjustments made to ensure test-first in every phase]
+**Tests that can fail:**
+- [tests, fakes and fixtures sharpened; validation commands dry-run]
 **Observability:**
 - [logging/monitoring additions]
 **Debugging readiness:**
@@ -166,15 +177,12 @@ or says "pass 3" / "final review".
 **Validation calibration:**
 - [validation strategies reviewed, adjustments to match scope]
 **Concurrency honesty:**
-- [Concurrency Map verified; write-set disjointness re-checked; shared-
-  state contracts converted from mechanisms to invariants where needed;
-  re-entry verification mapped one-to-one to contract; new parallel
-  candidates flagged. Write "Map confirmed; sequential plan." if no
-  changes were warranted.]
+- [Map line confirmed; for a parallel set, disjointness, invariants and
+  re-entry checks. Write "Map confirmed; sequential plan." if no changes.]
 **Discovery (if Phase 0 exists):**
 - [discovery tasks reviewed for concreteness, completeness, and disposition]
 **Coherence:**
-- [any reasoning gaps filled, scope adjustments]
+- [reasoning gaps filled, hedges resolved, superseded text replaced]
 **Documentation impact:**
 - [doc updates verified present in the right phase, or flagged as missing]
 **Confirmed ready:** [yes/no — if no, what remains]
@@ -182,54 +190,30 @@ or says "pass 3" / "final review".
 
 ## Output
 
-Final plan doc ready for execution. Before declaring readiness, surface ALL
-remaining open questions — not just blocking ones. The user must have seen
-and confirmed every open question's severity before execution starts.
+The final plan, ready for execution. Before declaring readiness, walk every decision the user owns per
+`walk-through.md`: one item per message, decision first, each answer written into the plan before the next.
+Decisions already made in earlier passes are listed, not re-walked, unless something in this pass changed
+them. Answers that add work get the gap-analysis step and Pass 3 on the changed part.
 
-**If any open questions remain (any severity):**
+Do not say the plan is ready until
+every walk-through answer is written into the plan and re-checked.
+The agent recommends, the user decides.
 
-Use the **walk-through procedure from `pass1.md` § Output**, with one
-adjustment: split the brief listing into confirmed-from-prior-passes
-(read-only) and new-or-unreviewed (need the user's call). Walk through
-only the unreviewed set.
-
-> "Pass 3 complete. Open question status:"
->
-> **Confirmed from prior passes (read-only):**
-> 1. [CONFIRMED: BLOCKING] Question text. *Needs resolution before starting.*
->
-> **New or unreviewed (need your call):**
-> 2. [RECOMMENDED: PHASE-GATED (Phase 2)] Question text. *One-line rationale.*
-> 3. [RECOMMENDED: ADVISORY] Question text. *One-line rationale.*
->
-> "Let's walk through the unreviewed ones (#2, #3). Starting with #2 unless
-> you'd rather accept all as recommended, or revisit a previously confirmed
-> item."
-
-Then walk through each RECOMMENDED item one at a time per the Pass 1
-procedure. Close out with a readiness statement:
-
-> "All open questions confirmed. [Tally.] The plan is ready for execution
-> (pending any BLOCKING items — see below).
->
-> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
-
-Always include the plan file path in the close-out — the user should never
-have to scroll back through session history to find where the plan lives.
-
-Do NOT say "the plan is ready" while unreviewed questions exist. The agent
-recommends, the user decides. A question the agent thinks is ADVISORY might
-be blocking context the user needs to make a decision.
-
-**If all open questions have been previously confirmed by the user:**
-
-Apply the confirmed severities:
+Then apply the tags:
 - **BLOCKING** items: the plan is not ready. List what's needed to resolve each.
 - **PHASE-GATED** items: the plan is ready to start, but flag which phases
   are blocked and what must be resolved before reaching them.
 - **ADVISORY** items: note them but don't gate execution.
 
-Close out with the plan file path in the same format.
+Write the plan's Next pass section per `pass1.md` § Next pass handoff (pointing at execution), and close:
+
+> "Pass 3 complete. [Decisions, decided-by-agent items for override, any BLOCKING or PHASE-GATED items.]
+> The plan is ready for execution; the paste is in the plan's Next pass section.
+>
+> **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
+
+Always include the plan file path in the close-out — the user should never
+have to scroll back through session history to find where the plan lives.
 
 **If there are no open questions:**
 
@@ -239,8 +223,8 @@ Close out with the plan file path in the same format.
 
 ## Reminders (critical, repeated for forefront)
 
-- **Apply fixes additively.** Pass 3 layers quality on top of the Pass 2
-  plan. Do not rewrite reasoning that holds up.
+- **Extend the structure; replace superseded text.** Pass 3 keeps the plan's phases and replaces only planning
+  text a later decision made wrong, logging each change.
 - **Every phase must have a wiring test.** If a phase only has unit
   tests for isolated components, that is a plan defect.
 - **Do not execute during planning.** Pass 3 is analysis only.

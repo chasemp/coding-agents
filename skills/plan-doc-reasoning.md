@@ -105,8 +105,8 @@ not after.
 
 ## Relationship to phase-plan
 
-phase-plan prescribes the full ceremony (three passes, specific
-template, execution rules). This skill prescribes only the floor.
+phase-plan prescribes the full ceremony (three passes: plan with gap
+analysis, independent review, quality gates; a template; execution rules). This skill prescribes only the floor.
 When phase-plan is active, its template already exceeds the floor —
 both can fire together without conflict. That is the "load-bearing
 repetition" exception in `skill-hygiene.md`: the overlap is

@@ -115,3 +115,6 @@ anti-pattern against asking what a discovery read could answer.
   phase-plan cross-reference applied).
 - Upstream repo is active; re-check in ~3 months for iterations.
 - Parked question from the review: should phase-plan's walk-through also gain a "defaults" fast-path? Revisit after the underspec skill sees real use.
+  Answered 2026-11-12: yes. `skills/phase-plan/walk-through.md` keeps "accept all as recommended" as the fast
+  path, and the agent decides engineering-internal items itself, listed for override
+  (`plans/2026-11-09-1-plan-phase-plan-v2.md`, D8).

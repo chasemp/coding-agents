@@ -218,8 +218,8 @@ For Rust patterns, see `rust-enforcer.md` for the full discipline doc.
 - **No domain noun in a framing question without a one-line gloss.** A question the reader
   has to decode is a question they answer wrong — and you then build on the wrong answer.
   This bites hardest at session start, when the reader has the least context loaded.
-- **Lead with the decision and its options**; mechanics after, and the full detail in the
-  repo rather than in the reply.
+- **Lead with the decision and its options**, one per message for any list of decisions;
+  save each answer at once. Mechanics after; full detail in the repo, not the reply.
 - **Name layer boundaries; do not collapse them.** "Bob is cut off" conflates a relay
   refusing a call with a directory dropping a record — one recovers in a second, the other
   needs an operator. A sentence that would be true at two layers is describing neither.

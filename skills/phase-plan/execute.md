@@ -62,6 +62,21 @@ resume in the named follow-up phase.
 
 ---
 
+## Before starting
+
+- **Pass 3 gate.** Read the plan's Review Log and
+  refuse to start without a Pass 3 Review Log entry
+  (an old `Pass 3: Quality Gates` entry counts; see `phase-plan.md` § Compatibility rule). Say what is missing
+  and offer to run Pass 3.
+  A batch-approved plan
+  (`phase-plan.md` § A batch approved in conversation) is exempt: its short plan doc is the record.
+- **Re-measure gating figures** the phases depend on (counts, sizes, record states) and record them with the
+  date; a figure from planning day is a forecast. If one moved enough to change a phase, stop and walk it per
+  `walk-through.md`.
+- **Fresh context.** A compacted context is not fresh: say so and hand off (`pass1.md` § Next pass handoff).
+
+---
+
 ## The execution reminder (print in full at execution start)
 
 Print this once at the start of execution. At the start of each subsequent
@@ -132,6 +147,7 @@ execution guidance:
 
 ## Executing Parallel Phases
 
+Only when the Concurrency Map declares a parallel set; a sequential plan skips this section.
 If the Concurrency Map declares a parallel set (e.g., `{Phase 2A, Phase 2B}`),
 execution follows a different rhythm than sequential phases. **Read this
 whole section before dispatching** — skipping any step is how isolation
@@ -249,8 +265,8 @@ underneath it.
    Review Log and resolve before continuing. Run the full suite as well
    to catch any regression the merge introduced.
 
-**If the merges conflict:** That's a sign the Pass 2 disjointness check
-missed something. Resolve the conflict, record what overlapped in the
+**If the merges conflict:** That's a sign the gap-analysis step's write-set
+check missed something. Resolve the conflict, record what overlapped in the
 Review Log, and tighten the next plan's write-set declarations. A
 clean parallel set produces clean merges; conflicts mean the write-sets
 weren't actually disjoint.
@@ -305,6 +321,16 @@ Before moving from Phase N to Phase N+1, confirm:
       says "tests are sufficient," tests are sufficient. The validation
       strategy was calibrated during planning for a reason. Report what you
       validated and what you observed.
+- [ ] **Phase state recorded.** A scheduled job, deploy or live-data change moves
+      built → merged → deployed → observed
+      and gets ✅ only at observed, with the run id. Merged is not done.
+- [ ] **External writes followed the external-write tier:** a dry run showing exactly
+      what would be written, then a small supervised run with every write read
+      back, then the full run. Reruns are safe; rollback covers data already written.
+- [ ] **Mutation testing** (logic-heavy phases: rules, parsers, encoders, state
+      machines, search) is the exit step: commit the green state, mutate, triage
+      each survivor as equivalent or a real gap, and close real gaps. Run
+      `git status --porcelain <path>` before every restore.
 - [ ] Tests for Phase N's changes were written first and are passing
 - [ ] Existing tests still pass (regression check)
 - [ ] **Documentation updates scheduled for this phase are done.**
@@ -376,7 +402,10 @@ After the phase completion checklist passes and you commit:
 2. **If the phase delivered something different from the Pass 3 spec**,
    append a short "Delivered:" note describing the difference and why
    it was chosen. Don't rewrite the original spec — append. The spec
-   is the contract; the delivered note is the reconciliation.
+   is the contract; the delivered note is the reconciliation. This is the
+   one exception to replacing superseded text (D5 scope):
+   planning text is replaced, execution records are appended
+   ("Delivered:" notes, skip records).
 3. **Add a one-line entry to the Outcome Summary** (at the top of the
    plan — create it if it doesn't exist) with the commit SHA and a
    one-sentence outcome. This is the at-a-glance view for future readers.
@@ -423,6 +452,12 @@ need to know this to understand the plan's outcomes? If yes, update.
 If it's purely operational (transient error, environment quirk, known
 flake), keep it in chat.
 
+**A late change gets a scoped re-check.** A change that adds design, a phase, scope or a pass's own fixes
+gets the gap-analysis step (`pass1.md` § Gap-analysis step) and Pass 3 on the changed part before the work it
+affects starts; Pass 2 as well when it adds a phase, an external-system interaction or a write path. A decision
+the user owns goes through `walk-through.md`: one item per message, the answer written into the plan before
+continuing.
+
 Typical mid-execution updates:
 - A follow-up the plan surfaced but won't address → add a bullet under
   the phase that surfaced it, point at `TODO.md` for tracking.
@@ -440,14 +475,15 @@ Typical mid-execution updates:
      across repos. Before each removal: porcelain --ignored shows nothing
      unexpected; the branch is landed, or for a squash merge its content
      is on the base; no --force. Never remove a worktree this plan did
-     not create. Triggered by a three-repo plan (cyclops, infosec-actions,
-     samp) that closed with four worktrees and five local branches still
+     not create. Triggered by a plan spanning three
+     repos that closed with four worktrees and five local branches still
      in place. Monitor whether agents remove worktrees before the
      close-out PR merges (the ordering trap), and whether the scope rule
      holds when other sessions' worktrees share the list. -->
 
 Closing a plan is not just "I wrote the last commit." It's a specific
-act:
+act, planned as the plan's last numbered phase (`phase-plan.md` § The Plan Doc) so it is scheduled rather
+than remembered:
 
 1. **Outcome Summary exists at the top** with one row per phase showing
    outcome (✅/⏭️/❌) + commit SHA + one-sentence note.
@@ -485,8 +521,12 @@ act:
                      smoke tests; assumptions that turned out wrong
                      mid-phase. Write "none noteworthy" if execution
                      went exactly as planned (rare — interrogate
-                     this before writing it).>
+                     this before writing it). For each, answer:
+                     which pass should have caught this?>
    ```
+
+   Probe results kept as fixtures go into the repo when captured (with the
+   path recorded in the plan), never only in a session scratchpad.
 
    Per-phase `✅ SHIPPED (sha)` markers are necessary but not
    sufficient. The close-out is the paragraph the next reader will

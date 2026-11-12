@@ -51,9 +51,9 @@ not.
 - The missing details can be resolved by a quick, low-risk discovery
   read (grep an existing config, read a nearby file, check `--help`).
   See the anti-pattern below.
-- `phase-plan` is already active — its Pass 1 walk-through handles
+- `phase-plan` is already active — its walk-through handles
   clarification inside the planning workflow using a different
-  (severity-based) format. Do not run both at once.
+  (decision-first, one per message) format. Do not run both at once.
 - The user has explicitly said "just do your best interpretation" or
   equivalent.
 
@@ -183,11 +183,11 @@ non-trivial changes.
 - The change is a simple refactor with no new behavior.
 - `phase-plan` would add ceremony without improving the outcome.
 
-Phase-plan's Pass 1 uses a severity-based walk-through (BLOCKING /
-PHASE-GATED / ADVISORY) rather than multiple-choice questions. Both
-formats are intentional — multiple-choice is faster for independent
-early-stage questions, severity-based is better for interdependent
-planning-stage questions.
+Phase-plan uses a decision-first walk-through
+(`skills/phase-plan/walk-through.md`): one decision per message, with the situation, an example, options and a
+recommendation, and a proposed BLOCKING / PHASE-GATED / ADVISORY tag on each answer. Both formats are
+intentional — multiple-choice is faster for independent early-stage questions, the walk-through is better for
+interdependent planning-stage decisions.
 
 ## Quality gates
 
