@@ -79,16 +79,40 @@ p1-delivery-shape|skills/phase-plan/pass1.md|Steps|**Fill the Delivery shape sec
 p1-size-rule|skills/phase-plan/pass1.md|Steps|3 files maximum; 4 or more must split
 p1-next-pass|skills/phase-plan/pass1.md|Next pass handoff|## Next pass handoff
 p1-compacted|skills/phase-plan/pass1.md|Next pass handoff|A compacted context is not fresh
-p1-walkthrough-ref|skills/phase-plan/pass1.md|Output|`walk-through.md`'
+p1-walkthrough-ref|skills/phase-plan/pass1.md|Output|`walk-through.md`
+p2-lens-a|skills/phase-plan/pass2.md|Lens A|### Lens A: outcome and failure walk
+p2-lens-b|skills/phase-plan/pass2.md|Lens B|### Lens B: outward consistency
+p2-lens-c|skills/phase-plan/pass2.md|Lens C|### Lens C: facts against code and live data
+p2-brief|skills/phase-plan/pass2.md|Reviewer brief|## Reviewer brief
+p2-refute-first|skills/phase-plan/pass2.md|Reviewer brief|Refute first
+p2-model|skills/phase-plan/pass2.md|Running the reviewers|pass `model` explicitly
+p2-vetting|skills/phase-plan/pass2.md|Vetting|## Vetting
+p2-rerun|skills/phase-plan/pass2.md|When to re-run|## When to re-run
+p2-next-pass|skills/phase-plan/pass2.md|Output|`pass1.md` § Next pass handoff
+main-base-dir|skills/phase-plan.md|Loading the Per-Pass Files|`~/.claude/coding-agents/skills/phase-plan/`'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
 ABSENT='p1-confirm-as|skills/phase-plan/pass1.md|Confirm as [SEVERITY]
-p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity'
+p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity
+p2-old-title|skills/phase-plan/pass2.md|Pass 2: Gap Analysis
+route-pass12-gone|skills/phase-plan.md|"pass 1+2" / "plan and review together"
+quick-skips-pass2|skills/phase-plan.md|`pass1.md`, `pass2.md`, and `pass3.md` together'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
-TABLE_MAP='route-pass1|"pass 1"|pass1.md'
+TABLE_MAP='route-pass1|"pass 1"|pass1.md
+route-lets-plan|"let'"'"'s plan"|pass1.md
+route-gap|"gap analysis"|pass1.md
+route-pass2|"pass 2"|pass2.md
+route-independent|"independent review"|pass2.md
+route-review-plan|"review the plan"|pass2.md
+route-plan-review|"plan review"|pass2.md
+route-pass3|"pass 3"|pass3.md
+route-quality|"quality gates"|pass3.md
+route-final|"final review"|pass3.md
+route-execute|"let'"'"'s execute"|execute.md
+route-decisions|any list of decisions|walk-through.md'
 
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.

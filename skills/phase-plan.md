@@ -197,18 +197,19 @@ should be editing the single plan file.
 This main file is the entry point. Detailed procedures for each pass live
 in sibling files. Load the relevant file(s) when the user invokes a pass:
 
+Read them from the installed checkout, `~/.claude/coding-agents/skills/phase-plan/`, not from a path
+relative to the current repo.
+
 | User says | Read |
 |-----------|------|
 | "pass 1" / "let's plan" | `skills/phase-plan/pass1.md` |
-| "pass 2" / "gap analysis" / "review the plan" | `skills/phase-plan/pass2.md` |
-| "pass 1+2" / "plan and review together" | `pass1.md` + `pass2.md` |
+| "gap analysis" (plan exists: start at its § Gap-analysis step) | `skills/phase-plan/pass1.md` |
+| "pass 2" / "independent review" / "review the plan" / "plan review" | `skills/phase-plan/pass2.md` |
 | "pass 3" / "quality gates" / "final review" | `skills/phase-plan/pass3.md` |
 | "let's execute" / "start execution" | `skills/phase-plan/execute.md` |
+| any list of decisions, in any pass | `skills/phase-plan/walk-through.md` |
 
-When the user is running the Combined Pass 1+2 pattern, both files can be
-loaded in the same context — the gap analysis benefits from the Pass 1
-exploration still being fresh. Pass 3 always uses a fresh context for
-clean eyes on the final plan.
+Pass 1 drafts the plan and runs its gap-analysis step in one context. Pass 2 and Pass 3 each start fresh.
 
 ---
 
@@ -543,7 +544,7 @@ User: [clears context] "Here's our plan doc. Let's execute."
 
 Combine all three passes into a single context if the change is small and
 well-understood. The user can say "plan and finalize" or "quick plan". Load
-`pass1.md`, `pass2.md`, and `pass3.md` together.
+`pass1.md` and `pass3.md` together; a quick plan skips the independent review.
 
 ### A batch approved in conversation
 

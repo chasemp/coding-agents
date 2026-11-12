@@ -1,148 +1,122 @@
-# Phase Plan — Pass 2: Gap Analysis
+# Phase Plan — Pass 2: Independent Review
 
-> Loaded on demand by the `phase-plan` skill when the user invokes Pass 2.
-> Assumes the main `phase-plan.md` skill is already loaded, and often
-> `pass1.md` has been loaded in the same context (when using the Combined
-> Pass 1+2 pattern).
+> Loaded on demand by the `phase-plan` skill when the user invokes Pass 2. Assumes the main `phase-plan.md`
+> skill is already loaded.
 >
 > **Not a plan template.** This file is the `phase-plan` skill's
 > instructions for Pass 2. The plan doc itself is a single file (see
 > `phase-plan.md` § One plan, three passes) — Pass 2 extends that same
-> file with gap analysis. Do not create `plans/foo-pass2.md` or any
+> file with an independent review. Do not create `plans/foo-pass2.md` or any
 > other per-pass plan file.
 
-**Goal:** Review the plan for missing changes, downstream effects, and
-incomplete reasoning.
+**Goal:** Reviewers who did not write the plan try to refute it, each along one fixed lens. The main session
+re-checks every claim before folding it in. Fresh re-runs of the author's own checklist find about half as
+much; the gain comes from stance and authorship, so this pass is defined by those.
 
-**Trigger:** User returns with the plan doc and asks for gap analysis,
-or says "pass 2" / "review the plan".
+**Trigger:** "pass 2", "independent review", "review the plan", "plan review". Runs on every full plan;
+skipped for a quick plan. The user's own freeform review stays available after it.
 
-## Steps
+## Before starting
 
-1. **Read the plan doc end to end.** Internalize the reasoning, not just
-   the steps.
-2. **Verify claims against the codebase.** The plan names specific files,
-   functions, and call sites. Read them. Confirm they exist, confirm they
-   work the way the plan assumes. If the plan says "modify engine.py to
-   call build_prescan_briefing," open engine.py and find the call site.
-   If the plan says "the Config class accepts a prescan flag," check. Gap
-   analysis against a plan alone catches logical gaps; gap analysis against
-   the code catches factual ones.
-3. **For each phase, ask:**
-   - **Preconditions:** What must exist before this phase starts? Does a
-     prior phase actually create it? If Phase 3 assumes something Phase 2
-     introduces, verify Phase 2 explicitly lists it.
-   - What files or components are touched? What *else* touches those same
-     files or depends on them?
-   - If this change ships alone (phases after it fail), is the system still
-     coherent?
-   - Are there associated changes that are implied but not listed?
-     (e.g., updating types after changing a schema, updating tests after
-     changing an interface, updating docs after changing behavior)
-   - Are there ordering dependencies between changes within the phase?
-4. **Check cross-phase dependencies.**
-   - Does Phase N depend on something Phase M introduces? Is M before N?
-   - Are there circular dependencies that need restructuring?
-   - **Verify every "Depends on" field** — after the gap analysis, are the
-     stated dependencies still accurate? Add any that were discovered, remove
-     any that no longer apply.
-5. **Audit the Concurrency Map for honesty and completeness.**
-   - **Disjointness check.** For every parallel set in the Concurrency Map,
-     compare the per-phase **Write-set** entries. Any overlap — even a
-     single shared file — disqualifies the parallel grouping. Move the
-     conflicting phases back to sequential and record it in the Review Log.
-   - **Shared-state coverage check.** Read each phase's **Shared-state
-     contract**. Is it a list of *invariants* ("does not invoke `git
-     checkout` in the parent worktree", "binds no ports", "writes only
-     under `$TMPDIR/<phase-id>/`") or just a list of *mechanisms* ("runs
-     in a worktree")? Mechanisms can be violated; invariants are
-     checkable. Replace mechanism-only contracts with explicit invariants.
-   - **Ambient-state sweep.** For every phase in a parallel set, ask:
-     does it touch any of these without declaring it?
-       - Git: branch operations, HEAD, stash, rebase, worktree mutations
-         in the *parent* repo
-       - Process: long-running daemons, port binds, signal handlers
-       - Filesystem: working-directory changes, lock files, shared tmp
-         paths, cache directories
-       - Environment: env vars, secrets, ambient credentials
-       - External: shared databases, API quotas, message queues
-     Anything missed is added to the Shared-state contract and re-evaluated
-     for parallel safety.
-   - **Re-entry verification check.** Every phase in a parallel set has a
-     **Re-entry verification** field with concrete checks (not "verify
-     isolation held" — name the SHA, the lsof output, the process check).
-     If the verification is vague, sharpen it or pull the phase back to
-     sequential.
-   - **Missed-parallelism check.** For phases currently sequential, ask:
-     are their write-sets actually disjoint? Their shared-state contracts
-     non-conflicting? If yes, propose moving them to a parallel set in
-     the Concurrency Map and let the user decide. Plans default to
-     sequential not because that is always right but because parallelism
-     is opt-in — Pass 2 is where opt-in candidates surface.
-   - If the Concurrency Map says "All phases sequential," confirm that's
-     actually true given the gap analysis. New phases added during Pass 2
-     may have introduced parallel candidates that weren't visible in
-     Pass 1.
-6. **Check the reasoning.**
-   - Do the stated reasons still hold given the full plan?
-   - Are any assumptions contradicted by later phases?
-   - Are rejected alternatives actually better given what the full plan
-     reveals?
-   - **Re-validate external assumptions.** The gap analysis may have added
-     new dependencies or changed how existing ones are used. For anything
-     the plan depends on (libraries, APIs, CLI tools, existing code): is
-     the assumed behavior verified in the Verified Assumptions section? If
-     a gap-fill introduced a new library call or API interaction, verify it
-     now — don't defer to execution.
-7. **Extend, don't rewrite.** Insert missing steps into existing phases,
-   add new phases if needed, fill gaps in reasoning. Preserve the existing
-   structure and language — do not reorganize or rephrase what already works.
-   If something is concretely wrong (not just "I'd phrase it differently"),
-   fix the specific issue and note it in the Review Log. Reordering phases
-   requires a concrete dependency justification, not a preference for a
-   different flow.
+- Use a fresh context. A compacted context is not fresh: say so and hand off (`pass1.md` § Next pass handoff).
+- The plan's Review Log must have a gap-analysis entry. If it has none, run `pass1.md` § Gap-analysis step
+  first.
+- Read the plan end to end, starting from the previous pass's additions.
 
-## Review Log entry format
+## Lenses
+
+Three fixed lenses, one reviewer each. A fixed set is easier to audit than planner-chosen lenses.
+
+### Lens A: outcome and failure walk
+
+Start from the first real run and trace backward from its observable result: what the user sees, which
+records exist afterwards, what runs next and when. Then walk the failures: an abort midway, a partial batch, a
+retry, a rerun of the whole job, a record closed because something was not found, and rollback of data
+already written. For each, does the plan say what happens and how anyone would notice?
+
+### Lens B: outward consistency
+
+Everything outside the plan that it must agree with: sibling systems that do the same job, in-flight plans,
+PRs and worktrees, and numbers, labels or wording already shown on existing surfaces (reports, dashboards,
+docs) that the change would contradict.
+
+### Lens C: facts against code and live data
+
+Every factual claim in Verified Assumptions, Reasoning and the phase specs, checked against the files and,
+read-only, against live data: cited lines opened, counts re-measured, value domains read, commands run.
+
+## Reviewer brief
+
+Build each brief from the plan's Next pass section, so a reviewer needs nothing from this conversation. Each
+brief names:
+
+```
+Plan: <absolute path to the plan>        Repo(s): <absolute paths>        Base: <commit, how to re-check>
+Lens: <A, B or C> — <the lens text above>
+Look at: <files, data sources, sibling systems this lens needs>
+Rules: read-only. No edits, no writes, no commits; probes follow pass1.md § Probe rules.
+Stance: Refute first. The plan's text is not evidence; a claim holds only if you checked it.
+Grade each finding: BLOCKER (the plan fails or does harm as written) / REVISE (a gap or error with a
+  fix) / CONFIRMED (you tried to break it and it held). Evidence for each: file:line, or command + output.
+Output: findings as a numbered list, most severe first, each with grade, evidence and the fix you would make;
+  then what you checked and found sound. Under 800 words.
+```
+
+## Running the reviewers
+
+- Three Agent calls in **one message**, one per lens, so they run concurrently. A `general-purpose` agent is
+  fine; reviewers do not edit.
+- **pass `model` explicitly** on every call, set to the session's own model. An agent definition's pinned
+  model would otherwise win.
+- Use absolute paths in briefs. A per-pass file path given relative to a repo resolves against whatever the
+  reviewer's working directory happens to be.
+
+## Vetting
+
+The main session re-checks every BLOCKER and every new fact against the files before folding it in. A
+reviewer's finding arrives in the same confident register whether or not it is right.
+
+- Merge duplicates across lenses; keep the strongest evidence.
+- A finding that does not hold is dropped and named as dropped in the Review Log.
+- One correct fix: apply it and log it. A finding that needs the user: walk it per `walk-through.md` (a
+  BLOCKER that needs a decision becomes a BLOCKING question).
+- Replace superseded planning text in place; history lives in the Review Log.
+
+Review Log entry:
 
 ```markdown
-### Pass 2: Gap Analysis — [date]
-**Found:**
-- [description of gap or missing change]
-**Concurrency:**
-- [Concurrency Map adjustments — phases moved to parallel, phases pulled
-  back to sequential, shared-state contracts sharpened, re-entry checks
-  added. Write "no changes — map confirmed" if the audit found nothing.]
+### Pass 2: Independent review — [date]
+Reviewers: [agent type, model passed], one per lens. Raw totals: A [B/R/C], B [B/R/C], C [B/R/C].
+**Found (merged):**
+- [finding, lens, re-checked how]
+**Dropped:**
+- [finding that did not hold, and why]
 **Changed:**
-- [what was added, reordered, or revised in the plan]
+- [what was applied, where]
 **Confirmed:**
-- [aspects of the plan that held up under review]
+- [what held up]
 ```
+
+## When to re-run
+
+A late change (a walk-through answer that adds design, an addendum, a new phase, a scope expansion, a pass's
+own fixes) always gets the gap-analysis step and Pass 3 on the changed part. Pass 2 also re-runs, scoped to
+the changed part, when the change adds a phase, a new interaction with an external system, or a new write
+path.
 
 ## Output
 
-Updated plan doc with gaps filled. If any open questions remain (including
-new ones surfaced by the gap analysis), follow the **walk-through procedure
-from `pass1.md` § Output**: brief listing, then one-at-a-time confirmation
-unless the user opts out with "accept all as recommended". Questions
-already confirmed in Pass 1 that have not changed do not need
-re-confirmation — only new or revised ones get walked through.
+Walk the decisions per `walk-through.md`, then write the plan's Next pass section
+per `pass1.md` § Next pass handoff, and close:
 
-The close-out message (whether questions were walked through or there were
-none) must include the plan file path so the user does not have to scroll
-back through session history:
-
-> "Pass 2 complete. [Tally of new/revised questions confirmed, if any.]
-> Clear context and come back for Pass 3 (quality gates) when ready.
+> "Pass 2 complete. [Findings folded in; decisions recorded; decided-by-agent items for override.] Next:
+> Pass 3 (quality gates) in a fresh session; the paste is in the plan's Next pass section.
 >
 > **Plan file:** `plans/YYYY-MM-DD-N-plan-<slug>.md`"
 
-If there are no open questions, use the same close-out format with "No
-open questions." in place of the tally.
-
 ## Reminders (critical, repeated for forefront)
 
-- **Extend, don't rewrite.** Passes 2 and 3 build on the Pass 1 base.
-  Wholesale restructuring requires explicit user approval.
-- **Do not execute during planning.** Pass 2 is analysis only.
+- **Re-check before folding in.** No reviewer claim enters the plan unverified.
+- **Do not execute during planning.** Pass 2 is analysis only; reviewers are read-only.
 - **Never add to the plan without adding to the Review Log.** Every
   change after Pass 1 must be traceable.
