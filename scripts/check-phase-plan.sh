@@ -91,7 +91,15 @@ p2-rerun|skills/phase-plan/pass2.md|When to re-run|## When to re-run
 p2-next-pass|skills/phase-plan/pass2.md|Output|`pass1.md` § Next pass handoff
 main-base-dir|skills/phase-plan.md|Loading the Per-Pass Files|`~/.claude/coding-agents/skills/phase-plan/`
 p1-quick-close|skills/phase-plan/pass1.md|Output|Pass 3 for a quick plan
-p1-paste-loads-main|skills/phase-plan/pass1.md|Next pass handoff|starts with `/phase-plan <pass> <absolute plan path>`'
+p1-paste-loads-main|skills/phase-plan/pass1.md|Next pass handoff|starts with `/phase-plan <pass> <absolute plan path>`
+p3-test-validity|skills/phase-plan/pass3.md|Checks|**1b. Tests that can fail**
+p3-hedges|skills/phase-plan/pass3.md|Checks|**Hedges.**
+p3-external-write|skills/phase-plan/pass3.md|Checks|external-write tier
+p3-previous-additions|skills/phase-plan/pass3.md|Steps|start from the previous pass'"'"'s additions
+p3-deliverable|skills/phase-plan/pass3.md|Steps|**Deliverable anchor.**
+p3-ready|skills/phase-plan/pass3.md|Output|every walk-through answer is written into the plan and re-checked
+p3-walkthrough|skills/phase-plan/pass3.md|Output|`walk-through.md`
+p3-next-pass|skills/phase-plan/pass3.md|Output|`pass1.md` § Next pass handoff'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -100,7 +108,13 @@ p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity
 p2-old-title|skills/phase-plan/pass2.md|Pass 2: Gap Analysis
 route-pass12-gone|skills/phase-plan.md|"pass 1+2" / "plan and review together"
 quick-skips-pass2|skills/phase-plan.md|`pass1.md`, `pass2.md`, and `pass3.md` together
-p2-blocker-only|skills/phase-plan/pass2.md|every BLOCKER and every new fact'
+p2-blocker-only|skills/phase-plan/pass2.md|every BLOCKER and every new fact
+p3-confirmed-severity|skills/phase-plan/pass3.md|confirmed the severity
+p3-confirmed-every|skills/phase-plan/pass3.md|confirmed every open question'"'"'s severity
+p3-apply-confirmed|skills/phase-plan/pass3.md|Apply the confirmed severities
+p3-additive|skills/phase-plan/pass3.md|**Apply fixes additively.**
+p3-pass2-word|skills/phase-plan/pass3.md|take Pass 2'"'"'s word
+pass1-output-ref|*|`pass1.md` § Output'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
