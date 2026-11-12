@@ -1,6 +1,6 @@
 ---
 description: Hygiene audit of this repo's skills, agents, and commands against skill-hygiene.md rules; read-only report, no fixes applied
-allowed-tools: Bash(wc:*), Bash(find:*), Bash(ls:*), Bash(head:*), Bash(test:*), Bash(awk:*), Bash(sort:*), Bash(uniq:*), Bash(grep:*), Bash(echo:*), Bash(bash scripts/check-phase-plan.sh:*), Bash(bash scripts/test-check-phase-plan.sh:*), Read, Grep, Glob
+allowed-tools: Bash(wc:*), Bash(find:*), Bash(ls:*), Bash(head:*), Bash(test:*), Bash(awk:*), Bash(sort:*), Bash(uniq:*), Bash(grep:*), Bash(echo:*), Bash(bash scripts/audit-checks.sh:*), Bash(bash scripts/check-phase-plan.sh:*), Bash(bash scripts/test-check-phase-plan.sh:*), Bash(bash scripts/test-audit-checks.sh:*), Read, Grep, Glob
 ---
 
 Run a hygiene audit on this coding-agents repo. This command is
@@ -31,19 +31,19 @@ itself (they don't count individually against the 500-line rule).
 
 ### CLAUDE.md
 
-!`wc -l CLAUDE.md | awk '{print $1 " lines (budget: 200)"}'`
+!`bash scripts/audit-checks.sh claude-size`
 
 ### Top-level skills
 
-!`for f in skills/*.md; do lines=$(wc -l < "$f"); echo "$lines $f"; done | sort -rn`
+!`bash scripts/audit-checks.sh skill-sizes`
 
 ### Root agents (excluding documentation)
 
-!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; lines=$(wc -l < "$f"); echo "$lines $f"; done | sort -rn`
+!`bash scripts/audit-checks.sh agent-sizes`
 
 ### Files under `skills/phase-plan/` (informational only)
 
-!`for f in skills/phase-plan/*.md; do lines=$(wc -l < "$f"); echo "$lines $f"; done 2>/dev/null | sort -rn`
+!`bash scripts/audit-checks.sh phase-plan-sizes`
 
 **Interpret:** flag any skill over 500, any agent over 400, any
 CLAUDE.md over 200. Per-pass files are informational only.
@@ -60,11 +60,11 @@ and `.claude/` paths (those refer to consumer projects, not this repo).
 The pattern optionally captures `.claude/` prefix so the filter can
 see and reject it. See the grep below for the full filter list.
 
-!`grep -rhoE '(\.claude/)?skills/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)?\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/X/|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u`
+!`bash scripts/audit-checks.sh skill-refs`
 
 ### Command path references (e.g., `commands/X.md`)
 
-!`grep -rhoE '(\.claude/)?commands/[a-zA-Z0-9_-]+\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u`
+!`bash scripts/audit-checks.sh command-refs`
 
 ### Agent name references in backticks
 
@@ -85,15 +85,15 @@ Skills need `name:` and `description:`. Agents need `name:`,
 
 ### Skills missing `name:` or `description:`
 
-!`for f in skills/*.md; do head -10 "$f" | grep -q '^name:' || echo "MISSING name: $f"; head -10 "$f" | grep -q '^description:' || echo "MISSING description: $f"; done`
+!`bash scripts/audit-checks.sh skill-frontmatter`
 
 ### Agents missing required fields
 
-!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -60 "$f" | grep -q '^tools:' || continue; for field in name description tools model maxTurns; do head -60 "$f" | grep -q "^$field:" || echo "MISSING $field: $f"; done; done`
+!`bash scripts/audit-checks.sh agent-frontmatter`
 
 ### Commands missing required fields
 
-!`for f in commands/*.md; do head -10 "$f" | grep -q '^description:' || echo "MISSING description: $f"; done`
+!`bash scripts/audit-checks.sh command-frontmatter`
 
 **Interpret:** Any "MISSING" line is a frontmatter defect.
 `allowed-tools:` is not required — commands that don't invoke tools
@@ -105,7 +105,7 @@ tools used."
 
 Agent `color:` fields should be unique for visual distinctiveness.
 
-!`grep -l '^color:' *.md 2>/dev/null | while read f; do color=$(grep '^color:' "$f" | head -1 | awk '{print $2}'); echo "$color $f"; done | sort`
+!`bash scripts/audit-checks.sh colors`
 
 **Interpret:** Group by color. Any color used by 2+ agents is a
 collision. Not a blocker — cosmetic only — but worth fixing when
@@ -123,7 +123,7 @@ Root `.md` files that are neither on the docs whitelist nor have
 agent frontmatter (i.e., no `tools:` field) are orphans. They may be
 stale or misplaced.
 
-!`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; head -60 "$f" | grep -q '^tools:' || echo "ORPHAN: $f (no tools: field in first 60 lines, not on docs whitelist)"; done`
+!`bash scripts/audit-checks.sh orphans`
 
 **Interpret:** Any "ORPHAN" line warrants attention. Either the file
 belongs on the docs whitelist (add to the `case` patterns in these
@@ -165,7 +165,7 @@ The check grep below looks for any reasoning-related heading. Files
 with no such heading are flagged for review — they may be pure
 change lists with no reasoning trail.
 
-!`for f in plans/*.md; do grep -qiE '^#{1,4} (problem|reasoning|rationale|why this|source summary|context|decision|approach)' "$f" || echo "MISSING reasoning marker: $f"; done 2>/dev/null`
+!`bash scripts/audit-checks.sh plan-reasoning`
 
 **Interpret:** Any "MISSING" line means the plan has no heading that
 looks like a reasoning or problem record. The plan may still capture
@@ -193,7 +193,7 @@ Then run the fixture test with the Bash tool and an explicit
 `timeout: 600000` (it takes about three minutes, over the default limit):
 
 ```
-bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh
+bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh && bash scripts/test-audit-checks.sh
 ```
 
 **Interpret:** every `FAIL` line is a flag; the check's last line must
