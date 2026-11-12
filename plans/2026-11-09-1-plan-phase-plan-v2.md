@@ -12,7 +12,7 @@ decisions by agent listed under Open Questions).
 | 1 | ✅ | `3d39dd1`, `07bd294` | Structural check (68 assertions) and its test (38 fixtures); 9 hand mutations all killed after 2 fixtures added |
 | 2 | ✅ | `c3660fd` | `walk-through.md` (67 lines) and its Guardrails reference; 3 anchors |
 | 3 | ✅ | `23d0bc7` | `pass1.md` rewritten (257 lines) with the gap-analysis step; check gains CHK-ABSENT and CHK-TABLE-MAP (87 assertions, 57 fixtures) |
-| 4 | ✅ | `d06e0f8`, fixes in the next commit | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
+| 4 | ✅ | `d06e0f8`, `9a576b8` | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
 
 ## Problem Statement
 
@@ -280,7 +280,7 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 ## Documentation Impact
 
 - `skills/ask-questions-if-underspecified.md` (lines 54, 186): describes phase-plan's walk-through as
-  severity-based. Update to the decision-first format. Phase 6.
+  severity-based. Update to the decision-first format. Phase 6b.
 - `skills/plan-doc-reasoning.md` (line 108): "three passes" stays true; re-read wording against the new pass
   names. Phase 10a.
 - `commands/audit.md` Check 1 (exemption names the per-pass files; `walk-through.md` and `CHANGELOG.md` now
@@ -292,7 +292,7 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - `commands/skills.md` line 38: excludes `skills/phase-plan/*.md`; confirmed still correct for
   `walk-through.md` and `CHANGELOG.md`, and `scripts/` is not a skill directory. No change.
 - `agents.md` § File reference (line 225 lists `skills/` as one row): add a `scripts/` row only. Phase 1.
-- `CLAUDE.md` § Explaining Design and Protocol Work: one line (D8). Phase 6.
+- `CLAUDE.md` § Explaining Design and Protocol Work: one line (D8). Phase 6a.
 - `REFINEMENTS.md`: new entry for this plan (written with the plan); Status stays `accepted`; an "Applied
   <date> in <PR>" line is added to its Notes at close-out (VA-10).
 - `skills/skill-hygiene.md` lines 96-100: names the split TRACKING marker; the marker stays (VA-11), so no change.
@@ -360,7 +360,7 @@ Rules for every assertion a phase adds (Pass 3):
   catches the second.
 - **Record before validating.** When a phase's commit lands, its Outcome Summary row says "built `<sha>`,
   validation pending" before any long validation step, so an abort leaves the next session at the right phase.
-- **Which assertions stay.** Every assertion is permanent except `CHK-LINES` (Phase 6), whose job ends when no
+- **Which assertions stay.** Every assertion is permanent except `CHK-LINES` (Phase 6a), whose job ends when no
   later phase edits `CLAUDE.md`; Phase 10b removes it. A red check after close means a real break: a reference,
   route or applied change was lost, and the edit that caused it is fixed or the table is updated with a reason.
 
@@ -462,7 +462,7 @@ without the allowlist the pass fixture fails on day one.
 - [ ] `skills/phase-plan/walk-through.md`: the procedure from D8, with one worked example item.
 - [ ] `walk-through.md` states the mapping: a BLOCKER finding that needs a user decision becomes a BLOCKING question.
 - [ ] Check assertions: the file exists; it contains the mapping line. The severity-gate wording is asserted
-  absent file by file in the phase that rewrites each file (Phases 3, 5, 6, 7), not here: an assertion that
+  absent file by file in the phase that rewrites each file (Phases 3, 5, 6b, 7), not here: an assertion that
   stays red until Phase 7 would block every commit from Phase 2 to 6 under the verification loop, and the
   original patterns matched only `pass1.md:192` (`pass3.md:76` reads "confirmed the severity", the template
   line 498 "confirms or overrides the severity").
@@ -571,23 +571,35 @@ already true at base, so it cannot serve as the RED step).
 **Done when:** check passes.
 **Validation:** moderate.
 
-### Phase 6: Walk-through references outside the skill
+### Phase 6a: `CLAUDE.md` walk-through default and the line-limit table
 
-**Goal:** the D8 format is the default everywhere it is described.
+**Goal:** the D8 format is the default in `CLAUDE.md`, held at net zero lines (D13). (Phase 6 was split after
+the Phase 4 review: the generated line-limit fixture needs the test script, a fourth file.)
+**Changes:**
+- [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
+  decision and its options" bullet; net line count unchanged.
+- [ ] Check assertion `CHK-LINES`: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
+  Built as an entry in a `LINE_LIMITS` table (`name|file|max lines`, `--list-line-limits`) with a fixture
+  generated in `scripts/test-check-phase-plan.sh` (the file padded past its limit), so Phase 10b removes it by
+  deleting one table line. Plan-scoped (see the loop rules). Phase 8b's `CHK-SIZE` is a second entry in the same
+  table. RED step: the table entry with a limit of 290, watched failing, then set to 291.
+- [ ] Anchor: the folded bullet's new phrase, on one line.
+**Depends on:** Phase 2.
+**Write-set:** `CLAUDE.md`, `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`.
+**Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
+**Done when:** check and test pass.
+**Validation:** narrow.
+
+### Phase 6b: `ask-questions-if-underspecified` walk-through references
+
+**Goal:** the skill that hands off to phase-plan describes the decision-first walk-through.
 **Changes:**
 - [ ] `skills/ask-questions-if-underspecified.md` lines 54-56 and 186-189: describe the decision-first walk-through.
-- [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
-  decision and its options" bullet; net line count unchanged (D13).
-- [ ] Check assertion `CHK-LINES`: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
-  Built as an entry in a `LINE_LIMITS` table (`name|file|max lines`, `--list-line-limits`) with a generated
-  fixture (the file padded past its limit), so Phase 10b removes it by deleting one table line. Plan-scoped
-  (see the loop rules). Phase 8b's `CHK-SIZE` is a second entry in the same table.
 - [ ] Check assertion (absence, `skills/ask-questions-if-underspecified.md`): no `severity-based` (lines 56, 186,
   189 today). Scoped to that file because `py-enforcer.md:645` uses "severity-based recommendations" for its own
   reports, which is unrelated.
-**Depends on:** Phase 2.
-**Write-set:** `skills/ask-questions-if-underspecified.md`, `CLAUDE.md`, `scripts/check-phase-plan.sh`.
-**Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
+**Depends on:** Phase 6a.
+**Write-set:** `skills/ask-questions-if-underspecified.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** narrow.
 
@@ -1005,7 +1017,7 @@ Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/
 Phase 5**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
-`scripts/check-phase-plan.sh`; Phase 6 adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
+`scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
 text, then `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` plus the hook tests,
 commit (D20), record the phase. A test run takes about 2.5 minutes; run it in the background. Commit locally;
 push, PRs, merge and pull need the user's say-so. Stop for the user at the Phase 10a and Phase 11 checkpoints.
