@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–2 shipped; next Phase 3. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–3 shipped; next Phase 4. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -11,6 +11,7 @@ decisions by agent listed under Open Questions).
 |---|---|---|---|
 | 1 | ✅ | `3d39dd1`, `07bd294` | Structural check (68 assertions) and its test (38 fixtures); 9 hand mutations all killed after 2 fixtures added |
 | 2 | ✅ | `c3660fd` | `walk-through.md` (67 lines) and its Guardrails reference; 3 anchors |
+| 3 | ✅ | `23d0bc7` | `pass1.md` rewritten (257 lines) with the gap-analysis step; check gains CHK-ABSENT and CHK-TABLE-MAP (87 assertions, 57 fixtures) |
 
 ## Problem Statement
 
@@ -461,7 +462,7 @@ and confirm each step of the procedure appears in it. Live use comes from the ex
 line-wrapped literal, so the mapping sentence sits on its own line. Cold read against the Pass2-W1 → D17 walk:
 every step present. The worked example is generic (a size-budget item).
 
-### Phase 3: Pass 1 = plan + gap analysis
+### Phase 3: Pass 1 = plan + gap analysis — ✅ SHIPPED (`23d0bc7`)
 
 **Goal:** `pass1.md` covers drafting, the probe rules (D4), the explicit gap-analysis checklist with the outward
 sweep (D3), Delivery shape filling (D7), traced write-sets and the reworded size rule (D10), and the Next pass
@@ -482,6 +483,15 @@ required headings.
 **Risks:** `pass1.md` grows large; keep per-step text tight and move examples to the end.
 **Done when:** check passes; `pass1.md` reads end to end as one pass.
 **Validation:** moderate; read through once as a cold reader.
+**Delivered (2026-11-12):**
+- New sections `## Probe rules`, `## Gap-analysis step`, `## Next pass handoff`; `## Steps`, `## Output` and
+  `## Reminders` kept. 13 `p1-*` anchors; two absences (`Confirm as [SEVERITY]`, `to confirm severity`).
+- The wiring assertion became a new check type, `CHK-TABLE-MAP` (a loading-table row holds both the trigger
+  phrase and the file), because an anchor literal cannot contain the table's `|`. Phase 4 adds its rows there.
+  Absences live in an `ABSENT` table with `--list-absent`; both get generated fixtures.
+- Cold read: one forward pointer. The gap-analysis step's first paragraph names "main file § compatibility rule",
+  which Phase 8a writes (see its Changes). No formal mutation round: the two new check types are small and each
+  generated fixture was watched refusing.
 
 ### Phase 4: Pass 2 = independent review
 
@@ -578,6 +588,8 @@ in-flight compatibility rule (D15), usage patterns (quick plan skips Pass 2; Com
 guardrails ("extend structure; replace superseded planning text", D5 with its scope note), and TRACKING history
 moved to `skills/phase-plan/CHANGELOG.md`.
 **Changes:**
+- [ ] The D15 rule lives under a heading starting `Compatibility rule`, which `pass1.md` § Gap-analysis step
+  already names (Phase 3); assert it as an anchor.
 - [ ] `skills/phase-plan.md`: frame, usage patterns and guardrails; stale "Pass 2 fills gaps" (line 517-518) and
   Read-set text (line 428) reworded.
 - [ ] `skills/phase-plan/CHANGELOG.md`: TRACKING blocks moved except `TRACKING: File split (2026-04-16)`, which
@@ -890,7 +902,7 @@ compared against the plan.
 
 Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in
 `~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (branch `phase-plan-v2`, base `origin/main` `8e6fc33`;
-re-check with `git ls-remote`). **Continue execution at Phase 3**, loading the current
+re-check with `git ls-remote`). **Continue execution at Phase 4**, loading the current
 `skills/phase-plan/execute.md` (the worktree's own copy). Phases 1–2 shipped (Outcome Summary). Locked: D1–D20
 and the Pass 3 decisions by agent. Per phase: literals into the check's tables first (`ANCHORS` in
 `scripts/check-phase-plan.sh`; Phase 3 adds the absence table and `--list-absent`, with generated fixtures in
