@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–8b shipped (Phase 4 dogfood review folded in); next Phase 9a. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9a shipped (Phase 4 dogfood review folded in); next Phase 9b. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -19,6 +19,7 @@ decisions by agent listed under Open Questions).
 | 7 | ✅ | `fb3c764` | Template: Status, Delivery shape, one-line Concurrency Map, optional fields, close-out phase, Next pass; main file 628 lines; 153 assertions, 116 fixtures |
 | 8a | ✅ | `e1dd358` | Frame, triggers, § Compatibility rule, D5 guardrail; 6 TRACKING blocks → `CHANGELOG.md`; main file 524; 174 assertions, 134 fixtures |
 | 8b | ✅ | `bf6760d` | Phase 0 template → `pass1.md` § Phase 0 template; main file **478** (D13 met); `CHK-SIZE`; 183 assertions, 141 fixtures |
+| 9a | ✅ | `5020a8f` | `execute.md` § Before starting (Pass 3 gate, re-measure), phase states, external-write tier, mutation exit; 195 assertions |
 
 ## Problem Statement
 
@@ -723,7 +724,7 @@ load-bearing text to pass the assertion.
 template sits in `pass1.md` as plain text under `## Phase 0 template` (no inner `###` heading, which would end the
 section), placed after § Steps; step 5 points to it. `pass1.md` 313 lines.
 
-### Phase 9a: Execution rules, gates and states
+### Phase 9a: Execution rules, gates and states — ✅ SHIPPED (`5020a8f`)
 
 **Goal:** `execute.md` start-of-run and per-phase gates: refuse to start without the Pass 3 Review Log entry
 (D11), re-measure gating figures at start (D4), phase states built → merged → deployed → observed and the
@@ -738,6 +739,10 @@ external-write tier (D7), parallel protocol reached only when declared (D10).
 **Write-set:** `skills/phase-plan/execute.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
+
+**Delivered (2026-11-12):** the gate lives in a new `## Before starting` section ahead of the execution
+reminder, rather than inside it, so the reminder stays the short printable block. `execute.md` 731 lines. Literals
+that must sit on one line are broken onto their own lines in the bullets.
 
 ### Phase 9b: Execution rules, change handling and close-out
 
@@ -1052,7 +1057,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 9a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 9b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
