@@ -614,6 +614,7 @@ each task must honor its declared Disposition.
 phases. Phase 0 discovery operates under the Discovery Exemption — read
 `execute.md` § Discovery Exemption before executing Phase 0.
 
+- **Every list of decisions uses `skills/phase-plan/walk-through.md`**: one item per message, decision first.
 - **Never skip reasoning.** A plan without reasoning is a todo list. The
   reasoning is what makes the plan re-entrant across context windows.
 - **Build on the base, don't rebuild it.** Passes 2 and 3 extend Pass 1.

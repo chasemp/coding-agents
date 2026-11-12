@@ -61,7 +61,10 @@ reminders-pass3|skills/phase-plan/pass3.md|Reminders|## Reminders (critical, rep
 step4-consolidate|skills/phase-plan/execute.md|Step 4|### Step 4 — Consolidate locally
 closeout-template|skills/phase-plan/execute.md|When the plan closes|### Plan close-out — YYYY-MM-DD
 worktree-removal|skills/phase-plan/execute.md|When the plan closes|**The plan'"'"'s worktrees and branches are removed**
-agents-scripts-row|agents.md|File reference|`scripts/`'
+agents-scripts-row|agents.md|File reference|`scripts/`
+walkthrough-procedure|skills/phase-plan/walk-through.md|Procedure|## Procedure
+walkthrough-mapping|skills/phase-plan/walk-through.md|Review grades and question tags|a BLOCKER finding that needs a user decision becomes a BLOCKING question
+walkthrough-wired|skills/phase-plan.md|Guardrails|`skills/phase-plan/walk-through.md`'
 
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.
