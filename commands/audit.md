@@ -1,6 +1,6 @@
 ---
 description: Hygiene audit of this repo's skills, agents, and commands against skill-hygiene.md rules; read-only report, no fixes applied
-allowed-tools: Bash(wc:*), Bash(find:*), Bash(ls:*), Bash(head:*), Bash(test:*), Bash(awk:*), Bash(sort:*), Bash(uniq:*), Read, Grep, Glob
+allowed-tools: Bash(wc:*), Bash(find:*), Bash(ls:*), Bash(head:*), Bash(test:*), Bash(awk:*), Bash(sort:*), Bash(uniq:*), Bash(grep:*), Bash(echo:*), Bash(bash scripts/check-phase-plan.sh:*), Bash(bash scripts/test-check-phase-plan.sh:*), Read, Grep, Glob
 ---
 
 Run a hygiene audit on this coding-agents repo. This command is
@@ -24,9 +24,10 @@ Budgets from `skill-hygiene.md` § Token Budgeting:
 - Agents (root `.md` with agent frontmatter): under 400 lines
 - Commands: no hard limit (but front-load critical instructions)
 
-**Exempt:** `skills/phase-plan/*.md` are per-pass content files loaded
-on demand by the main `phase-plan.md` skill. Their budget is the
-skill itself (they don't count individually against the 500-line rule).
+**Exempt:** files under `skills/phase-plan/` (the pass files,
+`execute.md`, `walk-through.md`, `CHANGELOG.md`) are loaded on demand by
+the main `phase-plan.md` skill, or not at all. Their budget is the skill
+itself (they don't count individually against the 500-line rule).
 
 ### CLAUDE.md
 
@@ -40,7 +41,7 @@ skill itself (they don't count individually against the 500-line rule).
 
 !`for f in *.md; do case "$f" in CLAUDE.md|README.md|agents.md|LICENSE|RTK.md|REFINEMENTS.md|EXTERNAL-LEARNINGS.md) continue;; esac; lines=$(wc -l < "$f"); echo "$lines $f"; done | sort -rn`
 
-### Per-pass content files (informational only)
+### Files under `skills/phase-plan/` (informational only)
 
 !`for f in skills/phase-plan/*.md; do lines=$(wc -l < "$f"); echo "$lines $f"; done 2>/dev/null | sort -rn`
 
@@ -140,8 +141,11 @@ guardrails on purpose.
 
 !`grep -l 'TRACKING:' skills/phase-plan.md skills/phase-plan/*.md 2>/dev/null`
 
-**Interpret:** Verify the main `phase-plan.md` retains at least one
-TRACKING comment referencing the split (2026-04-16). Per-pass and
+!`grep -qF 'TRACKING: File split (2026-04-16)' skills/phase-plan.md && echo 'OK: split marker in skills/phase-plan.md' || echo 'MISSING: split marker in skills/phase-plan.md'`
+
+**Interpret:** the second line must read OK. The first list alone can
+stay green when the main file loses its marker, because
+`skills/phase-plan/CHANGELOG.md` and `execute.md` hold TRACKING text too. Per-pass and
 execute files do not need TRACKING markers themselves — the main
 file's TRACKING is the canonical marker.
 
@@ -175,6 +179,28 @@ it is useful to a future reader.
 names but still carry reasoning. Treat the check as advisory — the
 fix is usually "rename a heading" not "rewrite the plan."
 
+## Check 8: phase-plan structure
+
+`scripts/check-phase-plan.sh` checks the phase-plan skill's wiring: the
+loading table and its routes, every `skills/phase-plan/` path and
+section reference (a backticked file name, a section sign, a heading), the split marker, anchors for changes
+already applied, retired phrases, and line limits.
+`scripts/test-check-phase-plan.sh` proves each assertion can fail.
+
+!`bash scripts/check-phase-plan.sh 2>&1 | grep -v '^INFO'`
+
+Then run the fixture test with the Bash tool and an explicit
+`timeout: 600000` (it takes about three minutes, over the default limit):
+
+```
+bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh
+```
+
+**Interpret:** every `FAIL` line is a flag; the check's last line must
+read `0 failed` and the test's must read `0 failed`. A red check means a
+reference, route or applied change was lost: fix the edit that caused it,
+or update the check's table with the reason.
+
 ## Output
 
 Present findings grouped by check number. Use this summary structure:
@@ -202,6 +228,9 @@ Check 6 — TRACKING markers: [pass / issue]
 
 Check 7 — Plan doc reasoning: [pass / N flags]
   <each MISSING line, with a note that these are advisory>
+
+Check 8 — phase-plan structure: [pass / N flags]
+  <each FAIL line from the check or the fixture test>
 
 Overall: <N> flags across <M> checks.
 ```
