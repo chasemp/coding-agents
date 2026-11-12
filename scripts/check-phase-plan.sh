@@ -227,34 +227,42 @@ live_files() {
       sort )
 }
 
-# Print FILE with <!-- --> comment text blanked, keeping line numbers.
-strip_comments() {
-  awk '{
-    out = ""; line = $0
-    while (1) {
-      if (inc) { j = index(line, "-->"); if (!j) { line = ""; break } line = substr(line, j + 3); inc = 0 }
-      i = index(line, "<!--"); if (!i) { out = out line; break }
-      out = out substr(line, 1, i - 1); line = substr(line, i + 4); inc = 1
-    }
-    print out
-  }' "$1"
-}
-
 LIVE="$(live_files)"
 # Reference targets: the live files plus the ledgers. Ledgers hold history,
 # so references are not read from them, but they are valid things to point at.
 TARGETS="$(printf '%s\nREFINEMENTS.md\nEXTERNAL-LEARNINGS.md\n' "$LIVE" | while read -r t; do [ -f "$ROOT/$t" ] && echo "$t"; done)"
 
+# Every target file once, with <!-- --> comment text blanked (line numbers
+# kept), into a cache that the checks below read. One awk for all files keeps
+# the check fast enough to run per fixture.
+CACHE="$(mktemp -d "${TMPDIR:-/tmp}/check-phase-plan-cache.XXXXXX")"
+trap 'rm -rf "$CACHE"' EXIT
+for t in $TARGETS; do mkdir -p "$CACHE/$(dirname "$t")"; done
+( cd "$ROOT" && awk -v cache="$CACHE" '
+  FNR == 1 { if (out != "") close(out); out = cache "/" FILENAME; inc = 0 }
+  {
+    res = ""; line = $0
+    while (1) {
+      if (inc) { j = index(line, "-->"); if (!j) { line = ""; break } line = substr(line, j + 3); inc = 0 }
+      i = index(line, "<!--"); if (!i) { res = res line; break }
+      res = res substr(line, 1, i - 1); line = substr(line, i + 4); inc = 1
+    }
+    print res > out
+  }' $TARGETS )
+
+# Run an awk program over the cached live files; FILENAME is relative to ROOT.
+over_live() { ( cd "$CACHE" && awk "$@" $LIVE ); }
+
 # --- CHK-TABLE ---------------------------------------------------------------
 
-table_cells="$(strip_comments "$ROOT/$MAIN" | awk '
+table_cells="$(awk '
   /^#+ / { insec = (index($0, "Loading the Per-Pass Files") > 0); next }
   insec && /^\|/ {
     if ($0 ~ /^\|[-| ]+\|$/ || index($0, "User says")) next
     rows++; line = $0
     while (match(line, /`[^`]*\.md`/)) { print NR "|" substr(line, RSTART + 1, RLENGTH - 2); line = substr(line, RSTART + RLENGTH) }
   }
-  END { print "ROWS|" rows + 0 }')"
+  END { print "ROWS|" rows + 0 }' "$CACHE/$MAIN")"
 rows="$(printf '%s\n' "$table_cells" | sed -n 's/^ROWS|//p')"
 if [ "$rows" -ge "$MIN_TABLE_ROWS" ]; then pass_; else fail_ CHK-TABLE "$MAIN: loading table has $rows rows, need at least $MIN_TABLE_ROWS"; fi
 while IFS='|' read -r ln cell; do
@@ -266,28 +274,28 @@ done <<EOF
 $table_cells
 EOF
 
-table_rows="$(strip_comments "$ROOT/$MAIN" | awk '
+table_rows="$(awk '
   /^#+ / { insec = (index($0, "Loading the Per-Pass Files") > 0); next }
-  insec && /^\|/ { print }')"
+  insec && /^\|/ { print }' "$CACHE/$MAIN")"
 while IFS='|' read -r m_name m_phrase m_file; do
   [ -n "$m_name" ] || continue
-  if printf '%s\n' "$table_rows" | awk -v a="$m_phrase" -v b="$m_file\`" 'index($0, a) && index($0, b) { found = 1 } END { exit found ? 0 : 1 }'; then
-    pass_
-  else
-    fail_ "CHK-TABLE-MAP:$m_name" "$MAIN: no loading-table row holds both $m_phrase and \`$m_file\`"
-  fi
+  case "$table_rows" in
+    *"$m_phrase"*)
+      if printf '%s\n' "$table_rows" | awk -v a="$m_phrase" -v b="$m_file\`" 'index($0, a) && index($0, b) { found = 1 } END { exit found ? 0 : 1 }'; then
+        pass_; continue
+      fi ;;
+  esac
+  fail_ "CHK-TABLE-MAP:$m_name" "$MAIN: no loading-table row holds both $m_phrase and \`$m_file\`"
 done <<EOF
 $TABLE_MAP
 EOF
 
 # --- CHK-PATH ----------------------------------------------------------------
 
-for f in $LIVE; do
-  strip_comments "$ROOT/$f" | awk -v f="$f" '{
-    line = $0
-    while (match(line, /skills\/phase-plan\/[A-Za-z0-9_.{},-]+\.md/)) { print f "|" NR "|" substr(line, RSTART, RLENGTH); line = substr(line, RSTART + RLENGTH) }
-  }'
-done > "${TMPDIR:-/tmp}/check-phase-plan-paths.$$"
+paths="$(over_live '{
+  line = $0
+  while (match(line, /skills\/phase-plan\/[A-Za-z0-9_.{},-]+\.md/)) { print FILENAME "|" FNR "|" substr(line, RSTART, RLENGTH); line = substr(line, RSTART + RLENGTH) }
+}')"
 while IFS='|' read -r f ln p; do
   [ -n "$p" ] || continue
   case "$p" in
@@ -299,69 +307,77 @@ while IFS='|' read -r f ln p; do
   for e in $expanded; do
     if [ -f "$ROOT/$e" ]; then pass_; else fail_ CHK-PATH "$f:$ln names $e (from $p), not found"; fi
   done
-done < "${TMPDIR:-/tmp}/check-phase-plan-paths.$$"
-rm -f "${TMPDIR:-/tmp}/check-phase-plan-paths.$$"
+done <<EOF
+$paths
+EOF
 
 # --- CHK-SECTION / CHK-SECTION-ALLOW -----------------------------------------
 
-# Normalised headings of a file, one per line.
-headings_of() {
-  strip_comments "$1" | awk '/^#+ / { sub(/^#+ +/, ""); h = tolower($0); gsub(/[^a-z0-9 ]/, "", h); gsub(/ +/, " ", h); sub(/^ /, "", h); sub(/ $/, "", h); print h }'
-}
-
-# 0 when the reference words resolve to one of the headings on stdin.
-resolves() { # words
-  awk -v ref="$1" '
-    BEGIN { nr = split(ref, r, " ") }
-    {
-      nh = split($0, h, " "); k = 0
-      while (k < nr && k < nh && r[k + 1] == h[k + 1]) k++
-      need = 2; if (nh < need) need = nh; if (nr < need) need = nr
-      if (need > 0 && k >= need) { found = 1; exit }
+# Extract every `<file>.md` § <words> reference from the live files, then
+# resolve them all in one pass. A reference resolves when its leading words
+# match a heading's leading words for at least min(2, heading words,
+# reference words), after dropping markdown punctuation and dashes.
+refs_file="$CACHE/.refs"
+over_live '{
+  line = $0
+  while (match(line, /`[A-Za-z0-9_.\/-]+\.md` §/)) {
+    target = substr(line, RSTART + 1, RLENGTH - 1); sub(/` §$/, "", target)
+    line = substr(line, RSTART + RLENGTH)
+    words = line; sub(/^ +/, "", words)
+    if (match(words, /[`*.,;:()"]/)) words = substr(words, 1, RSTART - 1)
+    w = tolower(words); gsub(/[^a-z0-9 ]/, "", w); gsub(/ +/, " ", w); sub(/^ /, "", w); sub(/ $/, "", w)
+    print FILENAME "|" FNR "|" target "|" w "|" words
+  }
+}' > "$refs_file"
+printf '%s\n' "$TARGETS" > "$CACHE/.targets"
+resolved="$( cd "$CACHE" && awk -F'|' '
+  BEGIN {
+    nt = 0
+    while ((getline t < ".targets") > 0) tl[++nt] = t
+    close(".targets")
+    for (i = 1; i <= nt; i++) {
+      if (tl[i] == "") continue
+      n = split(tl[i], parts, "/"); b = parts[n]; count[b]++; path[b] = tl[i]
+      while ((getline l < tl[i]) > 0) {
+        if (l !~ /^#+ /) continue
+        sub(/^#+ +/, "", l); h = tolower(l); gsub(/[^a-z0-9 ]/, "", h); gsub(/ +/, " ", h); sub(/^ /, "", h); sub(/ $/, "", h)
+        nh[tl[i]]++; heads[tl[i], nh[tl[i]]] = h
+      }
+      close(tl[i])
     }
-    END { exit found ? 0 : 1 }'
-}
-
+  }
+  {
+    n = split($3, parts, "/"); b = parts[n]
+    if (count[b] != 1) { print "AMBIG|" (count[b] + 0) "|" $0; next }
+    if ($4 == "") { print "EMPTY|" path[b] "|" $0; next }
+    p = path[b]; nr = split($4, r, " "); ok = 0
+    for (j = 1; j <= nh[p] && !ok; j++) {
+      m = split(heads[p, j], hw, " "); k = 0
+      while (k < nr && k < m && r[k + 1] == hw[k + 1]) k++
+      need = 2; if (m < need) need = m; if (nr < need) need = nr
+      if (need > 0 && k >= need) ok = 1
+    }
+    print (ok ? "OK" : "UNRES") "|" p "|" $0
+  }' "$refs_file" )"
 refs=0
 seen_allow=""
-for f in $LIVE; do
-  strip_comments "$ROOT/$f" | awk -v f="$f" '{
-    line = $0
-    while (match(line, /`[A-Za-z0-9_.\/-]+\.md` §/)) {
-      target = substr(line, RSTART + 1, RLENGTH - 1); sub(/` §$/, "", target)
-      line = substr(line, RSTART + RLENGTH)
-      words = line; sub(/^ +/, "", words)
-      if (match(words, /[`*.,;:()"]/)) words = substr(words, 1, RSTART - 1)
-      w = tolower(words); gsub(/[^a-z0-9 ]/, "", w); gsub(/ +/, " ", w); sub(/^ /, "", w); sub(/ $/, "", w)
-      print f "|" NR "|" target "|" w "|" words
-    }
-  }'
-done > "${TMPDIR:-/tmp}/check-phase-plan-refs.$$"
-while IFS='|' read -r f ln target words raw; do
-  [ -n "$f" ] || continue
+while IFS='|' read -r status info f ln target words raw; do
+  [ -n "$status" ] || continue
   refs=$((refs + 1))
   tbase="${target##*/}"
-  matches="$(printf '%s\n' "$TARGETS" | awk -v b="$tbase" '{ n = split($0, p, "/"); if (p[n] == b) print }')"
-  count="$(printf '%s' "$matches" | grep -c .)"
   allow_key="${f##*/}|$tbase|$words|"
   allowed=0
   case "$SECTION_ALLOW" in *"$allow_key"*) allowed=1; seen_allow="$seen_allow
 $allow_key" ;; esac
-  if [ "$count" -ne 1 ]; then
-    fail_ CHK-SECTION "$f:$ln \`$target\` § $raw: $count files named $tbase among the targets"
-    continue
-  fi
-  if [ -z "$words" ]; then
-    fail_ CHK-SECTION "$f:$ln \`$target\` §: no heading text after the section sign"
-    continue
-  fi
-  if headings_of "$ROOT/$matches" | resolves "$words"; then
-    if [ "$allowed" -eq 1 ]; then fail_ CHK-SECTION-ALLOW "$f:$ln \`$target\` § $raw now resolves; remove it from SECTION_ALLOW"; else pass_; fi
-  else
-    if [ "$allowed" -eq 1 ]; then pass_; else fail_ CHK-SECTION "$f:$ln \`$target\` § $raw: no heading in $matches starts with those words"; fi
-  fi
-done < "${TMPDIR:-/tmp}/check-phase-plan-refs.$$"
-rm -f "${TMPDIR:-/tmp}/check-phase-plan-refs.$$"
+  case "$status" in
+    AMBIG) fail_ CHK-SECTION "$f:$ln \`$target\` § $raw: $info files named $tbase among the targets" ;;
+    EMPTY) fail_ CHK-SECTION "$f:$ln \`$target\` §: no heading text after the section sign" ;;
+    OK) if [ "$allowed" -eq 1 ]; then fail_ CHK-SECTION-ALLOW "$f:$ln \`$target\` § $raw now resolves; remove it from SECTION_ALLOW"; else pass_; fi ;;
+    UNRES) if [ "$allowed" -eq 1 ]; then pass_; else fail_ CHK-SECTION "$f:$ln \`$target\` § $raw: no heading in $info starts with those words"; fi ;;
+  esac
+done <<EOF
+$resolved
+EOF
 if [ "$refs" -ge "$MIN_SECTION_REFS" ]; then pass_; else fail_ CHK-SECTION "live scope: $refs section references extracted, need at least $MIN_SECTION_REFS (extractor broken?)"; fi
 while IFS='|' read -r a_src a_target a_words a_reason; do
   [ -n "$a_src" ] || continue
@@ -379,17 +395,36 @@ if grep -qF "$SPLIT_MARKER" "$ROOT/$MAIN"; then pass_; else fail_ CHK-MARKER "$M
 
 # --- CHK-ANCHOR --------------------------------------------------------------
 
+# One awk over every anchor file: an anchor holds when its literal appears in
+# its section (heading line to the next heading of any level; "^" = before the
+# first heading), outside comments.
+anchor_files="$(printf '%s\n' "$ANCHORS" | awk -F'|' 'NF { print $2 }' | sort -u)"
+present=""
+for af in $anchor_files; do [ -f "$CACHE/$af" ] && present="$present $af"; done
+printf '%s\n' "$ANCHORS" > "$CACHE/.anchors"
+found_anchors="$( cd "$CACHE" && awk -F'|' '
+  NR == FNR { if (NF) { n++; an[n] = $1; af[n] = $2; as[n] = $3; al[n] = substr($0, length($1 $2 $3) + 4) } next }
+  FNR == 1 { started = 0; h = "" }
+  {
+    if ($0 ~ /^#+ /) { h = $0; sub(/^#+ +/, "", h); started = 1 }
+    for (i = 1; i <= n; i++) {
+      if (af[i] != FILENAME || ok[i]) continue
+      insec = (as[i] == "^") ? !started : (started && index(h, as[i]) == 1)
+      if (insec && index($0, al[i])) ok[i] = 1
+    }
+  }
+  END { for (i = 1; i <= n; i++) if (ok[i]) print an[i] }' .anchors $present )"
 while IFS='|' read -r a_name a_file a_section a_literal; do
   [ -n "$a_name" ] || continue
   if [ ! -f "$ROOT/$a_file" ]; then fail_ "CHK-ANCHOR:$a_name" "$a_file not found"; continue; fi
-  if strip_comments "$ROOT/$a_file" | awk -v sec="$a_section" -v lit="$a_literal" '
-      /^#+ / { h = $0; sub(/^#+ +/, "", h); insec = (sec != "^" && index(h, sec) == 1); started = 1 }
-      { if ((sec == "^" && !started) || insec) if (index($0, lit)) { found = 1; exit } }
-      END { exit found ? 0 : 1 }'; then
-    pass_
-  else
-    fail_ "CHK-ANCHOR:$a_name" "$a_file: \"$a_literal\" not found in section \"$a_section\" (outside comments)"
-  fi
+  case "
+$found_anchors
+" in
+    *"
+$a_name
+"*) pass_ ;;
+    *) fail_ "CHK-ANCHOR:$a_name" "$a_file: \"$a_literal\" not found in section \"$a_section\" (outside comments)" ;;
+  esac
 done <<EOF
 $ANCHORS
 EOF
@@ -399,12 +434,10 @@ EOF
 while IFS='|' read -r x_name x_file x_literal; do
   [ -n "$x_name" ] || continue
   if [ "$x_file" = "*" ]; then x_files="$LIVE"; else x_files="$x_file"; fi
+  x_list=""
+  for f in $x_files; do [ -f "$CACHE/$f" ] && x_list="$x_list $f"; done
   x_hits=""
-  for f in $x_files; do
-    [ -f "$ROOT/$f" ] || continue
-    h="$(strip_comments "$ROOT/$f" | awk -v lit="$x_literal" -v f="$f" 'index($0, lit) { printf "%s:%d ", f, NR }')"
-    x_hits="$x_hits$h"
-  done
+  [ -n "$x_list" ] && x_hits="$( cd "$CACHE" && awk -v lit="$x_literal" 'index($0, lit) { printf "%s:%d ", FILENAME, FNR }' $x_list )"
   if [ -z "$x_hits" ]; then pass_; else fail_ "CHK-ABSENT:$x_name" "\"$x_literal\" still present at $x_hits"; fi
 done <<EOF
 $ABSENT
