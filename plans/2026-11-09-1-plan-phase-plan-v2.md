@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–5 shipped (Phase 4 dogfood review folded in); next Phase 6a. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–6a shipped (Phase 4 dogfood review folded in); next Phase 6b. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -14,6 +14,7 @@ decisions by agent listed under Open Questions).
 | 3 | ✅ | `23d0bc7` | `pass1.md` rewritten (257 lines) with the gap-analysis step; check gains CHK-ABSENT and CHK-TABLE-MAP (87 assertions, 57 fixtures) |
 | 4 | ✅ | `d06e0f8`, `9a576b8` | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
 | 5 | ✅ | `1c52532` | `pass3.md` rewritten (232 lines): tests that can fail, hedges, ready gate, walk-through; 133 assertions, 98 fixtures |
+| 6a | ✅ | `96781c5` | `CLAUDE.md` bullet folded (291 lines, net zero); `LINE_LIMITS` table with `CHK-LINES` |
 
 ## Problem Statement
 
@@ -578,7 +579,7 @@ Main file unchanged at 675. Check 1b holds D6; the ready gate's sentence sits on
 apostrophe need the shell's `'"'"'` escape in the check's tables (first attempt broke the table). The fixture test
 now takes 195 s (98 fixtures); Phase 10a's speed-up stays where it is.
 
-### Phase 6a: `CLAUDE.md` walk-through default and the line-limit table
+### Phase 6a: `CLAUDE.md` walk-through default and the line-limit table — ✅ SHIPPED (`96781c5`)
 
 **Goal:** the D8 format is the default in `CLAUDE.md`, held at net zero lines (D13). (Phase 6 was split after
 the Phase 4 review: the generated line-limit fixture needs the test script, a fourth file.)
@@ -596,6 +597,11 @@ the Phase 4 review: the generated line-limit fixture needs the test script, a fo
 **Risks:** `CLAUDE.md` is already over its 200-line budget (VA-4); D13 holds it at net zero.
 **Done when:** check and test pass.
 **Validation:** narrow.
+
+**Delivered (2026-11-12):** the bullet now reads "Lead with the decision and its options, one per message for
+any list of decisions; save each answer at once. Mechanics after; full detail in the repo, not the reply." Table
+format is `id|file|max`, so Phase 8b adds `CHK-SIZE|skills/phase-plan.md|499` as one line. 135 assertions, 100
+fixtures; main file 675.
 
 ### Phase 6b: `ask-questions-if-underspecified` walk-through references
 
@@ -1021,7 +1027,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 6a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 6b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
