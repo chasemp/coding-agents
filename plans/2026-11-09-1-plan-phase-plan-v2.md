@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–6b shipped (Phase 4 dogfood review folded in); next Phase 7. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–7 shipped (Phase 4 dogfood review folded in); next Phase 8a. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -16,6 +16,7 @@ decisions by agent listed under Open Questions).
 | 5 | ✅ | `1c52532` | `pass3.md` rewritten (232 lines): tests that can fail, hedges, ready gate, walk-through; 133 assertions, 98 fixtures |
 | 6a | ✅ | `96781c5` | `CLAUDE.md` bullet folded (291 lines, net zero); `LINE_LIMITS` table with `CHK-LINES` |
 | 6b | ✅ | `0be79c4` | `ask-questions-if-underspecified.md` names the decision-first walk-through; 138 assertions, 102 fixtures |
+| 7 | ✅ | `fb3c764` | Template: Status, Delivery shape, one-line Concurrency Map, optional fields, close-out phase, Next pass; main file 628 lines; 153 assertions, 116 fixtures |
 
 ## Problem Statement
 
@@ -621,7 +622,7 @@ fixtures; main file 675.
 in § Quality gates as first written). The new text names `skills/phase-plan/walk-through.md`, so `CHK-PATH` now
 checks it too.
 
-### Phase 7: Main file, plan template
+### Phase 7: Main file, plan template — ✅ SHIPPED (`fb3c764`)
 
 **Goal:** the template reflects D7, D9, D10 and D11: Delivery shape, Next pass, one-line Concurrency Map,
 optional Read-set and Shared-state contract, traced Write-set, Verified Assumptions probe format (with "not
@@ -643,6 +644,12 @@ hygiene.
 **Write-set:** `skills/phase-plan.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** moderate.
+
+**Delivered (2026-11-12):** main file 675 → 628 (−47; the plan expected about −6, because the Concurrency Map
+and Shared-state text shrank more and the new sections came in shorter). Added an `## Execution Log` section to
+the template (D10's "execution log in its own section"). The close-out line and the long field labels each sit
+on their own line. Revised size estimate for Phase 8b: 628 − TRACKING 106 − Combined Pass 1+2 18 − Phase 0
+template 48 ≈ 456, so the fallback is unlikely to be needed.
 
 ### Phase 8a: Main file, frame, triggers and history
 
@@ -1032,7 +1039,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 7**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 8a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
