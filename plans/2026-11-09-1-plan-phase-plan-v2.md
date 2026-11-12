@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–3 shipped; next Phase 4. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–4 shipped (Phase 4 dogfood review folded in); next Phase 5. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -12,6 +12,7 @@ decisions by agent listed under Open Questions).
 | 1 | ✅ | `3d39dd1`, `07bd294` | Structural check (68 assertions) and its test (38 fixtures); 9 hand mutations all killed after 2 fixtures added |
 | 2 | ✅ | `c3660fd` | `walk-through.md` (67 lines) and its Guardrails reference; 3 anchors |
 | 3 | ✅ | `23d0bc7` | `pass1.md` rewritten (257 lines) with the gap-analysis step; check gains CHK-ABSENT and CHK-TABLE-MAP (87 assertions, 57 fixtures) |
+| 4 | ✅ | `d06e0f8`, fixes in the next commit | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
 
 ## Problem Statement
 
@@ -179,9 +180,12 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - **D15 In-flight plans (was GA-W1; user, 2026-11-09).** One compatibility rule in the main file: before any
   pass, read the plan's Review Log; if it has no gap-analysis entry (an old "Pass 2: Gap Analysis" entry counts),
   run the gap-analysis step first. Applies to plans begun under the old labels; harmless on new plans.
-  *Matching (decided by agent in Pass 2):* any Review Log entry labelled Pass 2 or Pass 1+2 and dated before the
-  v2 merge counts as gap analysis; an execution already started continues under its existing structure; an old
-  "Pass 3: Quality Gates" entry satisfies the start gate. Sessions open at pull time re-invoke `/phase-plan`.
+  *Matching (decided by agent; revised 2026-11-12 after the Phase 4 dogfood review):* keyed on labels, not
+  dates, because the rule is written before the merge date exists. A `Pass 1: Gap-analysis step` entry, or any
+  entry labelled `Pass 2…` or `Pass 1+2…` / `Pass 1 + Pass 2…` other than `Pass 2: Independent review`, counts
+  as gap analysis; an execution already started continues under its existing structure; an old "Pass 3: Quality
+  Gates" entry satisfies the start gate. A session open at pull time is ended and a new one started; re-invoking
+  would leave the old and new loading tables both in context.
 - **D16 Close-out records (was GA-W2; user, 2026-11-09).** Records that can only exist after merge (observed
   check, Outcome Summary, `REFINEMENTS.md` Notes line) land in a second, records-only `land:` PR touching only
   this plan and `REFINEMENTS.md`. Nothing is recorded before it happens; nothing is pushed to `main` directly.
@@ -308,19 +312,25 @@ All recorded one at a time. These are locked; later passes extend them, not reop
   Phase 10b. PR 2 is records only (this plan, `REFINEMENTS.md`), opened after the observed check (D16).
 - **Gates:** `/audit` (D18), which runs the structural check and its test, with no flags beyond VA-9; hook tests; user review and merge
   (no review bot in this repo).
-- **Going live:** after merge, update the main checkout (`git -C ~/git/chasemp/coding-agents pull`), which the
-  `~/.claude` symlinks read. Then the observed check in Phase 11.
-- **Rollback:** trigger: the observed check fails, or a session loads the wrong pass file. On a new branch,
-  restore the skill files, `CLAUDE.md`, `skills/ask-questions-if-underspecified.md`, `commands/audit.md`,
-  `skills/plan-doc-reasoning.md`, `agents.md`, `README.md` and `EXTERNAL-LEARNINGS.md` from `8e6fc33`; delete
-  `scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`, `skills/phase-plan/walk-through.md`,
-  `skills/phase-plan/CHANGELOG.md`; land it as a PR; pull. Keep this plan and add a Discovery entry. Do not
-  `git revert -m1` PR 1 whole: that also deletes this plan.
+- **Going live:** after merge, update the main checkout, which the `~/.claude` symlinks read. Before the pull,
+  `git -C ~/git/chasemp/coding-agents status --porcelain` and `git -C ~/git/chasemp/coding-agents log
+  origin/main..HEAD` must both print nothing (the checkout has `pull.rebase=true`); pull when no session is
+  mid-pass. After it, record that the checkout's HEAD equals the merge commit. Then the observed check in Phase 11.
+- **Rollback:** trigger: a session loads the wrong pass file or uses the old loading table (see Phase 11 for
+  other observed-check failures). On a new branch, reverse only PR 1's own changes, so work that landed on `main`
+  after PR 1 in the same shared files (`CLAUDE.md` above all) survives:
+  `git diff <PR1 merge>^1 <PR1 merge> -- <paths> | git apply -R`, resolving any conflict by hand, for every path
+  PR 1 touched except this plan (skill files, `CLAUDE.md`, `skills/ask-questions-if-underspecified.md`,
+  `commands/audit.md`, `skills/plan-doc-reasoning.md`, `agents.md`, `README.md`, `EXTERNAL-LEARNINGS.md`). That
+  also deletes the files PR 1 added (`scripts/check-phase-plan.sh`, `scripts/test-check-phase-plan.sh`,
+  `skills/phase-plan/walk-through.md`, `skills/phase-plan/CHANGELOG.md`, the `.claude/commands/audit.md`
+  symlink); confirm with `git status`. Land it as a PR; pull per Going live. Keep this plan and add a Discovery
+  entry. Do not `git revert -m1` PR 1 whole: that also deletes this plan.
 - **Status on `main` between PRs:** PR 1 sets this plan's Status to "merged; awaiting observed check and PR 2", so
   `main` reads correctly if PR 2 is delayed.
 - **Commits:** local, one per phase after its checks pass, under D20's standing OK; push, PRs, merge and pull
   need the user's say-so each time.
-- **Manual steps:** the pull; re-invoke `/phase-plan` in any session open at pull time (D15).
+- **Manual steps:** the pull (with its checks); end any session open at pull time and start a new one (D15).
 - **Calendar or unattended jobs:** none.
 
 ## Concurrency Map
@@ -345,6 +355,14 @@ Rules for every assertion a phase adds (Pass 3):
   belongs to that later phase.
 - The real tree is the independent oracle: a typo in a table literal fails the pass fixture, so generating
   refusal fixtures from the same table does not make them circular.
+- **Literals sit on one line** in the target file. A literal that wraps makes an anchor fail and an absence
+  pass without testing anything (both seen in Phases 2 and 4); watching each absence fail first is what
+  catches the second.
+- **Record before validating.** When a phase's commit lands, its Outcome Summary row says "built `<sha>`,
+  validation pending" before any long validation step, so an abort leaves the next session at the right phase.
+- **Which assertions stay.** Every assertion is permanent except `CHK-LINES` (Phase 6), whose job ends when no
+  later phase edits `CLAUDE.md`; Phase 10b removes it. A red check after close means a real break: a reference,
+  route or applied change was lost, and the edit that caused it is fixed or the table is updated with a reason.
 
 ### Phase 1: Structural check for the skill — ✅ SHIPPED (`3d39dd1`, `07bd294`)
 
@@ -518,6 +536,16 @@ the D5 trigger for re-running it on late changes.
 naming absolute worktree paths. Record in Phase 4's execution note that the file read has the "Independent
 review" H1, that three Agent calls each set `model`, and the findings. Findings are handled as a late change (D5):
 walk-through, then a scoped re-check before Phase 5.
+**Delivered (2026-11-12):**
+- `pass2.md` 122 lines; main file 675. RED: 10 anchors (`p2-*`, `main-base-dir`), 4 table routes (gap analysis,
+  independent review, plan review, decisions), 3 absences. The quick-plan absence first passed vacuously, because
+  its literal wrapped a line, until the literal was narrowed. Not in the spec: a loading-table row routing "any
+  list of decisions" to `walk-through.md`.
+- Dogfood: three `general-purpose` reviewers, `model: opus` passed on each call, briefs with absolute worktree
+  paths. Each first reported the loaded file's H1, `# Phase Plan — Pass 2: Independent Review`. Totals: Lens A 1
+  BLOCKER / 7 REVISE, Lens B 0 / 10, Lens C 0 / 8, with overlaps. The main session re-checked the BLOCKER and each
+  new fact (rollback text, `REFINEMENTS.md` lines, `pass1.md`/`pass2.md` lines, one check run 1.64 s, 0 hits
+  for `confirm the severity`); all held. See the Review Log entry for what changed.
 
 ### Phase 5: Pass 3 = quality gates
 
@@ -528,7 +556,8 @@ checks (D10).
 - [ ] `skills/phase-plan/pass3.md`: extended; spot-check step bounded; severity-confirmation bullets in Check 4
   (lines 73-77) and the § Output severity flow (lines 183-232) replaced by the D8 walk-through; walk-through
   references repointed to `walk-through.md`; "Pass 2" references with the gap-analysis meaning (lines 102,
-  145-153, 242) reworded; D9 Next pass close-out; D5 "start by reviewing the previous pass's additions"; Check 7
+  145-153, 242) reworded, including the "apply fixes additively … recognizable from Pass 2" wording (step 4 and
+  § Reminders), which now says to replace superseded planning text in place (D5); D9 Next pass close-out; D5 "start by reviewing the previous pass's additions"; Check 7
   and § Reminders kept (VA-11).
 - [ ] Check assertions: test-validity check present; "ready" requires the walk-through answers to be integrated;
   no live file contains `` `pass1.md` § Output ``; Next pass close-out present.
@@ -550,7 +579,9 @@ already true at base, so it cannot serve as the RED step).
 - [ ] `CLAUDE.md` § Explaining Design and Protocol Work: fold the D8 default into the existing "Lead with the
   decision and its options" bullet; net line count unchanged (D13).
 - [ ] Check assertion `CHK-LINES`: `CLAUDE.md` line count does not exceed its count at base `8e6fc33` (291).
-  Fixture: one line appended.
+  Built as an entry in a `LINE_LIMITS` table (`name|file|max lines`, `--list-line-limits`) with a generated
+  fixture (the file padded past its limit), so Phase 10b removes it by deleting one table line. Plan-scoped
+  (see the loop rules). Phase 8b's `CHK-SIZE` is a second entry in the same table.
 - [ ] Check assertion (absence, `skills/ask-questions-if-underspecified.md`): no `severity-based` (lines 56, 186,
   189 today). Scoped to that file because `py-enforcer.md:645` uses "severity-based recommendations" for its own
   reports, which is unrelated.
@@ -573,9 +604,11 @@ hygiene.
   (audit Check 7); the optional fields read `**Read-set (optional):**` and `**Shared-state contract
   (optional for sequential phases):**`.
 - [ ] Check assertion (absence, `skills/phase-plan.md`): no `confirms or overrides the severity` (line 498 today).
-  Then the live-scope sweep: no live file contains `Confirm as [SEVERITY]`, `confirm the severity`, `confirmed
-  the severity` or `confirms or overrides the severity`. No allowlist: the `walk-through.md` mapping line uses
-  none of these strings.
+  Then widen the earlier per-file absences (`Confirm as [SEVERITY]`, `confirmed the severity`, `confirms or
+  overrides the severity`) to every live file. Only the template line goes red here; the widened ones are
+  regression guards, recorded as such. `confirm the severity` is dropped: it has no live hit at base, so it could
+  never fail. No allowlist: `walk-through.md` uses none of these strings. The new field labels sit on a line of
+  their own in the template (they are long enough to wrap).
 **Depends on:** Phase 5.
 **Write-set:** `skills/phase-plan.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
@@ -598,7 +631,16 @@ moved to `skills/phase-plan/CHANGELOG.md`.
 - [ ] Verification (not a committed assertion, because a deny-list in a public repo would publish the names):
   grep the touched files locally for the names Pass 2 found, using a list kept outside the repo; record "0 hits"
   and the date in the Review Log.
-- [ ] Check assertions: the D15 rule present; the split marker present in the main file; CHANGELOG exists.
+- [ ] The intro paragraph "Passes are additive, not destructive" (main file, after the H1) reworded to D5:
+  extend structure, replace superseded planning text in place, history in the Review Log.
+- [ ] § One plan, three passes names `walk-through.md` and `CHANGELOG.md` among the files in
+  `skills/phase-plan/`; the pointer to `skills/phase-plan/CHANGELOG.md` sits outside any comment, so `CHK-PATH`
+  proves the file exists (a pointer inside the split TRACKING comment would be invisible to the check).
+- [ ] Check assertions: the D15 rule present; the split marker present in the main file. Absences (each on one
+  line today): "Pass 2 reviews for gaps", "extends the base with gap analysis", "Pass 2 fills gaps",
+  "### Combined Pass 1+2", "Load pass1.md + pass2.md". Front-matter (`^`) anchors for the trigger phrases
+  "phase plan", "three-pass plan", "plan review" and for the D11 bulk-external-write trigger; an anchor for the D5
+  guardrail's literal.
 **Depends on:** Phase 7.
 **Write-set:** `skills/phase-plan.md`, `skills/phase-plan/CHANGELOG.md`, `scripts/check-phase-plan.sh`.
 **Risks:** the description is what triggers the skill; keep the existing trigger phrases ("phase plan",
@@ -608,12 +650,17 @@ moved to `skills/phase-plan/CHANGELOG.md`.
 
 ### Phase 8b: Main file under 500 lines
 
-**Goal:** the D13 size assertion turns GREEN. Pass 2 measured: TRACKING 122 lines out minus the 14-line split
-block kept, Concurrency Map 55 → ~13, optional-field text −29, Combined Pass 1+2 −22, new sections ≈ +64, giving
-≈ 534-545. The remaining ~45 lines move per D17.
+**Goal:** the D13 size assertion turns GREEN. Re-measured 2026-11-12 at 675 lines: TRACKING −106 net, Concurrency
+Map −41, optional-field text −29 (unmeasured), Combined Pass 1+2 −18, new sections ≈ +64, Phase 0 template −48,
+giving ≈ 497: about two lines of margin. Every Delivered note from Phase 7 on records the main file's `wc -l`.
+If the count is still 500 or more after the move, the walk-through offers the next candidate: § Relationship to
+Other Tools (lines 216-236 today) into `execute.md`, where its agents act.
 **Changes:**
 - [ ] `skills/phase-plan.md`: the Phase 0 (Discovery) template block replaced by a one-line pointer to `pass1.md`.
-- [ ] `skills/phase-plan/pass1.md`: receives the Phase 0 template under its Phase 0 drafting step.
+- [ ] `skills/phase-plan/pass1.md`: receives the Phase 0 template in its own `## Phase 0 template` section
+  after § Steps (inside § Steps its `###` heading would end the section and break the `Steps` anchors); step 5
+  points to it. The gap-analysis step's "main file § compatibility rule" becomes a checked reference,
+  `` `phase-plan.md` § Compatibility rule ``.
 - [ ] Check assertion: `pass1.md` contains the Phase 0 template heading; the main file's pointer resolves (Phase 1
   section-reference check).
 - [ ] Check assertion `CHK-SIZE`: `skills/phase-plan.md` under 500 lines (failing, not printed); the Discovery
@@ -651,7 +698,8 @@ probe fixtures in the repo (D11). Close-out narrative and worktree removal kept 
 - [ ] `skills/phase-plan/execute.md` § Keep the plan doc in sync with reality, including its § When the plan
   closes subsection; "Delivered:" and skip records stay append-only (D5 scope); D9 "a compacted context is not
   fresh: say so and hand off"; the 2026-10-09 TRACKING block's three repo names made generic (D19).
-- [ ] Check assertions: late-change re-check present; "which pass should have caught this?" present; VA-11
+- [ ] Check assertions: late-change re-check present; "which pass should have caught this?" present, on a line
+  of its own (here and in the Phase 7 template); VA-11
   close-out anchors present.
 **Depends on:** Phase 9a.
 **Write-set:** `skills/phase-plan/execute.md`, `scripts/check-phase-plan.sh`.
@@ -678,6 +726,9 @@ MISSING. Restore only after `git status --porcelain skills/phase-plan.md` shows 
 `git checkout HEAD -- skills/phase-plan.md`, then re-run the check.
 **Done when:** `/audit` shows no flags beyond the VA-9 baseline (and `phase-plan.md` 673 cleared); the structural
 check passes through `/audit`.
+**Risk:** the test took 128-144 s at Phase 4 (81 fixtures; each check run about 1.6 s, mostly forked `awk`
+processes), and grows with each anchor. Time it through `/audit` and record the time. If it is near a timeout,
+make the check cheaper first: strip comments once per file and resolve all references in one `awk` pass.
 **Validation:** narrow.
 
 ### Phase 10b: Repo docs
@@ -690,7 +741,10 @@ check passes through `/audit`.
 - [ ] `EXTERNAL-LEARNINGS.md` line 117: close the parked walk-through question with a pointer to D8.
 **Depends on:** Phase 10a.
 **Write-set:** `README.md`, `EXTERNAL-LEARNINGS.md`, `scripts/check-phase-plan.sh`.
-**Done when:** structural check passes; README lists every top-level directory.
+- [ ] `scripts/check-phase-plan.sh`: remove the `CHK-LINES` table line (its fixture is generated, so it goes
+  too; `CLAUDE.md` still at 291 is confirmed first).
+- [ ] The README gate line says when to run `/audit`: before each PR, and after merge (agents.md Post-Merge).
+**Done when:** structural check passes; README § What's here has the `scripts/` row and the gate line.
 **Validation:** narrow.
 
 ### Phase 11: Close-out
@@ -701,12 +755,17 @@ check passes through `/audit`.
 - [ ] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
   directory is a repo outside coding-agents, run the
   skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
-  three Agent calls each with `model` set, one question per message, and D15 behaviour on a plan with old labels.
-  Record the session date.
-- [ ] Refresh the two auto-memory files outside this repo that describe the old pass order (VA-2).
+  three Agent calls each with `model` set, one question per message, D15 behaviour on a plan with old labels,
+  and one handoff paste that starts with `/phase-plan`. Record the session date and the checkout's HEAD.
+  If it fails: the wrong pass file or the old loading table means rollback (Delivery shape); behaviour drift
+  (two questions in one message, a missing `model`) means fix forward in a new PR plus a Discovery entry. PR 2
+  records whichever happened.
+- [ ] Refresh the two auto-memory files outside this repo that describe the old pass order (VA-2), and this
+  project's own memory notes about the plan.
 - [ ] Record the `CLAUDE.md` overage (291 vs 200) as a `REFINEMENTS.md` follow-up entry (D13).
 - [ ] Outcome Summary, status line, Discoveries with "which pass should have caught this?".
-- [ ] `REFINEMENTS.md` entry: Status stays `accepted`; add "Applied <date> in <PR>" to Notes (VA-10).
+- [ ] `REFINEMENTS.md` entry: Status stays `accepted` with "implementation pending" dropped; add "Applied <date>
+  in <PR>" to Notes (VA-10).
 - [ ] Open PR 2 (records only: this plan, `REFINEMENTS.md`; D16); after merge, update the main checkout.
 - [ ] Remove the `phase-plan-v2` worktree and branch after both PRs have landed.
 **Write-set:** this plan, `REFINEMENTS.md` (plus the two auto-memory files outside the repo).
@@ -731,6 +790,14 @@ check passes through `/audit`.
   (BLOCKER / REVISE / CONFIRMED) sit next to the question tags (BLOCKING / PHASE-GATED / ADVISORY). Keep both,
   because they label different things (a reviewer's finding vs a decision the user owns); `walk-through.md` states
   the mapping: a BLOCKER finding that needs a user decision becomes a BLOCKING question.
+- **Decided by agent after the Phase 4 dogfood review (override if wanted):**
+  - *D15 matching keyed on labels, not the merge date;* sessions open at pull time are restarted, not re-invoked.
+  - *Rollback reverses PR 1's own diff* rather than restoring files from the base.
+  - *`CHK-LINES` is plan-scoped* and removed in Phase 10b; every other assertion is permanent.
+  - *Phase 10b's done-when narrowed* to the `scripts/` row and gate line rather than adding `plans/` and
+    `.claude/` rows (not in scope).
+  - *A pre-named size fallback* (§ Relationship to Other Tools into `execute.md`), offered by walk-through only if
+    the main file is still 500 or more after Phase 8b.
 - **Decided by agent in Pass 3 (override if wanted):**
   - *Severity wording asserted per file, not by one expected-red assertion.* Each phase that rewrites a file
     asserts the old wording gone from that file; Phase 7 adds the live-scope sweep. Keeps every commit green.
@@ -898,15 +965,48 @@ compared against the plan.
   choice and is now asserted, as is `agents.md`'s Phase 1 row. Every other entry has its phase.
 **Confirmed ready:** yes. No open questions; five decided-by-agent items listed for override.
 
+### Execution: Phase 4 dogfood review — 2026-11-12
+The new `pass2.md` run on this plan (D12), three lenses, `model: opus` on each call. Every BLOCKER and new fact
+re-checked by the main session before folding in; all held. No finding needed the user: each had one correct
+fix or revised an agent decision (listed under Open Questions).
+**Found (merged):**
+- BLOCKER (A): rollback restored shared files wholesale from the base, discarding any later work in them.
+- Plan records lagged the branch: Phase 4 unrecorded, Next pass stale (A, B, C).
+- Skill text shipped in Phases 3-4: `pass1.md` always handed off to Pass 2, even for a quick plan (B); the
+  handoff paste did not load the main file (A); `pass2.md` re-checked "every BLOCKER and every new fact", not
+  every claim (B).
+- D15 matching keyed on a merge date that does not exist when the rule is written (A); open sessions and the pull
+  had no check (A); a failed observed check had no response (A); `CHK-LINES` would freeze `CLAUDE.md` after
+  close (A).
+- Size margin about two lines, not 45 (B, C); Phase 8b's template move would break three `Steps` anchors because
+  headings in code fences count (C); test runtime 128-144 s, not 40 (A, C).
+- Assertions that could pass vacuously: Phase 7's `confirm the severity` (0 hits at base), a CHANGELOG pointer
+  inside a comment, an unbacked "compatibility rule" pointer, long literals that may wrap (C). Phase 8a asserted
+  none of its own rewrites (C).
+- Docs: Phase 10b done-when unmeetable (README omits `plans/` and `.claude/`), `REFINEMENTS.md` entry stale
+  (D1–D16, Target, "implementation pending"), rollback list missing the new symlink, frame not naming the new
+  files, additive wording left in the intro and `pass3.md`, a third memory note (B).
+**Changed:**
+- Skill text (next commit): `pass1.md` close-out names Pass 3 for a quick plan; the handoff paste starts with
+  `/phase-plan <pass> <absolute plan path>`; `pass2.md` re-checks every claim. Anchors `p1-quick-close`,
+  `p1-paste-loads-main`, absence `p2-blocker-only`, each watched RED.
+- Plan: Delivery shape rollback reverses only PR 1's diff; going-live pull checks; D15 matching by label and new
+  sessions instead of re-invoke; loop rules (one-line literals, record before validating, which assertions stay);
+  Phases 5, 6, 7, 8a, 8b, 9b, 10a, 10b, 11 extended as each finding names; `REFINEMENTS.md` entry corrected.
+**Dropped:** none.
+**Confirmed:** install path and routing; gates green at HEAD; mixed state cannot reach `main`; Outcome Summary
+counts re-run on archived trees; the literals Phases 5-6 will retire each sit on one line; no internal names in
+the added text.
+
 ## Next pass
 
-Read `plans/2026-11-09-1-plan-phase-plan-v2.md` in
-`~/git/chasemp/coding-agents.worktrees/phase-plan-v2` (branch `phase-plan-v2`, base `origin/main` `8e6fc33`;
-re-check with `git ls-remote`). **Continue execution at Phase 4**, loading the current
-`skills/phase-plan/execute.md` (the worktree's own copy). Phases 1–2 shipped (Outcome Summary). Locked: D1–D20
-and the Pass 3 decisions by agent. Per phase: literals into the check's tables first (`ANCHORS` in
-`scripts/check-phase-plan.sh`; Phase 3 adds the absence table and `--list-absent`, with generated fixtures in
-`scripts/test-check-phase-plan.sh`), watch RED, edit text, then `bash scripts/test-check-phase-plan.sh &&
-bash scripts/check-phase-plan.sh` plus the hook tests, commit (D20), record the phase. A test run takes about 40
-seconds. Anchor literals must sit on one line. Commit locally; push, PRs, merge and pull need the user's say-so.
-Stop for the user at the Phase 10a and Phase 11 checkpoints. Done when Phase 11 is closed.
+Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
+(branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
+Phase 5**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
+Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
+`scripts/check-phase-plan.sh`; Phase 6 adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
+text, then `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh` plus the hook tests,
+commit (D20), record the phase. A test run takes about 2.5 minutes; run it in the background. Commit locally;
+push, PRs, merge and pull need the user's say-so. Stop for the user at the Phase 10a and Phase 11 checkpoints.
+Done when Phase 11 is closed.

@@ -334,14 +334,15 @@ boilerplate, and the user repeats the same process instructions in most sessions
 **Proposed refinement:**
 - **Target:** extend skill `phase-plan` (main file, all per-pass files, `execute.md`, new `walk-through.md` and
   `CHANGELOG.md`); add `scripts/check-phase-plan.sh` with its test; touch `ask-questions-if-underspecified.md`,
-  `CLAUDE.md`, `commands/audit.md`, `plan-doc-reasoning.md`, `agents.md`, `README.md`, `EXTERNAL-LEARNINGS.md`.
+  `CLAUDE.md`, `commands/audit.md` (plus a project-local `.claude/commands/audit.md` symlink so `/audit` is the
+  repo's gate), `plan-doc-reasoning.md`, `agents.md`, `README.md`, `EXTERNAL-LEARNINGS.md`.
 - **Change:** new pass order (Pass 1 plan + explicit gap-analysis step with an outward sweep → Pass 2
   independent three-lens review → Pass 3 quality gates); read-only probe rules; late-change re-checks and
   in-place replacement of superseded text; test-validity gates; external-write rollout tier and
   built → merged → deployed → observed phase states; Delivery shape and Next pass template sections; a
   decision-first walk-through; template cuts (Concurrency Map, Read-set, Shared-state contract, 4-file rule
   wording, Review Log hygiene); close-out as a numbered phase with "which pass should have caught this?".
-  Full decision list (D1–D16) in `plans/2026-11-09-1-plan-phase-plan-v2.md`.
+  Full decision list (D1–D20) in `plans/2026-11-09-1-plan-phase-plan-v2.md`.
 - **Rationale:** checks that cannot see a category do not see it on a second run; the gain comes from changing
   direction, stance and author. Cutting boilerplate pays for the additions so the main file shrinks.
 
