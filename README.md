@@ -50,6 +50,11 @@ TRACKING, DEPLOYMENT, DECISIONS, ARCHITECTURE, PATTERN, REPO-GRAMMAR) plus
 | `skills/` | On-demand skill definitions (testing-anti-patterns, hexagonal-architecture, etc.) |
 | `commands/` | Slash commands (pr, generate-pr-review) |
 | `hooks/` | Programmatic TDD enforcement for Claude Code and git |
+| `scripts/` | Repo checks: the phase-plan structure check, the `/audit` shell checks, and their tests |
+
+**Gate:** run `/audit` before each PR and after each merge (the Post-Merge sequence in `agents.md` § Recommended Sequences). Its Check 8
+runs `bash scripts/test-check-phase-plan.sh && bash scripts/check-phase-plan.sh && bash scripts/test-audit-checks.sh`;
+the hook tests are `for t in hooks/test-*.sh; do bash "$t"; done`. There is no CI.
 
 ## Installation
 

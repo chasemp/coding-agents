@@ -20,7 +20,6 @@
 #   CHK-ANCHOR:<name>  an applied change's literal is still in its own section
 #   CHK-ABSENT:<name>  a retired phrase is gone from its file (or every live file)
 #   CHK-TABLE-MAP:<name> some loading-table row holds both a trigger phrase and its file
-#   CHK-LINES          CLAUDE.md held at its line count at base 8e6fc33 (plan-scoped; removed at close)
 #   CHK-SIZE           skills/phase-plan.md under its 500-line budget (D13)
 #
 # "Live" files: skills/ (except skills/phase-plan/CHANGELOG.md), commands/,
@@ -146,7 +145,9 @@ x-walkthrough-exec|skills/phase-plan/execute.md|When new findings surface mid-ex
 x-append-only|skills/phase-plan/execute.md|When a phase ships|planning text is replaced, execution records are appended
 x-closeout-phase|skills/phase-plan/execute.md|When the plan closes|the plan'"'"'s last numbered phase
 x-which-pass|skills/phase-plan/execute.md|When the plan closes|which pass should have caught this?
-x-fixtures-repo|skills/phase-plan/execute.md|When the plan closes|Probe results kept as fixtures go into the repo'
+x-fixtures-repo|skills/phase-plan/execute.md|When the plan closes|Probe results kept as fixtures go into the repo
+readme-scripts-row|README.md|What'"'"'s here|`scripts/`
+readme-gate|README.md|What'"'"'s here|**Gate:** run `/audit`'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -189,10 +190,8 @@ route-final|"final review"|pass3.md
 route-execute|"let'"'"'s execute"|execute.md
 route-decisions|any list of decisions|walk-through.md'
 
-# Line limits, as id|file|max lines. CHK-LINES holds CLAUDE.md at net zero for
-# this plan only (D13); it is removed when no later phase edits CLAUDE.md.
-LINE_LIMITS='CHK-LINES|CLAUDE.md|291
-CHK-SIZE|skills/phase-plan.md|499'
+# Line limits, as id|file|max lines.
+LINE_LIMITS='CHK-SIZE|skills/phase-plan.md|499'
 
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.
