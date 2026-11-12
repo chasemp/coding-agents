@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9b shipped; Phase 10a built (`283a014`); its `/audit` run failed at load (D21); next Phase 10a-ii. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9b shipped; Phases 10a (`283a014`) and 10a-ii (`33a705c`) built; waiting on the user's `/audit` run in a new session. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -23,6 +23,7 @@ decisions by agent listed under Open Questions).
 | 9b | ✅ | `a1a3e29` | `execute.md` late-change re-check, walk-through, append-only records, close-out as last phase with "which pass"; 203 assertions, about 155 fixtures |
 | — | ✅ | `eb0d4f8` | Check speed-up (decision before 10a): about 1 s a run, test about 165 s |
 | 10a | built `283a014`, validation pending | | `/audit` Check 6 OK/MISSING, Check 8 structure check; `.claude/commands/audit.md`; waiting on the user's `/audit` run |
+| 10a-ii | built `33a705c`, validation pending | | `scripts/audit-checks.sh` (12 checks moved verbatim), `scripts/test-audit-checks.sh` (14 pass); first `/audit` run had stopped at load |
 
 ## Problem Statement
 
@@ -813,7 +814,7 @@ instructed Bash step with `timeout: 600000`. Not in the spec: `allowed-tools` ga
 and the two script commands, since the checks call them. The check caught an illustrative reference in the new
 Check 8 text, which was reworded. Fixture test 161 s, 156 passed.
 
-### Phase 10a-ii: `/audit` checks through a script (D21)
+### Phase 10a-ii: `/audit` checks through a script (D21) — built (`33a705c`), validation pending
 
 **Goal:** `/audit` loads and runs every check without a permission refusal, so Phase 10a's checkpoint can pass.
 **Changes:**
@@ -830,6 +831,13 @@ the user's `/audit` run in a new session (Phase 10a's checkpoint).
 **Write-set:** `scripts/audit-checks.sh`, `scripts/test-audit-checks.sh`, `commands/audit.md`.
 **Done when:** the test passes, the structure check passes, and `/audit` runs end to end in a new session.
 **Validation:** moderate; the user's `/audit` run, plus the refusal (marker removed) through it.
+
+**Delivered so far (2026-11-12):** twelve lines moved, not nine: the test also counts `$` inside quoted `awk`
+and `grep` patterns (`$1`, `\.md$`), which is stricter than needed and cheaper than guessing what Claude Code's
+check accepts. Output parity was checked once rather than committed: each subcommand printed exactly what its
+inline command printed (12/12). Unchanged and still inline: Check 2's agent-name grep, Check 6's two lines,
+Check 8's check line (none contains `$`). `agents.md`'s `scripts/` row names only the structure check; Phase 10b
+covers it.
 
 ### Phase 10b: Repo docs
 
