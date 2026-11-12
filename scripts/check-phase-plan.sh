@@ -101,7 +101,8 @@ p3-deliverable|skills/phase-plan/pass3.md|Steps|**Deliverable anchor.**
 p3-ready|skills/phase-plan/pass3.md|Output|every walk-through answer is written into the plan and re-checked
 p3-walkthrough|skills/phase-plan/pass3.md|Output|`walk-through.md`
 p3-next-pass|skills/phase-plan/pass3.md|Output|`pass1.md` § Next pass handoff
-claude-md-walkthrough|CLAUDE.md|Explaining Design and Protocol Work|one per message for any list of decisions'
+claude-md-walkthrough|CLAUDE.md|Explaining Design and Protocol Work|one per message for any list of decisions
+aq-walkthrough|skills/ask-questions-if-underspecified.md|Relationship to phase-plan|decision-first walk-through'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -116,7 +117,8 @@ p3-confirmed-every|skills/phase-plan/pass3.md|confirmed every open question'"'"'
 p3-apply-confirmed|skills/phase-plan/pass3.md|Apply the confirmed severities
 p3-additive|skills/phase-plan/pass3.md|**Apply fixes additively.**
 p3-pass2-word|skills/phase-plan/pass3.md|take Pass 2'"'"'s word
-pass1-output-ref|*|`pass1.md` § Output'
+pass1-output-ref|*|`pass1.md` § Output
+aq-severity-based|skills/ask-questions-if-underspecified.md|severity-based'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
