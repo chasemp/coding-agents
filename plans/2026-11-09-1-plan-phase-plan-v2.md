@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–8a shipped (Phase 4 dogfood review folded in); next Phase 8b. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–8b shipped (Phase 4 dogfood review folded in); next Phase 9a. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -18,6 +18,7 @@ decisions by agent listed under Open Questions).
 | 6b | ✅ | `0be79c4` | `ask-questions-if-underspecified.md` names the decision-first walk-through; 138 assertions, 102 fixtures |
 | 7 | ✅ | `fb3c764` | Template: Status, Delivery shape, one-line Concurrency Map, optional fields, close-out phase, Next pass; main file 628 lines; 153 assertions, 116 fixtures |
 | 8a | ✅ | `e1dd358` | Frame, triggers, § Compatibility rule, D5 guardrail; 6 TRACKING blocks → `CHANGELOG.md`; main file 524; 174 assertions, 134 fixtures |
+| 8b | ✅ | `bf6760d` | Phase 0 template → `pass1.md` § Phase 0 template; main file **478** (D13 met); `CHK-SIZE`; 183 assertions, 141 fixtures |
 
 ## Problem Statement
 
@@ -693,7 +694,7 @@ the split block keeps a pointer line, and the frame names the file outside any c
 The changelog anchor's section is § Per-pass skill files (the subsection that lists the files). The commit
 message says 525; the count is 524.
 
-### Phase 8b: Main file under 500 lines
+### Phase 8b: Main file under 500 lines — ✅ SHIPPED (`bf6760d`)
 
 **Goal:** the D13 size assertion turns GREEN. Re-measured 2026-11-12 at 675 lines: TRACKING −106 net, Concurrency
 Map −41, optional-field text −29 (unmeasured), Combined Pass 1+2 −18, new sections ≈ +64, Phase 0 template −48,
@@ -717,6 +718,10 @@ Other Tools (lines 216-236 today) into `execute.md`, where its agents act.
 load-bearing text to pass the assertion.
 **Done when:** check passes, including the size assertion.
 **Validation:** moderate.
+
+**Delivered (2026-11-12):** main file 524 → 478, 21 lines under budget; the fallback move was not needed. The
+template sits in `pass1.md` as plain text under `## Phase 0 template` (no inner `###` heading, which would end the
+section), placed after § Steps; step 5 points to it. `pass1.md` 313 lines.
 
 ### Phase 9a: Execution rules, gates and states
 
@@ -1047,7 +1052,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 8b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 9a**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
