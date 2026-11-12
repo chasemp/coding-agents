@@ -839,6 +839,15 @@ inline command printed (12/12). Unchanged and still inline: Check 2's agent-name
 Check 8's check line (none contains `$`). `agents.md`'s `scripts/` row names only the structure check; Phase 10b
 covers it.
 
+**User `/audit` run 1 (2026-11-12, new session in the worktree):** stopped at load on Check 3's `$f` line
+(D21). **Run 2, after `33a705c`:** loaded and ran all eight checks. Check 1: the VA-9 baseline flags exactly
+(`CLAUDE.md` 291; `skills/testing-anti-patterns.md` 506; six agents), with `skills/phase-plan.md` (478) no longer
+flagged. Check 4: orange shared by three agents (`rust-enforcer.md` unchanged since 2026-05-28; not this plan).
+Checks 2, 3, 5, 6, 7 pass; Check 8: 204 assertions, 156 and 14 fixtures, all 0 failed. Run 2 also showed a shell
+error in Check 2's agent-name line (escaped backticks in a backtick-delimited `!` line, also pre-existing);
+fixed in `75533c0` (`agent-names` subcommand; test refuses escaped backticks; 16 pass). Follow-up, not this plan:
+that grep's name list omits `rust-enforcer`.
+
 ### Phase 10b: Repo docs
 
 **Goal:** README and the external-learn ledger are current.
