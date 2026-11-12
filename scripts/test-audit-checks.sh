@@ -25,6 +25,16 @@ else
   printf '%s\n' "$bad" | cut -c1-100 | sed 's/^/    /'
 fi
 
+# 1b. No `!` line contains an escaped backtick: the line is itself delimited
+# by backticks, so the command would be cut at it.
+bad="$(grep -n '^!`' "$AUDIT" | grep -F '\`')"
+if [ -z "$bad" ]; then
+  record PASS "no escaped backtick in any ! line of commands/audit.md"
+else
+  record FAIL "escaped backtick in ! lines of commands/audit.md:"
+  printf '%s\n' "$bad" | cut -c1-100 | sed 's/^/    /'
+fi
+
 # 2. Every audit-checks.sh name the command uses runs and exits 0.
 names="$(grep -o 'bash scripts/audit-checks.sh [a-z0-9-]*' "$AUDIT" | awk '{ print $3 }' | sort -u)"
 if [ -z "$names" ]; then

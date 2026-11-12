@@ -71,7 +71,7 @@ see and reject it. See the grep below for the full filter list.
 Grep for inline-code agent names and verify the corresponding root
 `.md` exists:
 
-!`grep -rhoE '\`(tdd-guardian|py-enforcer|pr-reviewer|refactor-scan|progress-guardian|adr|docs-guardian|learn|external-learn|use-case-data-patterns)\`' skills/ commands/ *.md 2>/dev/null | sort -u | tr -d '\`'`
+!`bash scripts/audit-checks.sh agent-names`
 
 **Interpret:** For each referenced path, verify it exists via
 `test -f`. Flag any that don't. Known-good referenced names should

@@ -19,6 +19,8 @@ case "${1:-}" in
     grep -rhoE '(\.claude/)?skills/[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)?\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/X/|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u ;;
   command-refs)
     grep -rhoE '(\.claude/)?commands/[a-zA-Z0-9_-]+\.md' skills/ commands/ *.md 2>/dev/null | grep -vE '^\.claude/|(^|/)X\.md$|/some-[a-zA-Z0-9_-]+\.md$|<' | sort -u ;;
+  agent-names)
+    grep -rhoE '`(tdd-guardian|py-enforcer|pr-reviewer|refactor-scan|progress-guardian|adr|docs-guardian|learn|external-learn|use-case-data-patterns)`' skills/ commands/ *.md 2>/dev/null | sort -u | tr -d '`' ;;
   skill-frontmatter)
     for f in skills/*.md; do head -10 "$f" | grep -q '^name:' || echo "MISSING name: $f"; head -10 "$f" | grep -q '^description:' || echo "MISSING description: $f"; done ;;
   agent-frontmatter)
@@ -32,6 +34,6 @@ case "${1:-}" in
   plan-reasoning)
     for f in plans/*.md; do grep -qiE '^#{1,4} (problem|reasoning|rationale|why this|source summary|context|decision|approach)' "$f" || echo "MISSING reasoning marker: $f"; done 2>/dev/null ;;
   *)
-    echo "usage: bash scripts/audit-checks.sh <claude-size|skill-sizes|agent-sizes|phase-plan-sizes|skill-refs|command-refs|skill-frontmatter|agent-frontmatter|command-frontmatter|colors|orphans|plan-reasoning>" >&2
+    echo "usage: bash scripts/audit-checks.sh <agent-names|claude-size|skill-sizes|agent-sizes|phase-plan-sizes|skill-refs|command-refs|skill-frontmatter|agent-frontmatter|command-frontmatter|colors|orphans|plan-reasoning>" >&2
     exit 2 ;;
 esac
