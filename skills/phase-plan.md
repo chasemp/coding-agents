@@ -261,6 +261,7 @@ handoff artifact between context windows.
 
 ```markdown
 # [Title]
+**Status:** one line of current state (pass done, phase shipped, next step).
 
 ## Problem Statement
 What we're solving and why. Include issue references, symptoms, constraints.
@@ -272,9 +273,10 @@ future readers (including future-us) should be able to reconstruct the
 decision process from this section alone.
 
 ## Verified Assumptions
-What we confirmed about libraries, APIs, CLI tools, and existing code —
-and how we confirmed it (docs link, source file:line, probe output).
-Anything not listed here is unverified.
+What we confirmed about libraries, APIs, CLI tools, data and existing code —
+and how (docs link, source file:line, probe command + full count + date;
+samples flagged as samples). Failure behaviour not seen is marked
+"not observed live" and carried as a risk. Anything not listed is unverified.
 
 ## Documentation Impact
 Every doc file that will be added, renamed, moved, removed, or
@@ -301,59 +303,20 @@ If the plan adds, renames, or removes a file, this section cannot be
 empty. At minimum, record "grepped — no references found" with the
 search terms used.
 
+## Delivery shape
+PR count (default one per plan), merge order, the repo's gates, manual deploy
+steps, calendar dependencies, where unattended jobs run, rollback. Filled in
+Pass 1 from saved preferences. Production and ops state lives here.
+
 ## Concurrency Map
-Which phases run sequentially vs in parallel, and on what isolation guarantees.
-The section is **required** so the question is forced — not so every plan
-declares parallelism. Default to sequential; parallel is opt-in.
-
-**Scope of parallelism:** A parallel set is a *local execution* detail
-inside a single feature branch. Parallel agents work in worktrees and
-on per-agent branches, but their output is merged back into the feature
-branch **locally** via `git merge` — not via PRs. PRs are reserved for
-the feature-branch → main hand-off, on user request. Worktrees and
-subagents are not a sub-PR factory; they are how concurrent work happens
-underneath one branch of delivery. See `execute.md` § Step 4 for the
-consolidation procedure.
-
-For each set of phases that can run in parallel, declare three things:
-- **Disjoint write-sets:** The phases write to non-overlapping files/modules.
-  Compare the per-phase **Write-set** entries below — any overlap means the
-  phases cannot run in parallel.
-- **Disjoint shared-state contracts:** Neither phase mutates ambient state
-  the other observes. This goes beyond files: git HEAD/branch, working
-  directory, env vars, ports, daemons, lock files, databases, external
-  services. A files-only check is not enough; isolation leaks through
-  ambient state are the most common parallel-execution failure mode.
-- **Re-entry verification:** What the orchestrator checks when each parallel
-  phase returns to confirm isolation actually held. Examples: "main repo
-  HEAD = <pre-dispatch sha>", "`git status` clean in main worktree",
-  "no orphan `claude-*` processes", "lock file removed".
-
-**Format:**
-```
-Sequential spine: Phase 0 → Phase 1 → [Phase 2A || Phase 2B] → Phase 3
-
-Parallel set {2A, 2B}:
-- Disjoint write-sets: 2A writes src/foo.py + tests/test_foo.py;
-                       2B writes src/bar.py + tests/test_bar.py.
-- Shared-state contract: Both run in isolated git worktrees off
-  the parent branch. Neither invokes `git checkout` / `git stash` /
-  `git rebase` in the parent worktree. Both use disjoint tmp paths
-  and bind no ports.
-- Re-entry verification: Confirm parent-repo HEAD unchanged from
-  pre-dispatch SHA. Confirm `git worktree list` shows only the
-  expected worktrees. Confirm no spawned subprocess outlived the
-  agent.
-```
-
-If everything is sequential, write `All phases sequential.` and a one-line
-reason (e.g., "each phase reads what the prior wrote"). The empty Concurrency
-Map is what we're trying to prevent — silence here means parallelism was
-never considered.
-
-**Hard rule:** If two phases share *any* write-set entry or *any*
-shared-state mutation, they must be sequential. No exceptions inferred from
-"it'll probably be fine."
+One line by default: `All phases sequential: <reason>`. Ask once whether any
+phases could run in parallel. Only for a declared parallel set, write the
+block: disjoint write-sets, a shared-state contract written as invariants
+(git HEAD, working directory, env, ports, daemons, lock files, external
+services), and re-entry checks mapping one to one to it. Parallel work merges
+back into the feature branch locally (`execute.md` § Step 4), never as PRs.
+**Hard rule:** any shared write-set entry or shared-state mutation means
+sequential.
 
 ## Phases
 Ordered phases of work. Each phase should leave the system in a working state.
@@ -425,39 +388,17 @@ If a phase only has unit tests for its components, the wiring is not
 tested and will be skipped. **This is the single most important field
 for preventing dead code.**
 **Depends on:** Prior phases or external factors.
-**Read-set:** Files/modules this phase reads. Name files, not directories.
-Used by Pass 2 to detect cross-phase coupling and by the Concurrency Map
-to confirm parallelism is safe.
-**Write-set:** Files/modules this phase writes (creates, edits, or deletes).
-Used to derive the Concurrency Map. **If two phases share any entry here,
-they cannot run in parallel.** Be explicit — "src/" is not a write-set;
-`src/engine.py` and `src/config.py` are.
-**Shared-state contract:** Mutable state outside the file write-set that
-this phase touches or depends on. The Concurrency Map cannot be honest
-without this. Examples to consider:
-- **Git:** branches read/written, whether the phase invokes `git checkout`,
-  `git stash`, `git rebase`, or `git worktree` operations that can leak
-  HEAD across worktrees
-- **Process:** long-running daemons started/stopped, ports bound, signals
-  sent
-- **Filesystem:** working-directory changes, tmp paths, lock files
-- **Environment:** env vars set or read, secrets accessed
-- **External:** databases, API quotas, message queues, shared caches
-If the phase asserts isolation (runs in a worktree, uses tmp_path, runs
-in a container), name the invariants that prove the isolation holds —
-not just the mechanism. "Runs in worktree" is a mechanism; "Does not
-invoke `git checkout` in the parent worktree, binds no ports, writes
-only under `$TMPDIR/<phase-id>/`" is an invariant. Mechanisms can be
-violated; invariants are checkable.
-For sequential phases on a small change, this can be brief — "no shared
-mutable state beyond the file write-set" is acceptable when true. The
-field is required so the question is asked, not so every entry is long.
-**Re-entry verification:** (Required for any phase listed in a parallel
-set in the Concurrency Map.) The orchestrator's checklist after this
-phase returns, mapping one-to-one to the shared-state contract. Each
-item is a concrete check: "main-repo HEAD == <pre-dispatch sha>",
-"`lsof -i :8080` shows nothing", "no row added to `audit_log` outside
-the phase's own tmp database". For sequential phases, omit this field.
+**Read-set (optional):** Files this phase reads, when coupling matters.
+**Write-set:** Every file this phase creates, edits or deletes, traced from
+the gap-analysis reverse search: tests, fixtures and docs count. Name files,
+not directories. Three files maximum; an atomic unit counts as one.
+**Shared-state contract (optional for sequential phases):**
+Mutable state outside the write-set (git HEAD and branches, processes and
+ports, working directory and tmp paths, env and secrets, external systems),
+written as invariants ("does not invoke `git checkout` in the parent
+worktree"), not mechanisms ("runs in a worktree").
+**Re-entry verification:** (Only for a phase in a parallel set.) One concrete
+check per contract item: "main-repo HEAD == <pre-dispatch sha>".
 **Risks:** What could go wrong, what to watch for.
 **Done when:** Two tiers, both required:
 1. **Behavioral:** What the user or system can observably do after this
@@ -485,21 +426,33 @@ reviewer agree on what "verified" means. Examples by scope:
   + verify integration with external systems. Check logs, confirm data
   flow, verify error paths. If the change touches a deployment or config,
   verify it in an environment that resembles production.
-The validation strategy should match the risk. A phase that changes a
-format string needs less validation than a phase that rewires the
-authentication flow.
+- **External write:** dry run showing exactly what would be written, then a
+  small supervised live run with every write read back, then the full run.
+  Phase states: built → merged → deployed → observed; ✅ only at observed.
+The validation strategy should match the risk.
+
+### Phase N+1: Close-out (always the last numbered phase)
+Outcome Summary, Status, deferred work, worktree removal, and Discoveries,
+each answering:
+"which pass should have caught this?"
 
 ## Open Questions
-Unresolved items that need input. Each must include the agent's recommended
-severity and a brief rationale, but the user makes the final call:
-- **BLOCKING** (recommended) — must be resolved before execution starts
-- **PHASE-GATED** (recommended) — must be resolved before a specific phase (name it)
-- **ADVISORY** (recommended) — nice to know, can be resolved during execution
-Format: `- [RECOMMENDED: severity] Question text. *Rationale for recommendation.*`
-The user confirms or overrides the severity before the plan advances.
+Each with a proposed tag and a one-line rationale: **BLOCKING** (before
+execution), **PHASE-GATED** (before a named phase), **ADVISORY**. The user
+decides, through `walk-through.md`; answers move into the plan as decisions.
+Agent-decided items are listed as `Decided by agent: X, because Y`.
 
 ## Review Log
-Record of each review pass — what was found, what was changed.
+One entry per pass, oldest first, with fixed names (`Pass 1: Gap-analysis
+step`, `Pass 2: Independent review`, `Pass 3: Quality Gates`).
+
+## Execution Log
+Phase records and decisions made during execution (kept apart from reviews).
+
+## Next pass
+Rewritten at the end of every pass: the one-line paste, plan path, base
+commit, branch/worktree, pass file, locked decisions, open items, risk
+targets, the next deliverable and done-when (`pass1.md` § Next pass handoff).
 ```
 
 The user may already have a plan doc in a different format. Adapt to their

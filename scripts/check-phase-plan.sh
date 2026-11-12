@@ -102,23 +102,37 @@ p3-ready|skills/phase-plan/pass3.md|Output|every walk-through answer is written 
 p3-walkthrough|skills/phase-plan/pass3.md|Output|`walk-through.md`
 p3-next-pass|skills/phase-plan/pass3.md|Output|`pass1.md` § Next pass handoff
 claude-md-walkthrough|CLAUDE.md|Explaining Design and Protocol Work|one per message for any list of decisions
-aq-walkthrough|skills/ask-questions-if-underspecified.md|Relationship to phase-plan|decision-first walk-through'
+aq-walkthrough|skills/ask-questions-if-underspecified.md|Relationship to phase-plan|decision-first walk-through
+tpl-problem|skills/phase-plan.md|Problem Statement|## Problem Statement
+tpl-reasoning|skills/phase-plan.md|Reasoning|## Reasoning
+tpl-status|skills/phase-plan.md|[Title]|**Status:** one line of current state
+tpl-not-observed|skills/phase-plan.md|Verified Assumptions|"not observed live"
+tpl-delivery|skills/phase-plan.md|Delivery shape|## Delivery shape
+tpl-concurrency-line|skills/phase-plan.md|Concurrency Map|`All phases sequential: <reason>`
+tpl-readset-optional|skills/phase-plan.md|Phase N: [Name]|**Read-set (optional):**
+tpl-shared-optional|skills/phase-plan.md|Phase N: [Name]|**Shared-state contract (optional for sequential phases):**
+tpl-external-write|skills/phase-plan.md|Phase N: [Name]|**External write:**
+tpl-closeout|skills/phase-plan.md|Phase N+1: Close-out|"which pass should have caught this?"
+tpl-walkthrough|skills/phase-plan.md|Open Questions|`walk-through.md`
+tpl-execution-log|skills/phase-plan.md|Execution Log|## Execution Log
+tpl-next-pass|skills/phase-plan.md|Next pass|## Next pass'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
-ABSENT='p1-confirm-as|skills/phase-plan/pass1.md|Confirm as [SEVERITY]
+ABSENT='p1-confirm-as|*|Confirm as [SEVERITY]
 p1-confirm-severity|skills/phase-plan/pass1.md|to confirm severity
 p2-old-title|skills/phase-plan/pass2.md|Pass 2: Gap Analysis
 route-pass12-gone|skills/phase-plan.md|"pass 1+2" / "plan and review together"
 quick-skips-pass2|skills/phase-plan.md|`pass1.md`, `pass2.md`, and `pass3.md` together
 p2-blocker-only|skills/phase-plan/pass2.md|every BLOCKER and every new fact
-p3-confirmed-severity|skills/phase-plan/pass3.md|confirmed the severity
+p3-confirmed-severity|*|confirmed the severity
 p3-confirmed-every|skills/phase-plan/pass3.md|confirmed every open question'"'"'s severity
 p3-apply-confirmed|skills/phase-plan/pass3.md|Apply the confirmed severities
 p3-additive|skills/phase-plan/pass3.md|**Apply fixes additively.**
 p3-pass2-word|skills/phase-plan/pass3.md|take Pass 2'"'"'s word
 pass1-output-ref|*|`pass1.md` § Output
-aq-severity-based|skills/ask-questions-if-underspecified.md|severity-based'
+aq-severity-based|skills/ask-questions-if-underspecified.md|severity-based
+tpl-confirms-overrides|*|confirms or overrides the severity'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
