@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–6a shipped (Phase 4 dogfood review folded in); next Phase 6b. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–6b shipped (Phase 4 dogfood review folded in); next Phase 7. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -15,6 +15,7 @@ decisions by agent listed under Open Questions).
 | 4 | ✅ | `d06e0f8`, `9a576b8` | New `pass2.md` (independent review) and full loading table; dogfood review: 1 BLOCKER, 25 REVISE, all folded in |
 | 5 | ✅ | `1c52532` | `pass3.md` rewritten (232 lines): tests that can fail, hedges, ready gate, walk-through; 133 assertions, 98 fixtures |
 | 6a | ✅ | `96781c5` | `CLAUDE.md` bullet folded (291 lines, net zero); `LINE_LIMITS` table with `CHK-LINES` |
+| 6b | ✅ | `0be79c4` | `ask-questions-if-underspecified.md` names the decision-first walk-through; 138 assertions, 102 fixtures |
 
 ## Problem Statement
 
@@ -603,7 +604,7 @@ any list of decisions; save each answer at once. Mechanics after; full detail in
 format is `id|file|max`, so Phase 8b adds `CHK-SIZE|skills/phase-plan.md|499` as one line. 135 assertions, 100
 fixtures; main file 675.
 
-### Phase 6b: `ask-questions-if-underspecified` walk-through references
+### Phase 6b: `ask-questions-if-underspecified` walk-through references — ✅ SHIPPED (`0be79c4`)
 
 **Goal:** the skill that hands off to phase-plan describes the decision-first walk-through.
 **Changes:**
@@ -615,6 +616,10 @@ fixtures; main file 675.
 **Write-set:** `skills/ask-questions-if-underspecified.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check passes.
 **Validation:** narrow.
+
+**Delivered (2026-11-12):** the anchor's section is § Relationship to phase-plan (lines 186-190 sit there, not
+in § Quality gates as first written). The new text names `skills/phase-plan/walk-through.md`, so `CHK-PATH` now
+checks it too.
 
 ### Phase 7: Main file, plan template
 
@@ -1027,7 +1032,7 @@ the added text.
 
 Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
 (branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Continue execution at
-Phase 6b**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
+Phase 7**, loading the worktree's `skills/phase-plan/execute.md`. Phases 1-4 shipped (Outcome Summary); the
 Phase 4 dogfood review is folded in (Review Log). Locked: D1–D20 and the decided-by-agent items under Open
 Questions. Per phase: literals into the check's tables first (`ANCHORS`, `ABSENT`, `TABLE_MAP` in
 `scripts/check-phase-plan.sh`; Phase 6a adds `LINE_LIMITS`), each on one line in the target file, watch RED, edit
