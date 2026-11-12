@@ -68,6 +68,7 @@ that exists.
    Phase 0 is cheap. Skipping it when unknowns exist is expensive. When
    in doubt, include it — a discovery phase that confirms your assumptions
    costs a few probes. A plan built on wrong assumptions costs a rewrite.
+   Draft it from § Phase 0 template.
 6. **Draft phases.** Break the work into ordered phases. Each phase should:
    - Have a clear goal
    - List specific file/component changes (name the files)
@@ -138,6 +139,58 @@ that exists.
     the user owns is walked per `walk-through.md` before the pass closes.
 13. **Run § Gap-analysis step** on the drafted plan, then close per § Output.
 
+## Phase 0 template
+
+Copy into the plan's § Phases under a `### Phase 0: Discovery (optional)` heading.
+
+Include this phase when the plan has significant unknowns — unverified API
+behavior, unfamiliar codebase areas, novel technology, BLOCKING open questions,
+or assumptions that could invalidate multiple later phases if wrong. Phase 0
+is cheap insurance: a few hours of probes can save days of rework.
+
+**When to include Phase 0:**
+- Any BLOCKING open question that can be resolved by running code, reading
+  docs, or making a probe request
+- Dependencies on libraries/APIs/tools whose behavior you haven't verified
+  firsthand
+- Unfamiliar areas of the codebase where you're planning based on inference
+  rather than reading
+- Novel integrations where the happy path isn't certain
+
+**When to skip Phase 0:**
+- All assumptions are verified in the Verified Assumptions section
+- The codebase and tools are well-known to the team
+- The change is a straightforward application of an established pattern
+
+**Goal:** Resolve unknowns. Validate assumptions. Eliminate dead ends before
+committing to a multi-phase implementation.
+**Discovery tasks:** Each task declares a question, a probe, success criteria,
+and a disposition for any code the probe produces. Format:
+- [ ] **D1: [Question being answered]**
+  - **Probe:** Specific investigation — "Run `tool --flag` and confirm output
+    contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
+    "POST to `/api/v2/foo` with payload Z and record the response shape"
+  - **Success criteria:** What answer resolves the question (a concrete
+    value, shape, or observed behavior — not "it seems to work")
+  - **Disposition:** What happens to code written during the probe. One of:
+    - `throwaway` — delete or archive the spike after findings are recorded
+    - `keep-as-fixture` — the spike's output becomes test data or reference
+      material; consumers get TDD, the fixture itself does not
+    - `promote` — the spike code will become production code in a named
+      follow-up phase; TDD applies to the promoted code in that phase,
+      not to the spike
+**Outputs fed back into the plan:**
+- Verified Assumptions updated with findings and evidence
+- Open Questions resolved (or escalated with what was learned)
+- Phases adjusted if discovery invalidates an assumption — document what
+  changed and why in the Review Log
+**Done when:** All BLOCKING open questions are resolved and the Verified
+Assumptions section reflects firsthand evidence, not inference.
+
+**Key property of Phase 0:** It is the only phase that is allowed to change
+the structure of later phases. If a probe reveals that an assumption was wrong,
+update the plan before proceeding — do not defer the adjustment to execution.
+
 ## Probe rules
 
 A probe gathers facts: what data exists, how much, its shape, how it changes, and how the destination is
@@ -161,7 +214,7 @@ configured (fields, screens, permissions, limits, retention). Proving behaviour 
 ## Gap-analysis step
 
 An explicit step with its own Review Log entry, run after drafting, on a plan that comes from an older pass
-structure (main file § compatibility rule), and as the scoped re-check after any late change. It looks
+structure (`phase-plan.md` § Compatibility rule), and as the scoped re-check after any late change. It looks
 **outward**: the plan's own text is not evidence.
 
 1. **Read the plan end to end**, then **start from the previous pass's additions**: what was added last is

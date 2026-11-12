@@ -21,6 +21,7 @@
 #   CHK-ABSENT:<name>  a retired phrase is gone from its file (or every live file)
 #   CHK-TABLE-MAP:<name> some loading-table row holds both a trigger phrase and its file
 #   CHK-LINES          CLAUDE.md held at its line count at base 8e6fc33 (plan-scoped; removed at close)
+#   CHK-SIZE           skills/phase-plan.md under its 500-line budget (D13)
 #
 # "Live" files: skills/ (except skills/phase-plan/CHANGELOG.md), commands/,
 # and the root .md files except the two ledgers. plans/ and .claude/ are
@@ -126,7 +127,12 @@ m-changelog-pointer|skills/phase-plan.md|Per-pass skill files|`skills/phase-plan
 m-files-walkthrough|skills/phase-plan.md|Per-pass skill files|`walk-through.md`
 m-guardrail-replace|skills/phase-plan.md|Guardrails|**Extend the structure; replace superseded planning text.**
 m-guardrail-scope|skills/phase-plan.md|Guardrails|execution records stay append-only
-m-batch-walkthrough|skills/phase-plan.md|A batch approved in conversation|Walk-through answers that add work count toward this trigger'
+m-batch-walkthrough|skills/phase-plan.md|A batch approved in conversation|Walk-through answers that add work count toward this trigger
+p1-phase0-heading|skills/phase-plan/pass1.md|Phase 0 template|## Phase 0 template
+p1-phase0-disposition|skills/phase-plan/pass1.md|Phase 0 template|**Disposition:**
+p1-compat-ref|skills/phase-plan/pass1.md|Gap-analysis step|`phase-plan.md` § Compatibility rule
+main-phase0-pointer|skills/phase-plan.md|Phase 0: Discovery|`pass1.md` § Phase 0 template
+m-discovery-summary|skills/phase-plan.md|Discovery Exemption (summary)|## Discovery Exemption (summary)'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -150,6 +156,7 @@ m-fills-gaps|skills/phase-plan.md|Pass 2 fills gaps
 m-combined|skills/phase-plan.md|### Combined Pass 1+2
 m-load12|skills/phase-plan.md|Load pass1.md + pass2.md
 m-additive|skills/phase-plan.md|**Passes are additive, not destructive.**
+p1-compat-unchecked|skills/phase-plan/pass1.md|main file § compatibility rule
 m-build-on-base|skills/phase-plan.md|**Build on the base, don'"'"'t rebuild it.**'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
@@ -169,7 +176,8 @@ route-decisions|any list of decisions|walk-through.md'
 
 # Line limits, as id|file|max lines. CHK-LINES holds CLAUDE.md at net zero for
 # this plan only (D13); it is removed when no later phase edits CLAUDE.md.
-LINE_LIMITS='CHK-LINES|CLAUDE.md|291'
+LINE_LIMITS='CHK-LINES|CLAUDE.md|291
+CHK-SIZE|skills/phase-plan.md|499'
 
 # Illustrative § references that are not meant to resolve, as
 # source basename|target basename|normalised words|reason.

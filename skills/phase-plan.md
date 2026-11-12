@@ -233,53 +233,7 @@ sequential.
 Ordered phases of work. Each phase should leave the system in a working state.
 
 ### Phase 0: Discovery (optional)
-Include this phase when the plan has significant unknowns — unverified API
-behavior, unfamiliar codebase areas, novel technology, BLOCKING open questions,
-or assumptions that could invalidate multiple later phases if wrong. Phase 0
-is cheap insurance: a few hours of probes can save days of rework.
-
-**When to include Phase 0:**
-- Any BLOCKING open question that can be resolved by running code, reading
-  docs, or making a probe request
-- Dependencies on libraries/APIs/tools whose behavior you haven't verified
-  firsthand
-- Unfamiliar areas of the codebase where you're planning based on inference
-  rather than reading
-- Novel integrations where the happy path isn't certain
-
-**When to skip Phase 0:**
-- All assumptions are verified in the Verified Assumptions section
-- The codebase and tools are well-known to the team
-- The change is a straightforward application of an established pattern
-
-**Goal:** Resolve unknowns. Validate assumptions. Eliminate dead ends before
-committing to a multi-phase implementation.
-**Discovery tasks:** Each task declares a question, a probe, success criteria,
-and a disposition for any code the probe produces. Format:
-- [ ] **D1: [Question being answered]**
-  - **Probe:** Specific investigation — "Run `tool --flag` and confirm output
-    contains X", "Read `src/engine.py:45-80` and confirm Config accepts Y",
-    "POST to `/api/v2/foo` with payload Z and record the response shape"
-  - **Success criteria:** What answer resolves the question (a concrete
-    value, shape, or observed behavior — not "it seems to work")
-  - **Disposition:** What happens to code written during the probe. One of:
-    - `throwaway` — delete or archive the spike after findings are recorded
-    - `keep-as-fixture` — the spike's output becomes test data or reference
-      material; consumers get TDD, the fixture itself does not
-    - `promote` — the spike code will become production code in a named
-      follow-up phase; TDD applies to the promoted code in that phase,
-      not to the spike
-**Outputs fed back into the plan:**
-- Verified Assumptions updated with findings and evidence
-- Open Questions resolved (or escalated with what was learned)
-- Phases adjusted if discovery invalidates an assumption — document what
-  changed and why in the Review Log
-**Done when:** All BLOCKING open questions are resolved and the Verified
-Assumptions section reflects firsthand evidence, not inference.
-
-**Key property of Phase 0:** It is the only phase that is allowed to change
-the structure of later phases. If a probe reveals that an assumption was wrong,
-update the plan before proceeding — do not defer the adjustment to execution.
+Only when unknowns exist; template in `pass1.md` § Phase 0 template.
 
 ### Phase N: [Name]
 **Goal:** What this phase achieves.
