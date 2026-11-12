@@ -1,6 +1,6 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Executing. Phases 1–9b shipped; Phase 10a built (`283a014`), waiting on the user's `/audit` run in a new session. Passes 1–3 done (D1–D20, no open questions; Pass 3
+**Status:** Executing. Phases 1–9b shipped; Phase 10a built (`283a014`); its `/audit` run failed at load (D21); next Phase 10a-ii. Passes 1–3 done (D1–D20, no open questions; Pass 3
 decisions by agent listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
@@ -214,6 +214,13 @@ All recorded one at a time. These are locked; later passes extend them, not reop
 - **D20 Commit cadence (was Pass2-W4; user, 2026-11-09).** Standing OK for local commits on `phase-plan-v2`, one
   per phase, after that phase's checks pass. Push, opening either PR, merge and the main-checkout pull each still
   need the user's say-so.
+
+- **D21 `/audit` runs its checks through a script (was Exec-W1; user, 2026-11-12).** The user's first `/audit` run
+  stopped at load: Claude Code refuses a `!` shell line that uses a shell variable. Nine of `/audit`'s lines loop
+  with `$f`, `$lines` or `$color` (Checks 1, 3, 4, 5, 7), unchanged since before this plan, and `/audit` had never
+  been registered, so it had never run as a command (VA-9's baseline was measured by hand). Option A chosen: the
+  `$`-using lines move into `scripts/audit-checks.sh <name>` subcommands, called from variable-free `!` lines;
+  new Phase 10a-ii. Rejected: instructed Bash steps (prompts, relies on the model), dropping `/audit` as the gate.
 
 ## Verified Assumptions
 
@@ -806,6 +813,24 @@ instructed Bash step with `timeout: 600000`. Not in the spec: `allowed-tools` ga
 and the two script commands, since the checks call them. The check caught an illustrative reference in the new
 Check 8 text, which was reworded. Fixture test 161 s, 156 passed.
 
+### Phase 10a-ii: `/audit` checks through a script (D21)
+
+**Goal:** `/audit` loads and runs every check without a permission refusal, so Phase 10a's checkpoint can pass.
+**Changes:**
+- [ ] `scripts/audit-checks.sh <name>`: one subcommand per `!` line in `commands/audit.md` that contains `$`, with
+  the command moved verbatim; an unknown name exits 2 with usage.
+- [ ] `commands/audit.md`: those lines become `` !`bash scripts/audit-checks.sh <name>` ``; `allowed-tools` gains
+  `Bash(bash scripts/audit-checks.sh:*)`; Check 8's Bash step also runs `bash scripts/test-audit-checks.sh`.
+- [ ] `scripts/test-audit-checks.sh`: (1) no `!` line in `commands/audit.md` contains `$`; (2) every
+  `audit-checks.sh` name the command uses exits 0 and prints what the original inline command printed at the
+  phase's start (outputs captured before the move, in a temp dir); (3) an unknown name exits non-zero.
+**Wiring test:** `bash scripts/test-audit-checks.sh` (RED first: assertion 1 fails on today's `audit.md`); then
+the user's `/audit` run in a new session (Phase 10a's checkpoint).
+**Depends on:** Phase 10a.
+**Write-set:** `scripts/audit-checks.sh`, `scripts/test-audit-checks.sh`, `commands/audit.md`.
+**Done when:** the test passes, the structure check passes, and `/audit` runs end to end in a new session.
+**Validation:** moderate; the user's `/audit` run, plus the refusal (marker removed) through it.
+
 ### Phase 10b: Repo docs
 
 **Goal:** README and the external-learn ledger are current.
@@ -861,6 +886,7 @@ Check 8 text, which was reworded. Fixture test 161 s, 156 passed.
 - [RESOLVED → D18] **Pass2-W2 Keeping the checks live.** Option A chosen 2026-11-09.
 - [RESOLVED → D19] **Pass2-W3 Work names in moved TRACKING text.** Option A chosen 2026-11-09.
 - [RESOLVED → D20] **Pass2-W4 Commit cadence during execution.** Option A chosen 2026-11-09.
+- [RESOLVED → D21] **Exec-W1 How `/audit` runs its checks.** Option A chosen 2026-11-12.
 - **Decided by agent (override if wanted): review grades vs question tags.** D1's finding grades
   (BLOCKER / REVISE / CONFIRMED) sit next to the question tags (BLOCKING / PHASE-GATED / ADVISORY). Keep both,
   because they label different things (a reviewer's finding vs a decision the user owns); `walk-through.md` states
