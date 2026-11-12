@@ -115,7 +115,18 @@ tpl-external-write|skills/phase-plan.md|Phase N: [Name]|**External write:**
 tpl-closeout|skills/phase-plan.md|Phase N+1: Close-out|"which pass should have caught this?"
 tpl-walkthrough|skills/phase-plan.md|Open Questions|`walk-through.md`
 tpl-execution-log|skills/phase-plan.md|Execution Log|## Execution Log
-tpl-next-pass|skills/phase-plan.md|Next pass|## Next pass'
+tpl-next-pass|skills/phase-plan.md|Next pass|## Next pass
+m-trigger-phase-plan|skills/phase-plan.md|^|"phase plan"
+m-trigger-three-pass|skills/phase-plan.md|^|"three-pass plan"
+m-trigger-plan-review|skills/phase-plan.md|^|"plan review"
+m-trigger-bulk-write|skills/phase-plan.md|^|bulk writes to an external system
+m-compat-heading|skills/phase-plan.md|Compatibility rule|## Compatibility rule
+m-compat-label|skills/phase-plan.md|Compatibility rule|other than `Pass 2: Independent review`
+m-changelog-pointer|skills/phase-plan.md|Per-pass skill files|`skills/phase-plan/CHANGELOG.md`
+m-files-walkthrough|skills/phase-plan.md|Per-pass skill files|`walk-through.md`
+m-guardrail-replace|skills/phase-plan.md|Guardrails|**Extend the structure; replace superseded planning text.**
+m-guardrail-scope|skills/phase-plan.md|Guardrails|execution records stay append-only
+m-batch-walkthrough|skills/phase-plan.md|A batch approved in conversation|Walk-through answers that add work count toward this trigger'
 
 # Retired phrases, as name|file|literal. File "*" means every live file.
 # Checked outside comments, so history in TRACKING blocks may still quote them.
@@ -132,7 +143,14 @@ p3-additive|skills/phase-plan/pass3.md|**Apply fixes additively.**
 p3-pass2-word|skills/phase-plan/pass3.md|take Pass 2'"'"'s word
 pass1-output-ref|*|`pass1.md` § Output
 aq-severity-based|skills/ask-questions-if-underspecified.md|severity-based
-tpl-confirms-overrides|*|confirms or overrides the severity'
+tpl-confirms-overrides|*|confirms or overrides the severity
+m-desc-old|skills/phase-plan.md|Pass 2 reviews for gaps
+m-oneplan-old|skills/phase-plan.md|extends the base with gap analysis
+m-fills-gaps|skills/phase-plan.md|Pass 2 fills gaps
+m-combined|skills/phase-plan.md|### Combined Pass 1+2
+m-load12|skills/phase-plan.md|Load pass1.md + pass2.md
+m-additive|skills/phase-plan.md|**Passes are additive, not destructive.**
+m-build-on-base|skills/phase-plan.md|**Build on the base, don'"'"'t rebuild it.**'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
