@@ -294,12 +294,16 @@ Every pass, and an execution stopping before the end, ends by replacing the plan
 `## Next pass`, so the user's paste to resume is one line. The paste
 starts with `/phase-plan <pass> <absolute plan path>`, so the fresh session loads the main file (base
 directory, compatibility rule, template) before the pass file. The section names: the plan path; the base
-commit and how to re-check it; branch and worktree; the pass file to load; locked decisions; open items; named
-risk targets for the next pass to attack first; and the next pass's deliverable and done-when. Pass 2 builds
-its reviewer briefs from the same facts.
+commit and how to re-check it; branch and worktree; the pass file to load; locked decisions; open items;
+the standing commit OK, if any, and its scope (main file § Guardrails); named risk targets for the next pass
+to attack first; and the next pass's deliverable and done-when. Pass 2 builds its reviewer briefs from the
+same facts.
 
-A compacted context is not fresh: if this session has been compacted, say so and hand off rather than running
-the next pass here.
+**Fresh context is preferred, not required.** A new session reads only the plan, so it tests whether the plan
+stands alone; a compacted session, or the one that wrote the text under review, cannot. Recommend a fresh session
+in the handoff. When the user asks for the next pass in this session, that is their call: run it here, say in one
+line that the context is not fresh (compacted, or it wrote what it now checks), and record the same in that pass's
+Review Log entry. Do not stop to ask again, and never refuse to run the pass here.
 
 ## Reminders (critical, repeated for forefront)
 

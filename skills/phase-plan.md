@@ -42,7 +42,7 @@ description: >
      navigation friction. The other TRACKING history moved to
      skills/phase-plan/CHANGELOG.md (2026-11-12). -->
 
-Three-pass planning for complex changes. Each pass uses a fresh context window.
+Three-pass planning for complex changes. Each pass is best run in a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
 all reasoning, not just the steps.
 
@@ -316,7 +316,7 @@ Phase records and decisions made during execution (kept apart from reviews).
 
 ## Next pass
 Rewritten at the end of every pass: the one-line paste, plan path, base
-commit, branch/worktree, pass file, locked decisions, open items, risk
+commit, branch/worktree, pass file, commit OK, locked decisions, open items, risk
 targets, the next deliverable and done-when (`pass1.md` § Next pass handoff).
 ```
 
@@ -470,6 +470,14 @@ phases. Phase 0 discovery operates under the Discovery Exemption — read
 - **Commit at every stable point.** After each phase passes its checklist,
   commit. No batching phases into a single commit. Each commit is a verified,
   working checkpoint that can be rolled back to independently.
+- **A standing commit OK covers the plan and its offshoots.** When the user has
+  said to commit without asking (for a plan, a branch or a run of phases), it
+  covers every local commit that work makes: phase commits and plan-doc edits
+  from any pass. It also covers a plan split off from that plan or written to
+  deliver part of it, unless the user scoped it narrower. Name the OK in one
+  line and commit; do not ask again.
+  It never covers pushes, PRs, merges, deploys or external writes, nor
+  anything the user excluded when giving it. Record it in § Next pass.
 - **No assumed behavior.** Do not plan around how you think a library, API,
   or existing code works. Read the docs, read the source, run a probe.
   "I believe this method returns X" is not validation. This applies during

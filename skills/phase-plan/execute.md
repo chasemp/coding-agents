@@ -73,7 +73,7 @@ resume in the named follow-up phase.
 - **Re-measure gating figures** the phases depend on (counts, sizes, record states) and record them with the
   date; a figure from planning day is a forecast. If one moved enough to change a phase, stop and walk it per
   `walk-through.md`.
-- **Fresh context.** A compacted context is not fresh: say so and hand off (`pass1.md` § Next pass handoff).
+- **Fresh context preferred.** If the user asks to execute here, run it here (`pass1.md` § Next pass handoff).
 
 ---
 

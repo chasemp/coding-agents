@@ -18,7 +18,7 @@ skipped for a quick plan. The user's own freeform review stays available after i
 
 ## Before starting
 
-- Use a fresh context. A compacted context is not fresh: say so and hand off (`pass1.md` § Next pass handoff).
+- Prefer a fresh context; if the user asks for this pass here, run it here (`pass1.md` § Next pass handoff).
 - The plan's Review Log must have a gap-analysis entry. If it has none, run `pass1.md` § Gap-analysis step
   first.
 - Read the plan end to end, starting from the previous pass's additions.

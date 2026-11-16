@@ -146,8 +146,9 @@ gates" / "final review". Its Review Log entry is what execution checks for befor
 
 ## Steps
 
-1. Use a fresh context; a compacted one is not fresh, so say so and hand off. The Review Log needs a gap-analysis
-   entry (else run `pass1.md` § Gap-analysis step first) and, unless this is a quick plan, a Pass 2 entry.
+1. Prefer a fresh context; if the user asks for this pass here, run it here (`pass1.md` § Next pass handoff).
+   The Review Log needs a gap-analysis entry (else run `pass1.md` § Gap-analysis step first) and, unless this is
+   a quick plan, a Pass 2 entry.
 2. Read the plan doc end to end and start from the previous pass's additions: the independent review's fixes are
    the least reviewed text in the plan.
 3. **Deliverable anchor.** Write one line: what the plan delivers and how its done-when is observed. Judge every
