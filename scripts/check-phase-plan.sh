@@ -81,6 +81,9 @@ p1-size-rule|skills/phase-plan/pass1.md|Steps|3 files maximum; 4 or more must sp
 p1-next-pass|skills/phase-plan/pass1.md|Next pass handoff|## Next pass handoff
 p1-fresh-preferred|skills/phase-plan/pass1.md|Next pass handoff|**Fresh context is preferred, not required.**
 p1-run-here|skills/phase-plan/pass1.md|Next pass handoff|never refuse to run the pass here
+m-standing-ok|skills/phase-plan.md|Guardrails|**A standing commit OK covers the plan and its offshoots.**
+m-standing-limits|skills/phase-plan.md|Guardrails|never covers pushes, PRs, merges, deploys or external writes
+p1-handoff-commit-ok|skills/phase-plan/pass1.md|Next pass handoff|the standing commit OK, if any, and its scope
 p2-fresh-ref|skills/phase-plan/pass2.md|Before starting|if the user asks for this pass here, run it here
 p3-fresh-ref|skills/phase-plan/pass3.md|Steps|if the user asks for this pass here, run it here
 x-fresh-ref|skills/phase-plan/execute.md|Before starting|the user asks to execute here, run it here

@@ -127,3 +127,12 @@ handoff, and a request to run the pass here is the user's call: the agent runs i
 line that the context is not fresh (compacted, or it wrote the text it now checks), and records
 that in the pass's Review Log entry. The rule lives in `pass1.md` § Next pass handoff; the other
 files point to it. Monitor whether Review Log entries carry the not-fresh note when it applies.
+
+## Standing commit OK scope (2026-11-16)
+
+A user's standing OK to commit without asking was being re-asked about at each new session: whether
+it covered plan-doc edits from a planning pass, and whether it carried to a plan split off from the
+one it was given for. The handoff even noted that the first execution session would ask. Now
+§ Guardrails says the OK covers every local commit of the plan and of plans split off from it,
+unless the user scoped it narrower, and never covers pushes, PRs, merges, deploys or external writes.
+The Next pass handoff records the OK and its scope so the next session relies on it.
