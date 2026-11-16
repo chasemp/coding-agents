@@ -42,7 +42,7 @@ description: >
      navigation friction. The other TRACKING history moved to
      skills/phase-plan/CHANGELOG.md (2026-11-12). -->
 
-Three-pass planning for complex changes. Each pass uses a fresh context window.
+Three-pass planning for complex changes. Each pass is best run in a fresh context window.
 The plan doc is the single artifact that travels between passes — it must carry
 all reasoning, not just the steps.
 

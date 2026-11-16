@@ -79,7 +79,11 @@ p1-not-observed-live|skills/phase-plan/pass1.md|Probe rules|not observed live
 p1-delivery-shape|skills/phase-plan/pass1.md|Steps|**Fill the Delivery shape section.**
 p1-size-rule|skills/phase-plan/pass1.md|Steps|3 files maximum; 4 or more must split
 p1-next-pass|skills/phase-plan/pass1.md|Next pass handoff|## Next pass handoff
-p1-compacted|skills/phase-plan/pass1.md|Next pass handoff|A compacted context is not fresh
+p1-fresh-preferred|skills/phase-plan/pass1.md|Next pass handoff|**Fresh context is preferred, not required.**
+p1-run-here|skills/phase-plan/pass1.md|Next pass handoff|never refuse to run the pass here
+p2-fresh-ref|skills/phase-plan/pass2.md|Before starting|if the user asks for this pass here, run it here
+p3-fresh-ref|skills/phase-plan/pass3.md|Steps|if the user asks for this pass here, run it here
+x-fresh-ref|skills/phase-plan/execute.md|Before starting|the user asks to execute here, run it here
 p1-walkthrough-ref|skills/phase-plan/pass1.md|Output|`walk-through.md`
 p2-lens-a|skills/phase-plan/pass2.md|Lens A|### Lens A: outcome and failure walk
 p2-lens-b|skills/phase-plan/pass2.md|Lens B|### Lens B: outward consistency
@@ -175,7 +179,9 @@ m-load12|skills/phase-plan.md|Load pass1.md + pass2.md
 m-additive|skills/phase-plan.md|**Passes are additive, not destructive.**
 p1-compat-unchecked|skills/phase-plan/pass1.md|main file § compatibility rule
 x-pass2-disjoint|skills/phase-plan/execute.md|Pass 2 disjointness check
-m-build-on-base|skills/phase-plan.md|**Build on the base, don'"'"'t rebuild it.**'
+m-build-on-base|skills/phase-plan.md|**Build on the base, don'"'"'t rebuild it.**
+x-compacted-handoff|*|A compacted context is not fresh
+p3-compacted-handoff|*|a compacted one is not fresh'
 
 # Loading-table routes, as name|trigger phrase|file basename: some row of the
 # main file's loading table holds both.
