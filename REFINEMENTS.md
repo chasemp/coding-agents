@@ -311,6 +311,55 @@ run does not count) — the reframing extends it, it does not discard it.
 
 <!-- New entries added below in reverse-chronological order (newest first). -->
 
+## 2026-11-16: The global instruction layer is over its line budget, and the budget that binds is in characters
+
+**Observed pattern:** `CLAUDE.md` is 291 lines against `/audit`'s 200-line budget, flagged on every run. Separately,
+Claude Code now warns when a session's instruction files exceed 150k characters in total. This repo's global
+layer (`CLAUDE.md`, `agents.md`, plus the user's own `~/.claude/CLAUDE.md`) is about 42k of that budget in every
+session, so a project with a large `CLAUDE.md` of its own goes over.
+
+**Evidence:**
+- `/audit` Check 1, every run from 2026-11-12 to 2026-11-16: `CLAUDE.md` 291 (budget 200). The phase-plan v2 plan
+  held it net zero (D13) and deferred the overage here.
+- 2026-11-16: a fresh session in a project whose own `CLAUDE.md` is about 117k characters warned "5 instruction
+  files add up to 158.7k chars, over the 150.0k-char total limit". This repo's two files were 24.7k and 11.4k.
+
+**Proposed refinement:**
+- **Target:** extend `CLAUDE.md`, `agents.md` and `commands/audit.md` Check 1.
+- **Change:** move detail out of the always-loaded files into skills loaded on demand (for example the mutation
+  testing and destructive-git detail in `CLAUDE.md`, the orchestration narrative in `agents.md`); add a character
+  measure of the global layer to Check 1 next to the line counts.
+- **Rationale:** the line budget does not track what the harness counts, and every character in the global layer
+  is spent in every session in every project.
+
+**Status:** proposed
+
+**Notes:** Plan with `phase-plan`; `CLAUDE.md` is shared by every session, so keep each move small.
+
+## 2026-11-16: `/audit` checks that lag the agent set
+
+**Observed pattern:** three `/audit` checks were written for an earlier agent set and have not followed it.
+
+**Evidence (all predate the phase-plan v2 plan, seen on its `/audit` runs 2026-11-12 to 2026-11-16):**
+- Check 2's agent-name list omits `rust-enforcer`, so a stale reference to it would pass.
+- Check 2's path filter lets `.claude/skills/pr-review/SKILL.md` (named at `commands/generate-pr-review.md:273`)
+  through unresolved.
+- Check 4: orange is shared by `py-enforcer`, `rust-enforcer` and `use-case-data-patterns`; the check's text names
+  an intentional pair and says "With 10 agents, at least 2 collisions are unavoidable", but there are 11. The two
+  language enforcers both run alongside `tdd-guardian`, so a mixed-language diff shows two orange agents at once.
+
+**Proposed refinement:**
+- **Target:** extend `commands/audit.md` (Checks 2 and 4) and `scripts/audit-checks.sh`; possibly one agent's
+  `color`.
+- **Change:** derive Check 2's agent names from the agent files rather than a list; decide whether the
+  `.claude/skills/` reference is a real path or an example; give `rust-enforcer` its own colour or record the trio
+  as intended, and update the count.
+- **Rationale:** a check that lists what it checks goes stale silently when the set grows.
+
+**Status:** proposed
+
+**Notes:** Small; fits one plan, with fixtures per the enforcement-code rule in `CLAUDE.md`.
+
 ## 2026-11-09: phase-plan's passes look inward; the freeform pass that keeps finding defects looks outward
 
 **Observed pattern:** After Pass 3 declares a plan ready, the user routinely adds a freeform pass ("work
@@ -346,10 +395,16 @@ boilerplate, and the user repeats the same process instructions in most sessions
 - **Rationale:** checks that cannot see a category do not see it on a second run; the gain comes from changing
   direction, stance and author. Cutting boilerplate pays for the additions so the main file shrinks.
 
-**Status:** accepted (decisions confirmed by the user 2026-11-09, one at a time; implementation pending)
+**Status:** accepted (decisions confirmed by the user 2026-11-09, one at a time)
 
-**Notes:** Implementation tracked in `plans/2026-11-09-1-plan-phase-plan-v2.md`. Record files changed here at
-plan close-out.
+**Notes:** Implementation tracked in `plans/2026-11-09-1-plan-phase-plan-v2.md`, closed 2026-11-16. Applied
+2026-11-12 in #3 (`91f384b`); adjusted 2026-11-16 in #4 (`7cb7fdb`: fresh context preferred, not required; a
+standing commit OK covers plan-doc edits and split-off plans). Files changed: `skills/phase-plan.md`,
+`skills/phase-plan/{pass1,pass2,pass3,execute,walk-through,CHANGELOG}.md`, `CLAUDE.md`,
+`skills/ask-questions-if-underspecified.md`, `skills/plan-doc-reasoning.md`, `commands/audit.md`,
+`.claude/commands/audit.md` (symlink), `scripts/{check-phase-plan,test-check-phase-plan,audit-checks,test-audit-checks}.sh`,
+`agents.md`, `README.md`, `EXTERNAL-LEARNINGS.md`. Observed live in another repo on 2026-11-16. Follow-ups:
+the two 2026-11-16 entries above.
 
 ## 2026-05-04: Mutation accommodation in TDD + concurrency planning with isolation invariants
 

@@ -1,7 +1,8 @@
 # phase-plan v2: outward-looking passes, an independent review, and a leaner template
 
-**Status:** Phases 1–10c merged (#3, `91f384b`) and installed. Awaiting the observed check and PR 2
-(Phase 11). Passes 1–3 done; D1–D21 decided, no open questions (agent decisions listed under Open Questions).
+**Status:** Closed 2026-11-16. Shipped: Phases 1–11 (PR 1 #3, `91f384b`), plus one fix-forward from the observed
+check's run-up (#4, `7cb7fdb`). Skipped: none. Deferred: two follow-up entries in `REFINEMENTS.md` (Plan close-out).
+D1–D21 decided, no open questions (agent decisions listed under Open Questions).
 **Branch / worktree:** `phase-plan-v2` at `~/git/chasemp/coding-agents.worktrees/phase-plan-v2`, off
 `origin/main` `8e6fc33`.
 
@@ -26,6 +27,7 @@
 | 10a-ii | ✅ | `33a705c`, `75533c0` | `scripts/audit-checks.sh` (12 checks moved verbatim), `scripts/test-audit-checks.sh` (14 pass); first `/audit` run had stopped at load |
 | 10b | ✅ | `2182598` | README `scripts/` row and gate line; `CHK-LINES` removed (`CLAUDE.md` 291) |
 | 10c | ✅ | `a21a0f8` | `EXTERNAL-LEARNINGS.md` parked question answered; `agents.md` row names `audit-checks.sh`; 208 assertions, 159 fixtures |
+| 11 | ✅ | `91f384b`, `7cb7fdb`, PR 2 | PR 1 merged and installed 2026-11-12; observed check passed 2026-11-16; fix-forward #4 (fresh context preferred; standing commit OK scope); records and follow-ups |
 
 ## Problem Statement
 
@@ -889,7 +891,7 @@ updating for `audit-checks.sh` and would have been a fourth file here.
 **Write-set:** `EXTERNAL-LEARNINGS.md`, `agents.md`, `scripts/check-phase-plan.sh`.
 **Done when:** check and tests pass (208 assertions; 159 and 16 fixtures; hook tests).
 
-### Phase 11: Close-out
+### Phase 11: Close-out — ✅ SHIPPED (`91f384b`, `7cb7fdb`; records in PR 2)
 
 **Goal:** the plan closes in the v2 shape it introduces.
 **Changes:**
@@ -898,7 +900,7 @@ updating for `audit-checks.sh` and would have been a fourth file here.
 - [x] Main checkout pulled 2026-11-12 after the Going-live checks (clean, nothing unpushed, `pull.rebase=true`):
   fast-forward `8e6fc33` → `91f384b`; installed `skills/phase-plan.md` 478 lines; check 208/0 and audit test 16/16
   there.
-- [ ] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
+- [x] **Observed check (user checkpoint: the user opens the session):** in a fresh session whose working
   directory is a repo outside coding-agents, run the
   skill on a real plan and record what was seen: the pass file read from `~/.claude/coding-agents/skills/phase-plan/`,
   three Agent calls each with `model` set, one question per message, D15 behaviour on a plan with old labels,
@@ -906,11 +908,30 @@ updating for `audit-checks.sh` and would have been a fourth file here.
   If it fails: the wrong pass file or the old loading table means rollback (Delivery shape); behaviour drift
   (two questions in one message, a missing `model`) means fix forward in a new PR plus a Discovery entry. PR 2
   records whichever happened.
-- [ ] Refresh the two auto-memory files outside this repo that describe the old pass order (VA-2), and this
+  **Delivered (2026-11-16): passed.** Fresh session in a throwaway detached worktree of a work repo (HEAD at that
+  repo's `main`), installed checkout at `7cb7fdb`, session model Sonnet 5.5. Pass 2 run on a shipped plan whose
+  Review Log has `Pass 1: Plan`, `Pass 2: Gap Analysis`, `Pass 3: Quality Gates`. Seen, from the session's
+  transcript: `pass2.md`, `pass1.md` and `walk-through.md` read from `~/.claude/coding-agents/skills/phase-plan/`;
+  the old `Pass 2: Gap Analysis` entry counted as gap analysis (D15), so the pass went straight to review; three
+  Agent calls in one message, each with `model: sonnet` (the session model); the plan had no `## Next pass`, so
+  briefs were built from its header facts and the section was added at the end; the handoff paste starts with
+  `/phase-plan pass 3 <absolute path>` and the section carries a Commit OK line; no refusal to run here. One
+  question per message was **not exercised**: the pass raised no decision for the user. One drift, minor: the
+  Review Log entry said the pass ran "not in a fresh one" although the session was new, uncompacted and had
+  not written the plan (follow-up only if it recurs). Not a rollback trigger. Evidence kept local (D14).
+  **Fix-forward before the check (#4, `7cb7fdb`, 2026-11-16):** two rules stopped sessions to ask for what the
+  user had already given. (1) Passes 2, 3 and execution refused to run in a compacted session even when the user
+  asked; now a fresh context is preferred, the user's request is their call, and the pass logs that its context
+  was not fresh. (2) A standing commit OK was re-asked about for plan-doc edits and for a plan split off from the
+  one it was given for; now § Guardrails says it covers both, and the handoff records it. 218 assertions, 168
+  fixtures; `/audit` run by the user in the branch's worktree, Check 8 clean, other flags the baseline.
+- [x] Refresh the two auto-memory files outside this repo that describe the old pass order (VA-2), and this
   project's own memory notes about the plan.
-- [ ] Record the `CLAUDE.md` overage (291 vs 200) as a `REFINEMENTS.md` follow-up entry (D13).
-- [ ] Outcome Summary, status line, Discoveries with "which pass should have caught this?".
-- [ ] `REFINEMENTS.md` entry: Status stays `accepted` with "implementation pending" dropped; add "Applied <date>
+  **Delivered (2026-11-16):** a work repo's memory note now names the new pass order; a personal one points the
+  "Pass 2 disjointness check" at Pass 1 and Pass 3 § 5b; this project's notes record the merge, install and check.
+- [x] Record the `CLAUDE.md` overage (291 vs 200) as a `REFINEMENTS.md` follow-up entry (D13).
+- [x] Outcome Summary, status line, Discoveries with "which pass should have caught this?".
+- [x] `REFINEMENTS.md` entry: Status stays `accepted` with "implementation pending" dropped; add "Applied <date>
   in <PR>" to Notes (VA-10).
 - [ ] Open PR 2 (records only: this plan, `REFINEMENTS.md`; D16); after merge, update the main checkout.
 - [ ] Remove the `phase-plan-v2` worktree and branch after both PRs have landed.
@@ -1145,13 +1166,51 @@ fix or revised an agent decision (listed under Open Questions).
 counts re-run on archived trees; the literals Phases 5-6 will retire each sit on one line; no internal names in
 the added text.
 
+### Plan close-out — 2026-11-16
+**Shipped:** the `phase-plan` skill in the v2 shape, live from the installed checkout since 2026-11-12 (PR 1 #3,
+`91f384b`) and adjusted on 2026-11-16 (#4, `7cb7fdb`). Pass 1 drafts the plan and ends with a separately logged,
+outward-looking gap-analysis step (`pass1.md`), with read-only probe rules, Delivery shape, the Phase 0 template
+and the Next pass handoff. Pass 2 is an independent review by three subagents, one per lens, refute-first, with
+`model` passed explicitly (`pass2.md`). Pass 3 adds tests that can fail, hedge resolution, the external-write
+tier and a deliverable anchor (`pass3.md`). Execution refuses to start without a Pass 3 entry, tracks built →
+merged → deployed → observed, makes mutation testing an exit step, and closes with "which pass should have caught
+this?" (`execute.md`). The walk-through is decision-first, one per message (`walk-through.md`, pointed to from
+`CLAUDE.md` and `ask-questions-if-underspecified.md`). The main file went from 675 to 486 lines, with its history in
+`CHANGELOG.md` and a compatibility rule for plans begun under the old labels. A fresh context is preferred, not
+required, and a standing commit OK covers plan-doc edits and split-off plans. `scripts/check-phase-plan.sh` (218
+assertions) and its fixture test (168) guard the skill's wiring; `/audit` is the declared gate, its shell checks in
+`scripts/audit-checks.sh` with their own test (16). Observed live in another repo on 2026-11-16.
+**Stopped or skipped:** nothing in scope. One item of the observed check, one question per message, was not
+exercised because the pass raised no decision; the dogfood runs in this plan exercised it. Deferred to
+`REFINEMENTS.md`: the `CLAUDE.md` overage and the instruction-size budget; three `/audit` gaps that predate this
+plan (Check 2's agent list omits `rust-enforcer`, and its path filter lets a `.claude/skills/` path through;
+Check 4's orange group has a third member and its text still counts 10 agents, not 11).
+**Discoveries:**
+- **Claude Code refuses a `!` line in a command file that uses a shell variable**, so `/audit` stopped at load on
+  its first live run (D21). The checks had been run by hand, never through the command. *Which pass should have
+  caught this?* Pass 3, under tests that can fail: a check's proof is a refusal through the layer that invokes
+  it, so the first `/audit` run belonged before Phase 10a built on it, not at its checkpoint.
+- **A fresh-context rule worded as a requirement refused the user's own request** in a compacted session, and it
+  recurred across sessions (fixed in #4). *Which pass?* Pass 2, Lens A: the outcome walk followed the agent's
+  path but never the case where the user asks for the pass in the session the rule would refuse.
+- **A standing commit OK was re-asked about** for plan-doc edits and for a plan split off from the one it was
+  given for (fixed in #4). *Which pass?* Pass 1's gap analysis, neighbour check: the user's standing OKs live
+  next to the skill, in memory notes, and the plan never read how they would meet the new handoff.
+- **Instruction files share a 150k-character budget per session**, and Claude Code warns when a project's own
+  `CLAUDE.md` pushes the total over. The global layer from this repo is about 42k of it. The plan measured
+  `CLAUDE.md` in lines (D13), not in the characters the harness counts. *Which pass?* Pass 1's gap analysis,
+  value domains: the budget that binds is the harness's, and it was not probed. Not caused by this plan (its
+  share was 213 characters); recorded with the `CLAUDE.md` follow-up.
+- **Plans begun under the old order have no `## Next pass` section**; the observed Pass 2 built its briefs from the
+  plan's header facts and added the section at the end. The compatibility rule does not name this case and did
+  not need to. No pass missed it; noted so a future change to the rule keeps it working.
+
 ## Next pass
 
-Paste: `/phase-plan execute ~/git/chasemp/coding-agents.worktrees/phase-plan-v2/plans/2026-11-09-1-plan-phase-plan-v2.md`
-(branch `phase-plan-v2`, base `origin/main` `8e6fc33`; re-check with `git ls-remote`). **Phase 11, close-out.**
-Phases 1-10c shipped (Outcome Summary). Each step needs the user's say-so: push and open PR 1; merge; the
-main-checkout pull with its checks (Delivery shape, Going live); the observed check in a session the user opens
-outside this repo; PR 2 (records only: this plan, `REFINEMENTS.md`); worktree removal after both land. Before
-the push, run the declared gate and name it (README: `/audit`; its Check 8 scripts plus the hook tests).
-Follow-ups to record at close: `CLAUDE.md` overage (291 vs 200); `/audit` Check 2's agent-name list omits
-`rust-enforcer` and its path filter lets `.claude/skills/...` through; the third agent on orange (Check 4).
+Plan closed 2026-11-16 (Plan close-out). Nothing is due under this plan beyond landing it. Each step needs the
+user's say-so: push `phase-plan-v2` and open PR 2 (records only: this plan, `REFINEMENTS.md`; D16); merge; pull
+the main checkout per Delivery shape, Going live; then remove the worktrees this plan created
+(`~/git/chasemp/coding-agents.worktrees/phase-plan-v2` and the observed check's throwaway worktree), each after
+`git status --porcelain --ignored` and a check that nothing is unlanded, never with `--force` on unlanded work.
+**Commit OK:** D20, local commits on `phase-plan-v2` (§ Guardrails scope); not push, PR, merge or removal.
+Follow-ups are `REFINEMENTS.md` entries dated 2026-11-16, each a candidate for its own plan.
